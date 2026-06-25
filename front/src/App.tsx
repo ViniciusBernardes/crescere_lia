@@ -1,4 +1,4 @@
-import { PhoneFrame, StatusBar } from './components/layout/PhoneFrame'
+import { PhoneFrame } from './components/layout/PhoneFrame'
 import { PsychOverlay } from './components/overlays/PsychOverlay'
 import { LiaProvider, useLia } from './context/LiaContext'
 import { ChatScreen } from './screens/ChatScreen'
@@ -12,7 +12,6 @@ function AppShell() {
 
   return (
     <PhoneFrame>
-      <StatusBar />
       {screen === 'intro' && <IntroScreen />}
       {screen === 'chat' && <ChatScreen />}
       {screen === 'journey' && <JourneyScreen />}

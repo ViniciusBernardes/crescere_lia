@@ -108,19 +108,18 @@ export function MapScreen() {
 
   return (
     <div className="screen slide-in" id="mapScreen">
-      <div className="map-top">
-        <button
-          type="button"
-          className="hdr-back"
-          onClick={() => showScreen('chat')}
-          style={{ marginBottom: 12, background: 'rgba(255,255,255,0.2)', color: 'white' }}
-        >
-          ‹ Voltar
-        </button>
-        <h2>Meu Mapa Emocional</h2>
-        <p>Baseado nas suas respostas com a Lia</p>
-      </div>
-      <div className="map-scroll">
+      <div className="screen-content">
+        <header className="map-top">
+          <div className="page-inner">
+            <button type="button" className="hdr-back map-back" onClick={() => showScreen('chat')}>
+              ‹ Voltar
+            </button>
+            <h2>Meu Mapa Emocional</h2>
+            <p>Baseado nas suas respostas com a Lia</p>
+          </div>
+        </header>
+        <div className="map-scroll">
+          <div className="page-inner">
         {empty ? (
           <div className="map-empty">
             <div className="me-icon">🗺️</div>
@@ -187,6 +186,8 @@ export function MapScreen() {
             </div>
           </>
         )}
+          </div>
+        </div>
       </div>
     </div>
   )
