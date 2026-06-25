@@ -111,8 +111,9 @@ export function MapScreen() {
       <div className="screen-content">
         <header className="map-top">
           <div className="page-inner">
-            <button type="button" className="hdr-back map-back" onClick={() => showScreen('chat')}>
-              ‹ Voltar
+            <button type="button" className="back-btn back-btn--light" onClick={() => showScreen('chat')}>
+              <span className="back-btn-chevron" aria-hidden>‹</span>
+              Voltar
             </button>
             <h2>Meu Mapa Emocional</h2>
             <p>Baseado nas suas respostas com a Lia</p>

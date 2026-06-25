@@ -9,8 +9,9 @@ export function JourneyScreen() {
       <div className="screen-content">
         <header className="jm-top">
           <div className="page-inner">
-            <button type="button" className="hdr-back jm-back" onClick={() => showScreen('chat')}>
-              ‹ Voltar
+            <button type="button" className="back-btn" onClick={() => showScreen('chat')}>
+              <span className="back-btn-chevron" aria-hidden>‹</span>
+              Voltar
             </button>
             <h2>Jornadas</h2>
             <p>12 trilhas de apoio ao cuidador — todas disponíveis</p>
