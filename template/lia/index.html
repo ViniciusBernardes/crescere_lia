@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Crescere — Lia</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Nunito:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --lilac:#8B6BB1; --lilac-light:#B89FD4; --lilac-dark:#6347A0; --lilac-xdark:#432D72;
+  --lilac-pale:#EDE6F7; --lilac-xpale:#F7F4FC; --lavender:#C9BBE8; --mauve:#D9C8F0;
+  --cream:#FDFBFF; --text-dark:#1E1530; --text-mid:#4A3A6A;
+  --text-light:#9080B0; --text-xlight:#C0B0D8;
+  --shadow:0 4px 24px rgba(99,71,160,0.14);
+  --shadow-sm:0 2px 10px rgba(99,71,160,0.09);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;width:100%;overflow:hidden;font-family:'Nunito',sans-serif;background:var(--lilac-xpale);color:var(--text-dark);}
+
+.frame{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 30% 20%,#e0d4f5 0%,#d4c8f0 40%,#c8bce8 100%);}
+.phone{width:100%;height:852px;max-width:100vw;max-height:100vh;background:var(--cream);border-radius:52px;overflow:hidden;display:flex;flex-direction:column;position:relative;box-shadow:0 50px 100px rgba(30,21,48,0.4),0 0 0 1px rgba(255,255,255,0.6) inset;}
+@media(max-width:100%){.frame{background:var(--cream);}.phone{border-radius:0;height:100%;box-shadow:none;}}
+
+.statusbar{height:50px;padding:14px 28px 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:relative;z-index:20;}
+.statusbar-time{font-size:15px;font-weight:800;color:var(--text-dark);}
+.statusbar-icons{display:flex;gap:5px;align-items:center;color:var(--text-dark);font-size:13px;}
+.notch{width:126px;height:37px;background:var(--text-dark);border-radius:0 0 24px 24px;position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:30;}
+
+.screen{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+.screen.hidden{display:none;}
+.screen.slide-in{animation:slideUp 0.4s cubic-bezier(0.32,0.72,0,1) both;}
+@keyframes slideUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── INTRO ── */
+#introScreen{background:linear-gradient(170deg,#6347A0 0%,#8B6BB1 45%,#b89fd4 100%);overflow-y:auto;}
+#introScreen::-webkit-scrollbar{width:0}
+.intro-hero{padding:70px 28px 36px;display:flex;flex-direction:column;align-items:center;text-align:center;position:relative;}
+.intro-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 80% 15%,rgba(255,255,255,0.15) 0%,transparent 50%),radial-gradient(circle at 10% 80%,rgba(255,255,255,0.08) 0%,transparent 40%);}
+.intro-orb{width:110px;height:110px;border-radius:50%;border:3px solid rgba(255,255,255,0.5);overflow:hidden;background:var(--lilac-pale);margin-bottom:20px;position:relative;z-index:1;box-shadow:0 8px 40px rgba(0,0,0,0.25),0 0 0 8px rgba(255,255,255,0.12);animation:floatIn 0.8s cubic-bezier(0.32,0.72,0,1) both 0.2s;}
+@keyframes floatIn{from{opacity:0;transform:scale(0.8) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.intro-orb img{width:100%;height:100%;object-fit:cover;}
+.intro-hero h1{font-family:'DM Serif Display',serif;font-size:32px;color:white;font-style:italic;line-height:1.2;position:relative;z-index:1;animation:fadeUp 0.6s ease both 0.4s;}
+.intro-hero .tagline{font-size:12px;color:rgba(255,255,255,0.75);font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-top:6px;position:relative;z-index:1;animation:fadeUp 0.6s ease both 0.5s;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.intro-body{background:var(--cream);border-radius:36px 36px 0 0;padding:28px 24px 36px;margin-top:-16px;}
+.intro-quote{font-size:15.5px;line-height:1.75;color:var(--text-mid);text-align:center;margin-bottom:24px;font-style:italic;}
+.intro-quote strong{color:var(--lilac-dark);font-style:normal;font-weight:800;}
+.feature-grid{display:flex;flex-direction:column;gap:10px;margin-bottom:28px;}
+.feat{display:flex;align-items:center;gap:14px;background:var(--lilac-xpale);border-radius:16px;padding:13px 15px;border:1px solid rgba(139,107,177,0.1);animation:fadeUp 0.5s ease both;}
+.feat:nth-child(1){animation-delay:0.1s}.feat:nth-child(2){animation-delay:0.15s}.feat:nth-child(3){animation-delay:0.2s}.feat:nth-child(4){animation-delay:0.25s}
+.feat-icon{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--lilac) 0%,var(--lilac-dark) 100%);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;box-shadow:0 4px 10px rgba(99,71,160,0.25);}
+.feat-text strong{font-size:13px;font-weight:800;color:var(--text-dark);display:block;}
+.feat-text span{font-size:12px;color:var(--text-light);margin-top:1px;display:block;}
+.start-btn{width:100%;padding:17px;background:linear-gradient(135deg,#7B5BA8 0%,#6347A0 100%);color:white;border:none;border-radius:20px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer;letter-spacing:0.3px;box-shadow:0 8px 24px rgba(99,71,160,0.4);transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.start-btn:active{transform:scale(0.98);}
+.crescere-brand{text-align:center;margin-top:20px;font-family:'DM Serif Display',serif;font-size:14px;color:var(--text-xlight);letter-spacing:3px;text-transform:uppercase;font-style:italic;}
+
+/* ── CHAT HEADER ── */
+.chat-header{background:white;padding:12px 16px 13px;display:flex;align-items:center;gap:11px;border-bottom:1px solid rgba(139,107,177,0.1);flex-shrink:0;box-shadow:0 2px 16px rgba(99,71,160,0.07);position:relative;z-index:10;}
+.hdr-back{width:38px;height:38px;border-radius:12px;background:var(--lilac-xpale);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--lilac-dark);font-size:20px;flex-shrink:0;}
+.hdr-avatar{width:44px;height:44px;border-radius:50%;border:2.5px solid var(--lilac-light);overflow:hidden;flex-shrink:0;position:relative;background:var(--lilac-pale);}
+.hdr-avatar img{width:100%;height:100%;object-fit:cover;}
+.online-dot{width:10px;height:10px;background:#5CC878;border:2.5px solid white;border-radius:50%;position:absolute;bottom:1px;right:1px;}
+.hdr-info{flex:1;min-width:0;}
+.hdr-name{font-family:'DM Serif Display',serif;font-size:17px;color:var(--text-dark);font-style:italic;}
+.hdr-status{font-size:11.5px;color:var(--lilac);font-weight:700;margin-top:1px;}
+.hdr-actions{display:flex;gap:6px;}
+.hdr-btn{width:38px;height:38px;border-radius:12px;background:var(--lilac-xpale);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;transition:background 0.2s;position:relative;}
+.hdr-btn:active{background:var(--mauve);}
+
+/* ── MESSAGES ── */
+.messages{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px 15px 12px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth;background:linear-gradient(180deg,#f4f0fb 0%,#f7f4fc 100%);}
+.messages::-webkit-scrollbar{width:0;}
+.date-chip{text-align:center;font-size:10.5px;font-weight:800;color:var(--text-xlight);letter-spacing:1px;text-transform:uppercase;margin:2px 0;}
+.mrow{display:flex;gap:8px;align-items:flex-end;animation:msgIn 0.38s cubic-bezier(0.32,0.72,0,1) both;}
+.mrow.user{flex-direction:row-reverse;}
+@keyframes msgIn{from{opacity:0;transform:translateY(14px) scale(0.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.mavatar{width:32px;height:32px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid var(--lilac-light);background:var(--lilac-pale);}
+.mavatar img{width:100%;height:100%;object-fit:cover;}
+.mavatar.user-av{background:var(--lilac-dark);color:white;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;border-color:var(--lilac);}
+.bwrap{max-width:78%;display:flex;flex-direction:column;gap:3px;}
+.mrow.user .bwrap{align-items:flex-end;}
+.bubble{padding:11px 15px;border-radius:20px;font-size:14.5px;line-height:1.6;position:relative;}
+.bubble.ai{background:white;color:var(--text-dark);border-bottom-left-radius:5px;box-shadow:var(--shadow-sm);}
+.bubble.user{background:linear-gradient(135deg,#7B5BA8 0%,#5E3A98 100%);color:white;border-bottom-right-radius:5px;}
+.bubble p+p{margin-top:7px;}
+.btime{font-size:10px;color:var(--text-xlight);padding:0 3px;}
+.mrow.user .btime{color:var(--lilac-light);}
+
+/* ── AUDIO ── */
+.listen-btn{display:inline-flex;align-items:center;gap:5px;background:var(--lilac-xpale);border:1.5px solid var(--lavender);border-radius:30px;padding:5px 11px 5px 8px;font-size:11.5px;font-weight:700;color:var(--lilac-dark);cursor:pointer;margin-top:7px;transition:all 0.18s;}
+.listen-btn:active{background:var(--mauve);}
+.listen-btn svg{flex-shrink:0;}
+
+/* ── TYPING ── */
+.typing-bubble{display:flex;align-items:center;gap:4px;padding:13px 16px;background:white;border-radius:20px;border-bottom-left-radius:5px;box-shadow:var(--shadow-sm);width:fit-content;}
+.typing-bubble span{width:7px;height:7px;border-radius:50%;background:var(--lilac-light);animation:typeBounce 1.3s infinite ease;}
+.typing-bubble span:nth-child(2){animation-delay:0.18s;}
+.typing-bubble span:nth-child(3){animation-delay:0.36s;}
+@keyframes typeBounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+
+/* ── PILLS ── */
+.emotion-grid{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px;}
+.epill{display:flex;align-items:center;gap:5px;background:white;border:1.5px solid var(--lavender);border-radius:30px;padding:8px 13px;font-size:13.5px;font-weight:600;color:var(--text-dark);cursor:pointer;transition:all 0.2s;box-shadow:0 1px 4px rgba(99,71,160,0.06);}
+.epill:hover{background:var(--lilac-pale);border-color:var(--lilac);}
+.epill.sel{background:var(--lilac);color:white;border-color:var(--lilac);}
+.epill:active{transform:scale(0.95);}
+.epill.off{pointer-events:none;opacity:0.45;}
+
+/* ── INFO CARDS ── */
+.info-card{background:var(--lilac-xpale);border-radius:14px;padding:13px 14px;margin-top:9px;border:1px solid rgba(139,107,177,0.15);}
+.info-card ul{padding-left:16px;}
+.info-card li{font-size:13px;color:var(--text-mid);line-height:1.7;margin:2px 0;}
+.info-card .ic-title{font-size:12px;font-weight:800;color:var(--lilac-dark);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;}
+.hquote{background:linear-gradient(135deg,rgba(139,107,177,0.12),rgba(99,71,160,0.08));border-left:3px solid var(--lilac);border-radius:0 12px 12px 0;padding:10px 12px;margin-top:8px;font-size:13.5px;font-style:italic;color:var(--text-mid);line-height:1.6;}
+.reflection{background:white;border-radius:14px;padding:13px 14px;margin-top:9px;border:1.5px dashed var(--lavender);}
+.reflection .r-title{font-size:11px;font-weight:800;color:var(--lilac);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:7px;}
+.reflection .r-q{font-size:13.5px;color:var(--text-dark);line-height:1.65;}
+
+/* ── JOURNEY CARD ── */
+.jcard{background:white;border-radius:16px;padding:13px 15px;display:flex;align-items:center;gap:12px;cursor:pointer;margin-top:6px;box-shadow:var(--shadow-sm);border-left:4px solid var(--lilac-light);transition:all 0.18s;}
+.jcard:active{transform:scale(0.98);}
+.jcard .jci{font-size:22px;flex-shrink:0;}
+.jcard .jct .jcl{font-size:10.5px;font-weight:800;color:var(--lilac);text-transform:uppercase;letter-spacing:0.6px;}
+.jcard .jct .jcn{font-size:13.5px;font-weight:800;color:var(--text-dark);margin-top:1px;}
+.jcard .jca{font-size:16px;color:var(--text-xlight);}
+
+/* ── CTA STACK ── */
+.cta-stack{display:flex;flex-direction:column;gap:7px;margin-top:9px;}
+.ctabtn{display:flex;align-items:center;gap:9px;padding:12px 16px;border-radius:15px;border:none;cursor:pointer;font-family:'Nunito',sans-serif;font-size:13.5px;font-weight:700;text-align:left;transition:all 0.18s;}
+.ctabtn.primary{background:linear-gradient(135deg,#7B5BA8,#5E3A98);color:white;box-shadow:0 5px 16px rgba(99,71,160,0.32);}
+.ctabtn.secondary{background:white;color:var(--lilac-dark);border:1.5px solid var(--lavender);}
+.ctabtn.accent{background:linear-gradient(135deg,#9B6BB8,#7B4AA8);color:white;box-shadow:0 5px 16px rgba(139,107,177,0.32);}
+.ctabtn:active{transform:scale(0.97);}
+.ctabtn .ci{font-size:18px;flex-shrink:0;}
+.ctabtn .ct{flex:1;}
+.ctabtn .cs{font-size:11px;font-weight:400;opacity:0.8;display:block;margin-top:1px;}
+
+/* ── INPUT ── */
+.input-area{background:white;padding:10px 14px 24px;border-top:1px solid rgba(139,107,177,0.1);flex-shrink:0;display:flex;align-items:flex-end;gap:8px;}
+.input-wrap{flex:1;background:var(--lilac-xpale);border-radius:24px;border:1.5px solid rgba(139,107,177,0.2);display:flex;align-items:center;gap:8px;padding:9px 12px;transition:border-color 0.2s;}
+.input-wrap:focus-within{border-color:var(--lilac);}
+.input-wrap textarea{flex:1;border:none;background:none;font-family:'Nunito',sans-serif;font-size:14.5px;color:var(--text-dark);resize:none;outline:none;max-height:100px;min-height:22px;line-height:1.45;}
+.input-wrap textarea::placeholder{color:var(--text-xlight);}
+.mic-btn{border:none;background:none;color:var(--lilac);font-size:20px;cursor:pointer;padding:2px;display:flex;transition:color 0.2s;flex-shrink:0;}
+.mic-btn.rec{color:#E05555;animation:recPulse 1s infinite;}
+@keyframes recPulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.send-btn{width:48px;height:48px;border-radius:16px;background:linear-gradient(135deg,#7B5BA8,#5E3A98);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(99,71,160,0.35);transition:all 0.2s;flex-shrink:0;}
+.send-btn:active{transform:scale(0.93);}
+
+/* ── PSYCH BAR ── */
+.psych-bar{background:linear-gradient(135deg,#ede6f7,#ddd0f0);margin:0 14px 10px;border-radius:16px;padding:11px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;border:1px solid rgba(139,107,177,0.18);transition:transform 0.15s;}
+.psych-bar:active{transform:scale(0.98);}
+.pb-dot{width:8px;height:8px;background:#5CC878;border-radius:50%;animation:blinkDot 2s infinite;}
+@keyframes blinkDot{0%,100%{opacity:1}50%{opacity:0.3}}
+.pb-main{flex:1;}
+.pb-title{font-size:12.5px;font-weight:800;color:var(--lilac-dark);}
+.pb-sub{font-size:11px;color:var(--lilac);margin-top:1px;font-weight:600;}
+.pb-arrow{font-size:16px;color:var(--lilac-light);}
+
+/* ── JOURNEY SCREEN ── */
+#journeyScreen{background:var(--cream);}
+.jm-top{background:white;padding:56px 20px 18px;border-bottom:1px solid rgba(139,107,177,0.1);flex-shrink:0;}
+.jm-top h2{font-family:'DM Serif Display',serif;font-size:24px;color:var(--text-dark);font-style:italic;}
+.jm-top p{font-size:13px;color:var(--text-light);margin-top:4px;font-weight:600;}
+.jm-scroll{flex:1;overflow-y:auto;padding:14px;}
+.jm-scroll::-webkit-scrollbar{width:0;}
+.jm-section-title{font-size:10px;font-weight:800;color:var(--text-xlight);text-transform:uppercase;letter-spacing:1.2px;padding:6px 4px 8px;}
+.jm-row{display:flex;align-items:center;gap:12px;background:white;border-radius:18px;padding:14px 15px;margin-bottom:8px;cursor:pointer;box-shadow:var(--shadow-sm);border-left:4px solid transparent;transition:all 0.18s;position:relative;overflow:hidden;}
+.jm-row:active{transform:scale(0.98);background:var(--lilac-xpale);}
+.jm-icon{font-size:26px;flex-shrink:0;}
+.jm-info{flex:1;}
+.jm-num{font-size:10px;font-weight:800;color:var(--text-xlight);text-transform:uppercase;letter-spacing:0.7px;}
+.jm-title{font-size:14px;font-weight:800;color:var(--text-dark);margin-top:2px;}
+.jm-sub{font-size:11.5px;color:var(--text-light);margin-top:2px;}
+.jm-badge{background:linear-gradient(135deg,#7B5BA8,#5E3A98);color:white;font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px;}
+.jm-done{background:linear-gradient(135deg,#5CC878,#3AAA60);color:white;font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px;}
+
+/* ── MAP SCREEN ── */
+#mapScreen{background:var(--cream);}
+.map-top{background:linear-gradient(135deg,#6347A0,#8B6BB1);padding:54px 20px 24px;flex-shrink:0;}
+.map-top h2{font-family:'DM Serif Display',serif;font-size:22px;color:white;font-style:italic;}
+.map-top p{font-size:12px;color:rgba(255,255,255,0.75);margin-top:4px;font-weight:600;letter-spacing:0.5px;}
+.map-scroll{flex:1;overflow-y:auto;padding:16px;}
+.map-scroll::-webkit-scrollbar{width:0;}
+.map-summary{background:white;border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow-sm);}
+.map-summary .ms-title{font-size:12px;font-weight:800;color:var(--lilac);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:12px;}
+.map-bars{display:flex;flex-direction:column;gap:10px;}
+.mbar-row{display:flex;flex-direction:column;gap:5px;}
+.mbar-label{font-size:12.5px;font-weight:700;color:var(--text-mid);display:flex;justify-content:space-between;}
+.mbar-label span{color:var(--lilac-dark);font-weight:800;}
+.mbar-track{height:9px;background:var(--lilac-xpale);border-radius:10px;overflow:hidden;}
+.mbar-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--lilac-light),var(--lilac-dark));transition:width 1s cubic-bezier(0.32,0.72,0,1);width:0%;}
+.map-cards{display:flex;flex-direction:column;gap:10px;}
+.map-card{background:white;border-radius:16px;padding:14px 16px;box-shadow:var(--shadow-sm);border-left:4px solid var(--lilac-light);}
+.map-card .mc-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.map-card .mc-icon{font-size:22px;}
+.map-card .mc-title{font-size:13px;font-weight:800;color:var(--text-dark);}
+.map-card .mc-body{font-size:13px;line-height:1.65;color:var(--text-mid);}
+.map-card .mc-tag{display:inline-block;margin-top:8px;background:var(--lilac-xpale);color:var(--lilac-dark);font-size:11px;font-weight:800;border-radius:20px;padding:3px 10px;}
+.map-empty{text-align:center;padding:40px 20px;color:var(--text-xlight);}
+.map-empty .me-icon{font-size:48px;margin-bottom:12px;}
+.map-empty p{font-size:14px;font-weight:600;line-height:1.6;}
+
+/* ── OVERLAYS ── */
+.overlay{position:absolute;inset:0;background:rgba(30,21,48,0.6);backdrop-filter:blur(8px);z-index:200;display:flex;align-items:flex-end;justify-content:center;animation:overlayIn 0.25s ease both;}
+.overlay.hidden{display:none;}
+@keyframes overlayIn{from{opacity:0}to{opacity:1}}
+.sheet{background:white;border-radius:36px 36px 0 0;width:100%;padding:28px 24px 40px;animation:sheetUp 0.35s cubic-bezier(0.32,0.72,0,1) both;}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.ps-handle{width:40px;height:4px;background:var(--mauve);border-radius:4px;margin:0 auto 24px;}
+.ps-icon{font-size:44px;text-align:center;margin-bottom:12px;}
+.ps-title{font-family:'DM Serif Display',serif;font-size:24px;text-align:center;color:var(--text-dark);font-style:italic;line-height:1.3;margin-bottom:6px;}
+.ps-sub{font-size:13.5px;color:var(--text-mid);text-align:center;line-height:1.6;margin-bottom:20px;}
+.ps-features{display:flex;flex-direction:column;gap:9px;margin-bottom:22px;}
+.ps-feat{display:flex;align-items:center;gap:10px;background:var(--lilac-xpale);border-radius:14px;padding:11px 13px;}
+.ps-feat .pf-check{color:var(--lilac);font-size:16px;flex-shrink:0;}
+.ps-feat .pf-text{font-size:13px;font-weight:700;color:var(--text-dark);}
+.ps-cta{width:100%;padding:17px;background:linear-gradient(135deg,#7B5BA8,#5E3A98);color:white;border:none;border-radius:20px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer;box-shadow:0 8px 24px rgba(99,71,160,0.35);margin-bottom:10px;transition:all 0.2s;}
+.ps-cta:active{transform:scale(0.98);}
+.ps-cancel{width:100%;padding:13px;background:none;border:none;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;color:var(--text-light);cursor:pointer;}
+.badge-new{background:linear-gradient(135deg,#E87777,#C74A4A);color:white;font-size:9px;font-weight:800;border-radius:20px;padding:2px 6px;position:absolute;top:-3px;right:-3px;}
+
+/* ── PROGRESS BAR ── */
+.progress-bar{height:3px;background:var(--lilac-xpale);flex-shrink:0;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--lilac-light),var(--lilac-dark));transition:width 0.5s ease;}
+</style>
+</head>
+<body>
+<div class="frame"><div class="phone" id="phone">
+
+<div class="notch"></div>
+<div class="statusbar">
+  <span class="statusbar-time">9:41</span>
+  <div class="statusbar-icons">
+    <svg width="16" height="11" viewBox="0 0 16 11" fill="currentColor"><rect x="0" y="3" width="3" height="8" rx="1"/><rect x="4.5" y="1.5" width="3" height="9.5" rx="1"/><rect x="9" y="0" width="3" height="11" rx="1"/><rect x="13.5" y="0" width="2.5" height="11" rx="1" opacity="0.3"/></svg>
+    <span>🔋</span>
+  </div>
+</div>
+
+<!-- INTRO -->
+<div class="screen" id="introScreen">
+  <div class="intro-hero">
+    <div class="intro-orb">
+      <img src="lia.jpeg" alt="Lia" onerror="this.style.display='none'; var f=this.nextElementSibling; if(f) f.classList.remove('hidden');" loading="eager">
+    </div>
+    <h1>Olá, eu sou a Lia</h1>
+    <p class="tagline">Crescere · Apoio ao Cuidador</p>
+  </div>
+  <div class="intro-body">
+    <p class="intro-quote">Se você está aqui, isso importa.<br>Este espaço foi criado <strong>para você</strong> —<br>quem cuida de uma criança com TEA.</p>
+    <div class="feature-grid">
+      <div class="feat"><div class="feat-icon">📚</div><div class="feat-text"><strong>Psicoeducação acolhedora</strong><span>Informação clara sobre TEA em linguagem humana</span></div></div>
+      <div class="feat"><div class="feat-icon">💙</div><div class="feat-text"><strong>Suporte emocional</strong><span>Espaço seguro para falar sobre seus sentimentos</span></div></div>
+      <div class="feat"><div class="feat-icon">🗺️</div><div class="feat-text"><strong>Mapa comportamental</strong><span>Insights personalizados com base nas suas respostas</span></div></div>
+      <div class="feat"><div class="feat-icon">🕐</div><div class="feat-text"><strong>Plantão psicológico 24h</strong><span>Apoio humano sempre que você precisar</span></div></div>
+    </div>
+    <button class="start-btn" onclick="goToChat()">Quero começar minha jornada →</button>
+    <p class="crescere-brand">Crescere</p>
+  </div>
+</div>
+
+<!-- CHAT -->
+<div class="screen hidden" id="chatScreen">
+  <div class="chat-header">
+    <button class="hdr-back" onclick="showScreen('introScreen')">‹</button>
+    <div class="hdr-avatar">
+      <img src="https://lojasbethset.com.br/wp-content/uploads/2026/02/Captura-de-Tela-2026-02-19-as-10.05.18.png" alt="Lia" onerror="this.style.display='none'">
+      <div class="online-dot"></div>
+    </div>
+    <div class="hdr-info">
+      <div class="hdr-name">Lia</div>
+      <div class="hdr-status">● Online agora</div>
+    </div>
+    <div class="hdr-actions">
+      <button class="hdr-btn" onclick="toggleAudio()" id="audioBtn">🔇</button>
+      <button class="hdr-btn" onclick="showScreen('journeyScreen')">🗺️</button>
+      <div style="position:relative;">
+        <button class="hdr-btn" onclick="showScreen('mapScreen')">📊</button>
+        <span class="badge-new" id="mapBadge" style="display:none">!</span>
+      </div>
+    </div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  <div class="messages" id="messages"><div class="date-chip">Hoje</div></div>
+  <div class="psych-bar" onclick="openPsych()">
+    <div class="pb-dot"></div>
+    <div class="pb-main"><div class="pb-title">Plantão Psicológico 24h</div><div class="pb-sub">Desejo conversar com um psicólogo</div></div>
+    <div class="pb-arrow">›</div>
+  </div>
+  <div class="input-area">
+    <div class="input-wrap">
+      <textarea id="msgInput" rows="1" placeholder="Escreva aqui…" oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
+      <button class="mic-btn" id="micBtn" onclick="toggleMic()">🎙️</button>
+    </div>
+    <button class="send-btn" onclick="sendMessage()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- JOURNEYS -->
+<div class="screen hidden" id="journeyScreen">
+  <div class="jm-top">
+    <button class="hdr-back" onclick="showScreen('chatScreen')" style="margin-bottom:12px;">‹ Voltar</button>
+    <h2>Jornadas</h2><p>12 trilhas de apoio ao cuidador — todas disponíveis</p>
+  </div>
+  <div class="jm-scroll" id="journeyList"></div>
+</div>
+
+<!-- MAP -->
+<div class="screen hidden" id="mapScreen">
+  <div class="map-top">
+    <button class="hdr-back" onclick="showScreen('chatScreen')" style="margin-bottom:12px;background:rgba(255,255,255,0.2);color:white;">‹ Voltar</button>
+    <h2>Meu Mapa Emocional</h2><p>Baseado nas suas respostas com a Lia</p>
+  </div>
+  <div class="map-scroll" id="mapContent"></div>
+</div>
+
+<!-- PSYCH OVERLAY -->
+<div class="overlay hidden" id="psychOverlay" onclick="closePsych(event)">
+  <div class="sheet">
+    <div class="ps-handle"></div>
+    <div class="ps-icon">💜</div>
+    <div class="ps-title">Plantão Psicológico</div>
+    <div class="ps-sub">Um psicólogo está disponível agora para te acolher. Espaço seguro e sigiloso.</div>
+    <div class="ps-features">
+      <div class="ps-feat"><span class="pf-check">💜</span><span class="pf-text">Escuta qualificada e acolhedora</span></div>
+      <div class="ps-feat"><span class="pf-check">🔒</span><span class="pf-text">Atendimento sigiloso</span></div>
+      <div class="ps-feat"><span class="pf-check">⚡</span><span class="pf-text">Disponível 24h, 7 dias por semana</span></div>
+    </div>
+    <button class="ps-cta" onclick="closePsych()">Iniciar atendimento agora</button>
+    <button class="ps-cancel" onclick="closePsych()">Voltar</button>
+  </div>
+</div>
+
+</div></div>
+
+<script>
+// ═══════════════════════ STATE ═══════════════════════
+let audioEnabled = false;
+let isRecording = false;
+let mediaRecorder = null;
+let profile = {
+  emotionToday: null, stressLevel: 0, selfcareLevel: 0,
+  emotionsFound: [], caregiverRole: null,
+  journeysCompleted: [], responses: [],
+  challengeArea: null, copingStyle: null,
+  supportNetwork: null, sleepQuality: null
+};
+
+// ═══════════════════════ JOURNEY DATA ═══════════════════════
+const JOURNEYS = [
+  {n:1, icon:'🤗', title:'Acolhimento e Chegada', sub:'"Você não está sozinho"', color:'#8B6BB1'},
+  {n:2, icon:'🧩', title:'Compreendendo o TEA', sub:'"Informação que acolhe e aproxima"', color:'#9B75C7'},
+  {n:3, icon:'💭', title:'Sentimentos diante do diagnóstico', sub:'"Tudo que você sente merece espaço"', color:'#7B5BA8'},
+  {n:4, icon:'🔍', title:'Autoavaliação e Autopercepção', sub:'"Como você está, de verdade?"', color:'#6347A0'},
+  {n:5, icon:'🌱', title:'Cuidar de Si para Continuar', sub:'"Você também precisa de cuidado"', color:'#8B6BB1'},
+  {n:6, icon:'🛠️', title:'Estratégias de Manejo com a Criança', sub:'"Compreender antes de reagir"', color:'#9B75C7'},
+  {n:7, icon:'🤝', title:'A Rede de Apoio', sub:'"Cuidar é um trabalho coletivo"', color:'#7B5BA8'},
+  {n:8, icon:'📋', title:'Direitos, Deveres e Orientações', sub:'"Informação também é cuidado"', color:'#6347A0'},
+  {n:9, icon:'🌊', title:'Momentos de Crise', sub:'"Quando tudo parece demais"', color:'#8B6BB1'},
+  {n:10, icon:'⚡', title:'Como o Cérebro Aprende', sub:'"Entender o cérebro muda o cuidado"', color:'#9B75C7'},
+  {n:11, icon:'🌟', title:'Potencialidades, Identidade e Futuro', sub:'"Para além do diagnóstico"', color:'#7B5BA8'},
+  {n:12, icon:'🏫', title:'Escola, Sociedade e Inclusão', sub:'"Cuidar também é enfrentar o mundo"', color:'#6347A0'},
+];
+
+// ═══════════════════════ NAV ═══════════════════════
+function goToChat() {
+  document.getElementById('introScreen').classList.add('hidden');
+  const cs = document.getElementById('chatScreen');
+  cs.classList.remove('hidden'); cs.classList.add('slide-in');
+  renderJourneyList(); renderMap();
+  setTimeout(startIntroFlow, 400);
+}
+
+function showScreen(id) {
+  ['introScreen','chatScreen','journeyScreen','mapScreen'].forEach(s => {
+    document.getElementById(s).classList.add('hidden');
+    document.getElementById(s).classList.remove('slide-in');
+  });
+  const el = document.getElementById(id);
+  el.classList.remove('hidden'); el.classList.add('slide-in');
+  if (id === 'mapScreen') { renderMap(); setTimeout(animateBars, 200); }
+}
+
+function setProgress(pct) {
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+// ═══════════════════════ JOURNEY LIST ═══════════════════════
+function renderJourneyList() {
+  const el = document.getElementById('journeyList');
+  el.innerHTML = JOURNEYS.map(j => {
+    const done = profile.journeysCompleted.includes(j.n);
+    return `<div class="jm-row" style="border-left-color:${j.color}" onclick="startJourney(${j.n})">
+      <div class="jm-icon">${j.icon}</div>
+      <div class="jm-info">
+        <div class="jm-num">Jornada ${j.n}</div>
+        <div class="jm-title">${j.title}</div>
+        <div class="jm-sub">${j.sub}</div>
+      </div>
+      ${done ? '<span class="jm-done">✓ Concluída</span>' : '<span style="font-size:14px;color:var(--text-xlight)">›</span>'}
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════ MAP ═══════════════════════
+function renderMap() {
+  const el = document.getElementById('mapContent'), p = profile;
+  if (!p.emotionToday && p.responses.length === 0) {
+    el.innerHTML = `<div class="map-empty"><div class="me-icon">🗺️</div><p>Seu mapa emocional aparece aqui conforme você interage com a Lia.<br><br>Comece uma jornada para gerar seus primeiros insights.</p></div>`;
+    return;
+  }
+  const stress = Math.min(100, p.stressLevel * 10);
+  const sc = Math.min(100, p.selfcareLevel * 10);
+  const awareness = Math.min(100, p.responses.length * 12);
+  const engagement = Math.min(100, p.journeysCompleted.length * 25 + p.responses.length * 4);
+
+  el.innerHTML = `
+    <div class="map-summary">
+      <div class="ms-title">📊 Perfil emocional atual</div>
+      <div class="map-bars">
+        ${mbar('Nível de sobrecarga', stress, '#E87777')}
+        ${mbar('Autocuidado percebido', sc, '#5CC878')}
+        ${mbar('Consciência emocional', awareness, '#8B6BB1')}
+        ${mbar('Engajamento nas jornadas', engagement, '#5BA8D4')}
+      </div>
+    </div>
+    <div class="map-cards">
+      ${p.emotionToday ? mapCard('😌','Como você chegou hoje', moodDesc(p.emotionToday), suggestFor(p.emotionToday)) : ''}
+      ${p.emotionsFound.length ? mapCard('💭','Emoções identificadas', p.emotionsFound.slice(0,3).join(' · '), 'Continuar explorando na Jornada 3') : ''}
+      ${p.caregiverRole ? mapCard('🧩','Seu papel como cuidador', roleDesc(p.caregiverRole), 'Aprofundar na Jornada 5') : ''}
+      ${p.challengeArea ? mapCard('🎯','Principal área de desafio', p.challengeArea, 'Estratégias na Jornada 6') : ''}
+      ${p.journeysCompleted.length > 0 ? mapCard('✅','Jornadas concluídas', p.journeysCompleted.length + ' de 12 trilhas', 'Continue seu progresso') : ''}
+      ${mapCard('💡','Próximo passo', nextStep(), 'Ver todas as jornadas')}
+    </div>`;
+}
+
+function mbar(label, pct, color) {
+  return `<div class="mbar-row">
+    <div class="mbar-label">${label} <span>${pct}%</span></div>
+    <div class="mbar-track"><div class="mbar-fill" data-w="${pct}" style="width:0%;background:linear-gradient(90deg,${color}88,${color})"></div></div>
+  </div>`;
+}
+function animateBars() {
+  document.querySelectorAll('.mbar-fill').forEach(b => b.style.width = b.dataset.w + '%');
+}
+function mapCard(icon, title, body, tag) {
+  return `<div class="map-card"><div class="mc-header"><span class="mc-icon">${icon}</span><span class="mc-title">${title}</span></div><div class="mc-body">${body}</div><span class="mc-tag">${tag}</span></div>`;
+}
+function moodDesc(e) {
+  return {
+    'No limite':'Você chegou sentindo estar no limite — seu corpo pedindo pausa urgente.',
+    'Cansado(a)':'Sinal de amor prolongado precisando de reposição. O cansaço é real e válido.',
+    'Confuso(a)':'Comum quando há muita informação e pouco apoio. Vamos organizar juntos.',
+    'Estou bem':'Ótimo momento para aprendizado preventivo e fortalecimento.',
+    'Não sei dizer':'Não nomear também é um sinal. Vamos explorar juntos com calma.'
+  }[e] || e;
+}
+function suggestFor(e) {
+  return {'No limite':'Jornada 9 — Momentos de Crise','Cansado(a)':'Jornada 5 — Cuidar de Si','Confuso(a)':'Jornada 2 — Compreendendo o TEA','Estou bem':'Jornada 10 — Como o Cérebro Aprende','Não sei dizer':'Jornada 4 — Autoavaliação'}[e] || 'Continue com a Lia';
+}
+function roleDesc(r) {
+  return {
+    'Tenho me sentido invisível':'Suas necessidades têm ficado em segundo plano há algum tempo.',
+    'Tento equilibrar':'Você tenta equilibrar, mas acaba se colocando por último com frequência.',
+    'Sinto culpa quando penso em mim':'Você associa autocuidado a egoísmo — um peso desnecessário de carregar.',
+    'Preciso cuidar mais de mim':'Você reconhece a necessidade. Reconhecer já é o primeiro passo.',
+    'Consigo às vezes':'Você já acessa o autocuidado mas precisa de mais sustentação externa.'
+  }[r] || r;
+}
+function nextStep() {
+  if (!profile.emotionToday) return 'Compartilhe como você está para receber orientações personalizadas.';
+  const n = profile.journeysCompleted.length;
+  if (n === 0) return 'Inicie a Jornada 1 — Acolhimento e Chegada.';
+  if (n < 3) return `Continue sua jornada — ${12-n} trilhas ainda a explorar.`;
+  return 'Você está progredindo bem! Explore as jornadas avançadas.';
+}
+function updateMap() {
+  document.getElementById('mapBadge').style.display = 'block';
+  renderJourneyList();
+}
+
+// ═══════════════════════ OVERLAYS ═══════════════════════
+function openPsych() { document.getElementById('psychOverlay').classList.remove('hidden'); }
+function closePsych(e) { if (!e || e.target.id === 'psychOverlay') document.getElementById('psychOverlay').classList.add('hidden'); }
+
+// ═══════════════════════ AUDIO ═══════════════════════
+function toggleAudio() {
+  audioEnabled = !audioEnabled;
+  document.getElementById('audioBtn').textContent = audioEnabled ? '🔊' : '🔇';
+  if (!audioEnabled && window.speechSynthesis) window.speechSynthesis.cancel();
+}
+function speak(text) {
+  if (!audioEnabled || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text.replace(/<[^>]+>/g,''));
+  u.lang = 'pt-BR'; u.rate = 0.93; u.pitch = 1.05;
+  window.speechSynthesis.speak(u);
+}
+
+// ═══════════════════════ MIC ═══════════════════════
+async function toggleMic() {
+  const btn = document.getElementById('micBtn');
+  if (!isRecording) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.start(); isRecording = true;
+      btn.textContent = '⏹️'; btn.classList.add('rec');
+      mediaRecorder.addEventListener('stop', () => {
+        stream.getTracks().forEach(t => t.stop());
+        btn.classList.remove('rec'); btn.textContent = '🎙️'; isRecording = false;
+        addUserMsg('🎙️ Mensagem de voz');
+        showTyping(() => addAiMsg('Recebi sua mensagem de voz! 💙 Pode também escrever se preferir.', 'Recebi sua mensagem de voz. Estou aqui para você.'), 1400);
+      });
+    } catch { alert('Permita acesso ao microfone.'); }
+  } else { mediaRecorder && mediaRecorder.stop(); }
+}
+
+// ═══════════════════════ CHAT HELPERS ═══════════════════════
+function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 100) + 'px'; }
+function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
+function scrollBot() { const m = document.getElementById('messages'); setTimeout(() => m.scrollTo({top:m.scrollHeight,behavior:'smooth'}), 80); }
+function ts() { return new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
+function liaAv() { return `<div class="mavatar"><img src="https://lojasbethset.com.br/wp-content/uploads/2026/02/Captura-de-Tela-2026-02-19-as-10.05.18.png" alt="Lia" onerror="this.style.display='none'"></div>`; }
+
+function addAiMsg(html, audioText, extras) {
+  const msgs = document.getElementById('messages');
+  const row = document.createElement('div'); row.className = 'mrow';
+  row.innerHTML = `${liaAv()}<div class="bwrap">
+    <div class="bubble ai"><p>${html.replace(/\n/g,'<br>')}</p>
+    ${audioText ? `<button class="listen-btn" onclick="speak('${audioText.replace(/'/g,"\\'").replace(/\n/g,' ')}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>Ouvir</button>` : ''}
+    ${extras || ''}</div>
+    <span class="btime">${ts()}</span></div>`;
+  msgs.appendChild(row); scrollBot();
+  if (audioText) speak(audioText);
+}
+
+function addUserMsg(text) {
+  const msgs = document.getElementById('messages');
+  const row = document.createElement('div'); row.className = 'mrow user';
+  row.innerHTML = `<div class="bwrap"><div class="bubble user"><p>${text}</p></div><span class="btime">${ts()}</span></div><div class="mavatar user-av">EU</div>`;
+  msgs.appendChild(row); scrollBot();
+}
+
+function showTyping(cb, delay=1600) {
+  const msgs = document.getElementById('messages');
+  const row = document.createElement('div'); row.className = 'mrow'; row.id = 'typingRow';
+  row.innerHTML = `${liaAv()}<div class="typing-bubble"><span></span><span></span><span></span></div>`;
+  msgs.appendChild(row); scrollBot();
+  setTimeout(() => { row.remove(); cb(); }, delay);
+}
+
+function addPicker(question, audioQ, pills, onPick) {
+  const msgs = document.getElementById('messages');
+  const row = document.createElement('div'); row.className = 'mrow';
+  const uid = 'p' + Date.now();
+  const pillsHTML = pills.map((p,i) =>
+    `<button class="epill" id="${uid}_${i}" onclick="doPick('${uid}',${i},this,'${p.label.replace(/'/g,"\\'")}',window._cb_${uid})">${p.emoji||''} ${p.label}</button>`
+  ).join('');
+  row.innerHTML = `${liaAv()}<div class="bwrap"><div class="bubble ai">
+    <p>${question}</p>
+    ${audioQ ? `<button class="listen-btn" style="margin-bottom:6px" onclick="speak('${audioQ.replace(/'/g,"\\'")}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>Ouvir</button>` : ''}
+    <div class="emotion-grid">${pillsHTML}</div>
+    </div><span class="btime">${ts()}</span></div>`;
+  window['_cb_' + uid] = onPick;
+  msgs.appendChild(row); scrollBot();
+  if (audioQ) speak(audioQ);
+}
+
+function doPick(uid, idx, btn, label, cb) {
+  document.querySelectorAll('.epill').forEach(p => { p.classList.remove('sel'); p.classList.add('off'); });
+  btn.classList.add('sel'); btn.classList.remove('off');
+  addUserMsg(btn.textContent.trim());
+  if (cb) cb(idx, label);
+}
+
+function addCtas(buttons) {
+  const msgs = document.getElementById('messages');
+  const row = document.createElement('div'); row.className = 'mrow';
+  row.innerHTML = `${liaAv()}<div class="bwrap"><div class="bubble ai"><div class="cta-stack" id="ctas_${Date.now()}"></div></div><span class="btime">${ts()}</span></div>`;
+  msgs.appendChild(row);
+  const stack = row.querySelector('.cta-stack');
+  buttons.forEach(b => {
+    const btn = document.createElement('button');
+    btn.className = `ctabtn ${b.style||'secondary'}`;
+    btn.innerHTML = `<span class="ci">${b.icon}</span><div class="ct">${b.label}${b.sub?`<span class="cs">${b.sub}</span>`:''}</div>`;
+    btn.addEventListener('click', () => { try { eval(b.action); } catch(e){ console.error(e); } });
+    stack.appendChild(btn);
+  });
+  scrollBot();
+}
+
+function suggestBlock(j) {
+  const msgs = document.getElementById('messages');
+  const row = document.createElement('div'); row.className = 'mrow';
+  row.innerHTML = `${liaAv()}<div class="bwrap"><div class="bubble ai">
+    <p>Com base em como você está, sugiro:</p>
+    <div class="jcard" data-jn="${j.n}">
+      <div class="jci">${j.icon}</div>
+      <div class="jct"><div class="jcl">Sugestão da Lia</div><div class="jcn">J${j.n} — ${j.title}</div></div>
+      <div class="jca">›</div>
+    </div>
+    <div class="cta-stack" style="margin-top:8px">
+      <button class="ctabtn secondary" data-nav="journeyScreen"><span class="ci">🗺️</span><div class="ct">Ver todas as jornadas</div></button>
+      <button class="ctabtn accent" data-psych="1"><span class="ci">💜</span><div class="ct">Falar com psicólogo<span class="cs">Plantão disponível 24h</span></div></button>
+    </div>
+  </div><span class="btime">${ts()}</span></div>`;
+  msgs.appendChild(row);
+  row.querySelector('.jcard').addEventListener('click', () => startJourney(j.n));
+  row.querySelector('[data-nav]').addEventListener('click', () => showScreen('journeyScreen'));
+  row.querySelector('[data-psych]').addEventListener('click', () => openPsych());
+  scrollBot();
+  speak('Com base em como você está, sugiro começar por essa jornada. E lembre-se que o plantão psicológico está sempre disponível.');
+}
+
+// ═══════════════════════ FREE CHAT ═══════════════════════
+function sendMessage() {
+  const inp = document.getElementById('msgInput');
+  const text = inp.value.trim(); if (!text) return;
+  addUserMsg(text); inp.value = ''; inp.style.height = 'auto';
+  profile.responses.push({type:'text', text, time:Date.now()}); updateMap();
+  showTyping(() => {
+    const l = text.toLowerCase();
+    if (l.includes('crise')||l.includes('limite')||l.includes('desespero')) {
+      addAiMsg('Ouço você. Esse momento pede cuidado imediato. 💙\nVocê não está sozinho(a).','Ouço você. Esse momento pede cuidado imediato. Você não está sozinho.');
+      profile.stressLevel = Math.min(10, profile.stressLevel+3);
+      setTimeout(()=>addCtas([{icon:'🌊',label:'Jornada 9 — Momentos de Crise',style:'primary',action:'startJourney(9)'},{icon:'💜',label:'Falar com psicólogo agora',sub:'Plantão 24h',style:'accent',action:'openPsych()'}]),700);
+    } else if (l.includes('cansad')||l.includes('exaust')||l.includes('esgot')) {
+      addAiMsg('O cansaço que você sente é real e válido. 🌱\nCuidadores não adoecem por serem fracos — adoecem por ficarem fortes por tempo demais.','O cansaço que você sente é real e válido. Cuidadores não adoecem por serem fracos. Adoecem por ficarem fortes por tempo demais.');
+      profile.stressLevel = Math.min(10, profile.stressLevel+2);
+      setTimeout(()=>addCtas([{icon:'🌱',label:'Jornada 5 — Cuidar de Si',style:'primary',action:'startJourney(5)'},{icon:'💜',label:'Falar com psicólogo',style:'accent',action:'openPsych()'}]),700);
+    } else if (l.includes('diagnósti')||l.includes('tea')||l.includes('autis')) {
+      addAiMsg('O diagnóstico traz muitas emoções ao mesmo tempo. É completamente normal. 🧩','O diagnóstico traz muitas emoções ao mesmo tempo. É completamente normal.');
+      setTimeout(()=>addCtas([{icon:'🧩',label:'Jornada 2 — Compreendendo o TEA',style:'primary',action:'startJourney(2)'}]),700);
+    } else {
+      addAiMsg('Obrigada por compartilhar isso comigo. Estou aqui, escutando. 💙\nComo posso te ajudar?','Obrigada por compartilhar isso comigo. Estou aqui, escutando. Como posso te ajudar?');
+    }
+    updateMap();
+  });
+}
+
+// ═══════════════════════ INTRO FLOW ═══════════════════════
+function startIntroFlow() {
+  setProgress(5);
+  showTyping(()=>{
+    addAiMsg('Olá! Que coisa boa contar com a sua presença aqui! 💜\n\nSe você está aqui, é porque uma parte sua também pediu atenção. Este espaço foi criado para você.','Olá! Que coisa boa contar com a sua presença aqui! Se você está aqui, é porque uma parte sua também pediu atenção. Este espaço foi criado para você.');
+  },1200);
+  setTimeout(()=>showTyping(()=>{
+    addPicker('Como você está se sentindo <strong>hoje</strong>?','Como você está se sentindo hoje?',
+      [{emoji:'😔',label:'No limite'},{emoji:'🫥',label:'Cansado(a)'},{emoji:'🤔',label:'Confuso(a)'},{emoji:'🙂',label:'Estou bem'},{emoji:'❓',label:'Não sei dizer'}],
+      handleMoodPick);
+  },1800),3000);
+}
+
+const MOOD = {
+  'No limite':  {text:'Quando você está no limite, seu corpo e sua mente estão pedindo pausa, não cobrança.\n\nAqui, o cuidado começa com você. Vamos respirar juntos. 💙',audio:'Quando você está no limite, seu corpo e sua mente estão pedindo pausa. Aqui, o cuidado começa com você.',stress:8,sc:2,j:9},
+  'Cansado(a)': {text:'O cansaço é um sinal de amor prolongado sem descanso suficiente.\n\nVocê não está fraco(a) — está sobrecarregado(a). Aqui, isso tem espaço. 🌿',audio:'O cansaço é um sinal de amor prolongado sem descanso suficiente. Você não está fraco, está sobrecarregado.',stress:6,sc:3,j:5},
+  'Confuso(a)': {text:'A confusão é comum quando a informação é demais e o apoio é de menos.\n\nVamos organizar tudo em passos simples, sem pressa. 📚',audio:'A confusão é comum quando a informação é demais e o apoio é de menos. Vamos organizar tudo em passos simples.',stress:5,sc:4,j:2},
+  'Estou bem':  {text:'Que bom! 🙂 Mesmo nos dias bons, o cuidado preventivo fortalece você para os dias difíceis.\n\nVamos explorar juntos?',audio:'Que bom! Mesmo nos dias bons, o cuidado preventivo fortalece você para os dias difíceis.',stress:2,sc:7,j:2},
+  'Não sei dizer':{text:'Às vezes é difícil nomear o que sentimos. Isso também é um sinal importante.\n\nVamos começar com uma checagem para entender melhor o seu momento. 💭',audio:'Às vezes é difícil nomear o que sentimos. Isso também é um sinal importante. Vamos começar com uma checagem para entender melhor seu momento.',stress:4,sc:4,j:4},
+};
+
+function handleMoodPick(idx, label) {
+  const key = Object.keys(MOOD).find(k => label.includes(k)) || 'Não sei dizer';
+  const r = MOOD[key];
+  profile.emotionToday = key; profile.stressLevel = r.stress; profile.selfcareLevel = r.sc;
+  profile.responses.push({type:'mood',value:key}); updateMap(); setProgress(15);
+  showTyping(()=>{
+    addAiMsg(r.text, r.audio);
+    setTimeout(()=>showTyping(()=>suggestBlock(JOURNEYS.find(j=>j.n===r.j)||JOURNEYS[0]),1600),800);
+  });
+}
+
+// ═══════════════════════ START JOURNEY ═══════════════════════
+function startJourney(n) {
+  showScreen('chatScreen');
+  if (!profile.journeysCompleted.includes(n)) profile.journeysCompleted.push(n);
+  setProgress(Math.min(100, profile.journeysCompleted.length * 8 + 10));
+  updateMap();
+  const flows = {1:j1,2:j2,3:j3,4:j4,5:j5,6:j6,7:j7,8:j8,9:j9,10:j10,11:j11,12:j12};
+  (flows[n] || j1)();
+}
+
+// ╔══════════════════════════════════════════════════════════╗
+// ║  JORNADA 1 — ACOLHIMENTO E CHEGADA                      ║
+// ╚══════════════════════════════════════════════════════════╝
+function j1() {
+  addUserMsg('Jornada 1 — Acolhimento e Chegada 🤗');
+  showTyping(()=>{
+    addAiMsg('Olá! Que coisa boa contar com a tua presença aqui!\n\nAntes de qualquer explicação, eu quero falar sobre <strong>estar aqui</strong>.\n\nEstar aqui não é um acaso. É um gesto silencioso de quem percebeu que seguir sozinho estava pesado demais.','Olá! Que coisa boa contar com a tua presença aqui! Antes de qualquer explicação, eu quero falar sobre estar aqui. Estar aqui não é um acaso. É um gesto silencioso de quem percebeu que seguir sozinho estava pesado demais.');
+    setTimeout(()=>showTyping(()=>{
+      addAiMsg('Muitas pessoas chegam até aqui depois de tentarem ser fortes por muito tempo.\n\nTentaram entender tudo sozinhas.\nTentaram dar conta de tudo.\nTentaram não incomodar.\n\nE, em algum momento, algo interno disse:\n<em>"Eu preciso de um lugar onde eu possa respirar."</em>','Muitas pessoas chegam até aqui depois de tentarem ser fortes por muito tempo. E em algum momento, algo interno disse: eu preciso de um lugar onde eu possa respirar.');
+      setTimeout(()=>showTyping(()=>j1_modoCuidado(),2400),800);
+    },2200),1000);
+  });
+}
+
+function j1_modoCuidado() {
+  addAiMsg('Quando vivemos por muito tempo sob pressão, o cérebro entra no <strong>modo sobrevivência</strong>.\n\nNesse estado, ele está o tempo todo tentando proteger você de ameaças — mesmo que elas não sejam físicas.','Quando vivemos por muito tempo sob pressão, o cérebro entra no modo sobrevivência. Esse estado está tentando proteger você de ameaças, mesmo que elas não sejam físicas.',
+  `<div class="info-card"><div class="ic-title">⚡ Modo sobrevivência</div><ul><li>Pensamento acelerado ou confuso</li><li>Emoções intensas ou "anestesiadas"</li><li>Corpo tenso, cansado, exausto</li><li>Tudo parece urgente e pesado demais</li></ul></div>`);
+  setTimeout(()=>showTyping(()=>{
+    addAiMsg('Quando você busca acolhimento, algo importante acontece:\n\nSeu cérebro começa, lentamente, a sair do modo sobrevivência e a se aproximar do <strong>modo cuidado</strong>.','Quando você busca acolhimento, seu cérebro começa lentamente a sair do modo sobrevivência e se aproximar do modo cuidado.',
+    `<div class="info-card"><div class="ic-title">🌱 Modo cuidado</div><ul><li>O corpo começa a relaxar um pouco</li><li>A respiração fica mais profunda</li><li>Os pensamentos desaceleram</li><li>Surge espaço para sentir e refletir</li></ul></div><div class="hquote">Ninguém entra no modo cuidado de uma vez. É um processo gradual, feito de pequenas pausas. Estar aqui já é uma dessas pausas.</div>`);
+    setTimeout(()=>showTyping(()=>j1_percepcao(),2200),800);
+  },2400),800);
+}
+
+function j1_percepcao() {
+  addPicker('Perceba agora, sem se julgar:\n\n👉 Nos últimos dias, você tem se sentido mais:','Perceba agora, sem se julgar. Nos últimos dias, você tem se sentido mais:',
+    [{emoji:'🔥',label:'Sempre em alerta'},{emoji:'🪫',label:'Exausto mesmo descansando'},{emoji:'🌫️',label:'Confuso e sobrecarregado'},{emoji:'🌱',label:'Algo começou a aliviar'}],
+    (idx,label)=>{
+      profile.stressLevel = [8,7,6,3][idx]||5; profile.responses.push({type:'j1_state',value:label}); updateMap();
+      showTyping(()=>{
+        addAiMsg('Essa percepção já é um passo fora do modo sobrevivência. 💙\n\nAqui, você não precisa provar nada. Não precisa ser forte o tempo todo. Não precisa saber o que fazer agora.\n\nVamos começar cuidando de você — no seu tempo, do seu jeito.','Essa percepção já é um passo fora do modo sobrevivência. Aqui, você não precisa provar nada. Vamos começar cuidando de você, no seu tempo, do seu jeito.');
+        setTimeout(()=>showTyping(()=>j1_cuidador(),2200),800);
+      });
+    });
+}
+
+function j1_cuidador() {
+  addAiMsg('Agora quero te convidar a olhar para algo que quase sempre fica em segundo plano.\n\n👉 <strong>Você.</strong>\n\nCuidar de alguém exige presença, atenção, entrega. E, com o tempo, é comum que o papel de cuidador vá ocupando todos os espaços — até que a pessoa por trás do cuidado fique invisível.','Agora quero te convidar a olhar para algo que quase sempre fica em segundo plano. Você. Cuidar de alguém exige presença, atenção, entrega.',
+  `<div class="hquote">Cuidadores não adoecem porque são fracos. Eles adoecem porque permanecem fortes por tempo demais.</div>`);
+  setTimeout(()=>showTyping(()=>{
+    addPicker('👉 Nos últimos tempos, como você tem se colocado na própria vida?','Nos últimos tempos, como você tem se colocado na própria vida?',
+      [{emoji:'🫥',label:'Tenho me sentido invisível'},{emoji:'⚖️',label:'Tento equilibrar'},{emoji:'😔',label:'Sinto culpa quando penso em mim'},{emoji:'🌱',label:'Preciso cuidar mais de mim'},{emoji:'🤍',label:'Consigo às vezes'}],
+      (idx,label)=>{
+        const keys = ['Tenho me sentido invisível','Tento equilibrar','Sinto culpa quando penso em mim','Preciso cuidar mais de mim','Consigo às vezes'];
+        const key = keys[idx];
+        profile.caregiverRole = key; profile.responses.push({type:'caregiver_role',value:key}); updateMap();
+        profile.selfcareLevel = [2,4,3,5,6][idx]||3;
+        const resps = {
+          'Tenho me sentido invisível':'Sentir-se invisível dói mais do que parece. Geralmente isso acontece quando você esteve disponível para todos por tanto tempo, que esqueceu de reservar espaço para si.\n\n<strong>Nada em você desapareceu — apenas ficou sem lugar.</strong>\n\nAqui, sua presença é vista.',
+          'Tento equilibrar':'Tentar equilibrar já mostra consciência e esforço. Mas quando você fica sempre por último, o cansaço se acumula em silêncio.\n\nNão é falta de organização — é excesso de responsabilidade.',
+          'Sinto culpa quando penso em mim':'A culpa costuma aparecer quando você aprendeu que cuidar de si significa abandonar alguém.\n\n<strong>Mas isso não é verdade.</strong>\n\nCuidar de você não diminui o cuidado com o outro — sustenta.',
+          'Preciso cuidar mais de mim':'Reconhecer essa necessidade já é o começo. Muitas vezes, o "não saber por onde" vem do cansaço — não da falta de vontade.\n\nAqui, você não precisa ter um plano.',
+          'Consigo às vezes':'Isso mostra que você já experimentou o autocuidado — e sabe o quanto ele é necessário.\n\nA dificuldade em manter não é falha; é falta de sustentação externa.'
+        };
+        const audios = {
+          'Tenho me sentido invisível':'Sentir-se invisível dói mais do que parece. Nada em você desapareceu, apenas ficou sem lugar. Aqui, sua presença é vista.',
+          'Tento equilibrar':'Tentar equilibrar já mostra consciência. Não é falta de organização, é excesso de responsabilidade.',
+          'Sinto culpa quando penso em mim':'A culpa costuma aparecer quando você aprendeu que cuidar de si significa abandonar alguém. Mas isso não é verdade.',
+          'Preciso cuidar mais de mim':'Reconhecer essa necessidade já é o começo.',
+          'Consigo às vezes':'Isso mostra que você já experimentou o autocuidado e sabe o quanto ele é necessário.'
+        };
+        showTyping(()=>{
+          addAiMsg(resps[key], audios[key]);
+          setTimeout(()=>showTyping(()=>j1_fechamento(),2200),800);
+        });
+      });
+  },2400),800);
+}
+
+function j1_fechamento() {
+  addAiMsg('Essa jornada não é sobre mudar tudo agora.\n\nÉ sobre reconhecer que <strong>você importa nesse processo</strong>.\n\n👉 Seu lugar como cuidador não deve anular seu lugar como pessoa.\n\nAqui, a gente constrói caminhos onde o cuidado <strong>inclui você</strong>.','Essa jornada não é sobre mudar tudo agora. É sobre reconhecer que você importa nesse processo.',
+  `<div class="reflection"><div class="r-title">💭 Para reflexão</div><div class="r-q">• O que você costuma abrir mão quando precisa dar conta de tudo?<br>• O que em você está pedindo atenção há mais tempo?<br>• Como seu corpo tem sinalizado cansaço?</div></div>`);
+  setTimeout(()=>showTyping(()=>{
+    addAiMsg('Quando estiver pronto(a), podemos seguir para a <strong>Microjornada 1.3 — Normalizando sentimentos difíceis</strong>.\n\nVocê não precisa chegar pronto. Você só precisa chegar como está. 🌸','Quando estiver pronto, podemos seguir para a próxima etapa. Você não precisa chegar pronto. Você só precisa chegar como está.');
+    setTimeout(()=>addCtas([
+      {icon:'▶️',label:'Continuar — Microjornada 1.3',style:'primary',action:'j1_sentimentos()'},
+      {icon:'🗺️',label:'Ver outras jornadas',style:'secondary',action:'showScreen("journeyScreen")'},
+      {icon:'💜',label:'Falar com psicólogo',style:'accent',action:'openPsych()'}
+    ]),400);
+  },2000),1000);
+}
+
+function j1_sentimentos() {
+  showTyping(()=>{
+    addAiMsg('Se você chegou até aqui, provavelmente já percebeu que cuidar não é feito só de amor.\n\nÉ feito também de sentimentos que quase nunca ganham espaço para existir.\n\nAqui, a gente vai falar sobre eles — não para consertar, não para julgar, mas para <strong>normalizar</strong>.','Cuidar não é feito só de amor. É feito também de sentimentos que quase nunca ganham espaço. Aqui, a gente vai falar sobre eles para normalizar.',
+    `<div class="hquote">Sentir não te torna fraco. Te torna humano.</div>`);
+    setTimeout(()=>showTyping(()=>{
+      addAiMsg('Muitos cuidadores tentam empurrar esses sentimentos para longe:\n\n<em>"Não posso sentir isso."</em>\n<em>"Tem gente em situação pior."</em>\n<em>"Eu deveria ser mais forte."</em>\n\nMas sentimentos ignorados não desaparecem. Eles se acumulam — e voltam como cansaço extremo, irritação ou sensação de vazio.','Muitos cuidadores tentam empurrar esses sentimentos para longe. Mas sentimentos ignorados não desaparecem. Eles se acumulam e voltam em forma de cansaço extremo ou irritação.');
+      setTimeout(()=>showTyping(()=>{
+        addPicker('👉 Nos últimos tempos, quais sentimentos têm aparecido com mais frequência?','Nos últimos tempos, quais sentimentos têm aparecido com mais frequência?',
+          [{emoji:'😔',label:'Tristeza ou desânimo'},{emoji:'😤',label:'Irritação ou raiva'},{emoji:'😟',label:'Medo de errar'},{emoji:'😶',label:'Sensação de vazio'},{emoji:'🤍',label:'Amor com muito cansaço'},{emoji:'❓',label:'Não sei identificar'}],
+          (idx,label)=>{
+            profile.emotionsFound.push(label); profile.responses.push({type:'emotions',value:label}); updateMap();
+            showTyping(()=>{
+              addAiMsg('Seja qual for a sua resposta, ela faz sentido dentro da história que você está vivendo.\n\n<strong>Nenhum desses sentimentos invalida o amor, o cuidado ou a dedicação que existem em você.</strong>\n\nEles apenas mostram que algo aí dentro também precisa ser cuidado. 💙','Seja qual for a sua resposta, ela faz sentido dentro da história que você está vivendo. Nenhum desses sentimentos invalida o amor que existe em você.',
+              `<div class="reflection"><div class="r-title">💭 Um exercício simples</div><div class="r-q">Se esse sentimento pudesse falar, o que ele estaria tentando te dizer?<br><br>"Eu preciso de descanso."<br>"Eu estou sozinho(a)."<br>"Estou com medo."<br><br>Apenas escute. Escutar já é cuidado.</div></div>`);
+              setTimeout(()=>showTyping(()=>{
+                addAiMsg('Você não está errado(a) por sentir o que sente.\n\nVocê está humano(a) em um contexto exigente. 🌸\n\n<strong>Jornada 1 concluída!</strong> Seu mapa foi atualizado.','Você não está errado por sentir o que sente. Você está humano em um contexto exigente. Jornada 1 concluída!');
+                setTimeout(()=>addCtas([
+                  {icon:'▶️',label:'Continuar — Jornada 2',style:'primary',action:'j2()'},
+                  {icon:'📊',label:'Ver meu mapa emocional',style:'secondary',action:'showScreen("mapScreen")'},
+                  {icon:'💜',label:'Falar com psicólogo',style:'accent',action:'openPsych()'}
+                ]),400);
+              },2400),800);
+            });
+          });
+      },2200),800);
+    },2200),800);
+  });
+}
+
+// ╔══════════════════════════════════════════════════════════╗
+// ║  JORNADA 2 — COMPREENDENDO O TEA                        ║
+// ╚══════════════════════════════════════════════════════════╝
+function j2() { addUserMsg('Jornada 2 — Compreendendo o TEA 🧩'); flowJ2(); }
+function flowJ2() {
+  showTyping(()=>{
+    addAiMsg('Nesta jornada, vamos ajustar a forma como olhamos para o TEA. 🧩\n\nAntes de qualquer coisa:','Nesta jornada, vamos ajustar a forma como olhamos para o TEA.',
+    `<div class="hquote">Conhecimento não tira a sensibilidade — ele fortalece.</div>`);
+    setTimeout(()=>showTyping(()=>{
+      addAiMsg('O <strong>Transtorno do Espectro Autista</strong> não é uma doença. É uma condição do neurodesenvolvimento.\n\nIsso significa que o cérebro funciona de um jeito diferente — com suas próprias formas de perceber, sentir e interagir com o mundo.','O Transtorno do Espectro Autista não é uma doença. É uma condição do neurodesenvolvimento. O cérebro funciona de um jeito diferente.',
+      `<div class="info-card"><div class="ic-title">✅ Pontos essenciais</div><ul><li>O autismo não é causado por falta de afeto ou educação</li><li>Não é algo que você causou</li><li>É uma forma de diversidade neurológica</li><li>Não existe "cura" — existe suporte e desenvolvimento</li></ul></div>`);
+      setTimeout(()=>showTyping(()=>j2_espectro(),2200),800);
+    },2400),800);
+  });
+}
+
+function j2_espectro() {
+  addAiMsg('A palavra <strong>espectro</strong> indica diversidade. Não existe um único tipo de autismo — cada pessoa tem características únicas.','A palavra espectro indica diversidade. Não existe um único tipo de autismo.',
+  `<div class="info-card"><div class="ic-title">1️⃣ Comunicação e interação social</div><ul><li>Dificuldade no "vai e vem" da conversa</li><li>Desafios com expressões faciais, gestos e ironia</li></ul></div>
+  <div class="info-card" style="margin-top:8px"><div class="ic-title">2️⃣ Comportamentos e rotinas</div><ul><li>Preferência por rotinas previsíveis e seguras</li><li>Interesses intensos e específicos</li><li>Movimentos repetitivos (regulação emocional)</li></ul></div>
+  <div class="info-card" style="margin-top:8px"><div class="ic-title">3️⃣ Processamento sensorial</div><ul><li>Sensibilidade a sons, luzes, cheiros, toques</li><li>Ou busca por estímulos mais intensos</li></ul></div>
+  <div class="hquote" style="margin-top:8px">"Se você conhece uma pessoa autista, você conhece uma pessoa autista." — Cada criança é única no espectro.</div>`);
+  setTimeout(()=>showTyping(()=>{
+    addPicker('Ao pensar na criança com TEA, em qual área você percebe <strong>mais desafios</strong> no dia a dia?','Em qual área você percebe mais desafios no dia a dia?',
+      [{emoji:'💬',label:'Comunicação e interação'},{emoji:'🔄',label:'Rotinas e comportamentos'},{emoji:'👂',label:'Sensibilidade sensorial'}],
+      (idx,label)=>{
+        profile.challengeArea = label; profile.responses.push({type:'challenge_area',value:label}); updateMap();
+        showTyping(()=>{
+          addAiMsg('Essas áreas podem trazer desafios muito reais para o cuidador. 💙\n\nAo longo das próximas jornadas, vamos explorar estratégias práticas para cada uma delas.\n\n<strong>Você está dando um passo essencial ao buscar entender.</strong>','Essas áreas podem trazer desafios muito reais. Ao longo das próximas jornadas, vamos explorar estratégias práticas para cada uma delas.');
+          setTimeout(()=>showTyping(()=>j2_neurodiversidade(),2200),800);
+        });
+      });
+  },2400),800);
+}
+
+function j2_neurodiversidade() {
+  addAiMsg('Agora quero te apresentar um conceito que <strong>muda tudo</strong>:\n\n🌈 <strong>Neurodiversidade</strong>\n\nÉ a ideia de que existem muitos jeitos legítimos de funcionar cognitivamente. O cérebro autista não é inferior — é diferente.','Agora quero te apresentar um conceito que muda tudo. Neurodiversidade. É a ideia de que existem muitos jeitos legítimos de funcionar cognitivamente.',
+  `<div class="hquote">Diferença não é déficit. É uma forma diferente de estar no mundo.</div>`);
+  setTimeout(()=>showTyping(()=>{
+    addPicker('Como você se sentiu ao ler sobre neurodiversidade?','Como você se sentiu ao ler sobre neurodiversidade?',
+      [{emoji:'💡',label:'Abriu uma nova perspectiva'},{emoji:'😌',label:'Me trouxe alívio'},{emoji:'🤔',label:'Ainda tenho dúvidas'},{emoji:'😔',label:'É difícil de aceitar ainda'}],
+      (idx,label)=>{
+        profile.responses.push({type:'neurodiversity_reaction',value:label}); updateMap();
+        const resps = ['Que ótimo! Essa abertura faz toda a diferença no cuidado. 💙','Esse alívio é muito válido. Compreender liberta. 🌸','Dúvidas fazem parte do processo. Vamos construir juntos, passo a passo. 🌱','Aceitar é um processo. Não precisa acontecer de uma vez. É normal levar tempo. 💜'];
+        showTyping(()=>{
+          addAiMsg(resps[idx]||resps[0], resps[idx]||resps[0]);
+          setTimeout(()=>showTyping(()=>{
+            addAiMsg('Conhecimento é uma forma de empoderamento. Ele reduz o medo e amplia as possibilidades de cuidado. 🌱\n\n<strong>Jornada 2 concluída!</strong> Seu mapa foi atualizado.','Conhecimento é uma forma de empoderamento. Jornada 2 concluída!');
+            setTimeout(()=>addCtas([
+              {icon:'▶️',label:'Continuar — Jornada 3',style:'primary',action:'j3()'},
+              {icon:'📊',label:'Ver meu mapa',style:'secondary',action:'showScreen("mapScreen")'},
+              {icon:'💜',label:'Falar com psicólogo',style:'accent',action:'openPsych()'}
+            ]),400);
+          },2000),800);
+        });
+      });
+  },2200),800);
+}
+
+// ╔══════════════════════════════════════════════════════════╗
+// ║  JORNADA 3 — SENTIMENTOS DIANTE DO DIAGNÓSTICO          ║
+// ╚══════════════════════════════════════════════════════════╝
+function j3() { addUserMsg('Jornada 3 — Sentimentos diante do diagnóstico 💭');
+  showTyping(()=>{
+    addAiMsg('Receber — ou conviver — com um diagnóstico não impacta apenas a criança. Ele atravessa quem cuida.\n\nMuitos cuidadores relatam um misto de emoções: amor, medo, luto, esperança, exaustão. Nenhuma delas é errada.','Receber ou conviver com um diagnóstico não impacta apenas a criança. Ele atravessa quem cuida. Muitos cuidadores relatam um misto de emoções. Nenhuma delas é errada.',
+    `<div class="hquote">Tudo o que você sente merece espaço.</div>`);
+    setTimeout(()=>showTyping(()=>{
+      addAiMsg('O diagnóstico pode ativar um processo semelhante ao <strong>luto simbólico</strong>: não pelo filho real, mas pelas expectativas que foram criadas.\n\nReconhecer isso ajuda a reduzir culpa e isolamento.','O diagnóstico pode ativar um processo semelhante ao luto simbólico. Não pelo filho real, mas pelas expectativas que foram criadas. Reconhecer isso ajuda a reduzir culpa e isolamento.',
+      `<div class="info-card"><div class="ic-title">🌊 Fases comuns do luto simbólico</div><ul><li>Negação: "Talvez seja engano..."</li><li>Raiva: "Por que comigo? Por que ele?"</li><li>Negociação: "E se eu fizer mais...?"</li><li>Tristeza: O peso da realidade</li><li>Aceitação: Ressignificação e nova perspectiva</li></ul></div>
+      <div class="hquote" style="margin-top:8px">Essas fases não são lineares. Você pode sentir várias ao mesmo tempo.</div>`);
+      setTimeout(()=>showTyping(()=>{
+        addPicker('Marque o que você já sentiu desde o diagnóstico:','Marque o que você já sentiu desde o diagnóstico:',
+          [{emoji:'😨',label:'Medo do futuro'},{emoji:'😔',label:'Culpa'},{emoji:'😢',label:'Tristeza'},{emoji:'😮‍💨',label:'Alívio por ter respostas'},{emoji:'🥱',label:'Cansaço profundo'}],
+          (idx,label)=>{
+            profile.emotionsFound.push(label); profile.responses.push({type:'diagnosis_emotion',value:label}); updateMap();
+            showTyping(()=>{
+              addAiMsg('Seja qual for o que você marcou, isso faz parte da sua história. E essa história merece ser acolhida.\n\nVamos fazer um pequeno exercício:','Seja qual for o que você marcou, isso faz parte da sua história e merece ser acolhida.',
+              `<div class="reflection"><div class="r-title">✍️ Exercício reflexivo</div><div class="r-q">Complete mentalmente a frase:<br><br>"Eu me permito sentir _______ porque estou vivendo algo desafiador."<br><br>Não precisa responder em voz alta. Apenas perceber já é um gesto de cuidado.</div></div>`);
+              setTimeout(()=>showTyping(()=>{
+                addAiMsg('A <strong>culpa</strong> é um dos sentimentos mais comuns entre cuidadores. E um dos mais pesados.\n\nMuitos se perguntam: "Fiz algo errado?" "Poderia ter prevenido?"\n\nA resposta é não. O autismo não é causado por ações dos pais.','A culpa é um dos sentimentos mais comuns entre cuidadores. Muitos se perguntam se fizeram algo errado. A resposta é não. O autismo não é causado por ações dos pais.');
+                setTimeout(()=>showTyping(()=>{
+                  addAiMsg('<strong>Jornada 3 concluída!</strong> Você deu um passo corajoso ao explorar esses sentimentos. 💜\n\nSe este conteúdo despertou emoções difíceis, você pode seguir para a Jornada 5 — Cuidar de Si, ou acionar o plantão psicológico.','Jornada 3 concluída! Você deu um passo corajoso ao explorar esses sentimentos.');
+                  setTimeout(()=>addCtas([
+                    {icon:'▶️',label:'Continuar — Jornada 4',style:'primary',action:'j4()'},
+                    {icon:'🌱',label:'Jornada 5 — Cuidar de Si',style:'secondary',action:'j5()'},
+                    {icon:'💜',label:'Falar com psicólogo',style:'accent',action:'openPsych()'}
+                  ]),400);
+                },2200),800);
+              },2200),800);
+            });
+          });
+      },2200),800);
+    },2400),800);
+  });
+}
+
+// ╔══════════════════════════════════════════════════════════╗
+// ║  JORNADA 4 — AUTOAVALIAÇÃO E AUTOPERCEPÇÃO              ║
+// ╚══════════════════════════════════════════════════════════╝
+function j4() { addUserMsg('Jornada 4 — Autoavaliação e Autopercepção 🔍');
+  showTyping(()=>{
+    addAiMsg('Esta jornada é sobre você se ver com mais clareza.\n\nNão para se julgar — mas para entender onde está e o que precisa.\n\n🌿 Vamos fazer uma checagem emocional gentil.','Esta jornada é sobre você se ver com mais clareza. Não para se julgar, mas para entender onde está e o que precisa.');
+    setTimeout(()=>showTyping(()=>{
+      addPicker('Quando você pensa na sua vida hoje, você sente que:','Quando você pensa na sua vida hoje, você sente que:',
+        [{emoji:'🔴',label:'Está no limite'},{emoji:'🟡',label:'Está cansado mas seguindo'},{emoji:'🟠',label:'Está confuso'},{emoji:'🟢',label:'Está emocionalmente bem'},{emoji:'⚪',label:'Não sabe dizer'}],
+        (idx,label)=>{
+          profile.stressLevel = [9,6,5,2,4][idx]||5; profile.responses.push({type:'check_in',value:label}); updateMap();
+          const feedback = [
+            'Estar no limite é um sinal muito importante. Prioridade agora é reduzir a sobrecarga — não resolver tudo.',
+            'Cansado mas seguindo mostra resiliência real. E também pede atenção — o cansaço acumulado tem um custo.',
+            'A confusão aparece quando há muita demanda e pouco tempo para organizar. Vamos dar clareza passo a passo.',
+            'Que bom! Momentos de equilíbrio são valiosos. Use esse momento para preventir e fortalecer.',
+            'Não saber dizer também é um dado. Às vezes o corpo sabe antes da mente.'
+          ];
+          showTyping(()=>{
+            addAiMsg(feedback[idx]||feedback[4], feedback[idx]||feedback[4]);
+            setTimeout(()=>showTyping(()=>j4_sinais(),2000),800);
+          });
+        });
+    },2200),800);
+  });
+}
+
+function j4_sinais() {
+  addPicker('Nos últimos dias, você tem notado em você:','Nos últimos dias, você tem notado em você:',
+    [{emoji:'😴',label:'Dificuldade para dormir ou descansar'},{emoji:'🧠',label:'Pensamentos que não param'},{emoji:'😤',label:'Irritação fácil com pequenas coisas'},{emoji:'😶',label:'Desconexão ou vazio interior'},{emoji:'🤢',label:'Sintomas físicos: cabeça, barriga, cansaço'}],
+    (idx,label)=>{
+      profile.responses.push({type:'burnout_signal',value:label}); updateMap();
+      if (idx <= 1) profile.stressLevel = Math.min(10, profile.stressLevel+1);
+      showTyping(()=>{
+        addAiMsg('Esses sinais são o corpo e a mente tentando te dizer que algo precisa de atenção.\n\nNão são fraqueza. São alertas importantes.','Esses sinais são o corpo e a mente tentando te dizer que algo precisa de atenção. Não são fraqueza. São alertas importantes.',
+        `<div class="info-card"><div class="ic-title">⚠️ Sinais de esgotamento emocional</div><ul><li>Exaustão persistente mesmo com descanso</li><li>Perda de prazer em atividades antes satisfatórias</li><li>Irritabilidade ou choro sem motivo claro</li><li>Sensação de estar "no automático"</li><li>Dificuldade de concentração</li></ul></div>`);
+        setTimeout(()=>showTyping(()=>j4_autocuidado(),2200),800);
+      });
+    });
+}
+
+function j4_autocuidado() {
+  addPicker('Como anda o seu autocuidado nos últimos tempos?','Como anda o seu autocuidado nos últimos tempos?',
+    [{emoji:'✅',label:'Consigo me cuidar razoavelmente'},{emoji:'⚠️',label:'Me cuido pouco, mas tento'},{emoji:'❌',label:'Praticamente não me cuido'},{emoji:'🤷',label:'Nem sei mais o que seria me cuidar'}],
+    (idx,label)=>{
+      profile.selfcareLevel = [7,4,2,3][idx]||3; profile.responses.push({type:'selfcare_level',value:label}); updateMap();
+      showTyping(()=>{
+        addAiMsg(['Ótimo! Manter práticas de autocuidado faz uma diferença real no longo prazo.','Tentar já é muito. Vamos construir pequenos passos para tornar isso mais possível.','Quando o autocuidado zera, o desgaste se acelera. Vamos trabalhar nisso juntos, sem cobrança.','Às vezes é preciso voltar ao básico. O que você gostava de fazer antes do cuidado tomar todo o espaço?'][idx]||'', '');
+        setTimeout(()=>showTyping(()=>{
+          addAiMsg('<strong>Jornada 4 concluída!</strong> Você fez uma avaliação corajosa e honesta de como está. 💜\n\nIsso já é autocuidado.','Jornada 4 concluída! Você fez uma avaliação corajosa de como está. Isso já é autocuidado.');
+          setTimeout(()=>addCtas([
+            {icon:'▶️',label:'Continuar — Jornada 5',style:'primary',action:'j5()'},
+            {icon:'📊',label:'Ver meu mapa',style:'secondary',action:'showScreen("mapScreen")'},
+            {icon:'💜',label:'Falar com psicólogo',style:'accent',action:'openPsych()'}
+          ]),400);
+        },2000),800);
+      });
+    });
+}
+
+// ╔══════════════════════════════════════════════════════════╗
+// ║  JORNADA 5 — CUIDAR DE SI PARA CONTINUAR                ║
+// ╚══════════════════════════════════════════════════════════╝
+function j5() { addUserMsg('Jornada 5 — Cuidar de Si para Continuar 🌱');
+  showTyping(()=>{
+    addAiMsg('Autocuidado não é egoísmo. É sustentação. 🌱\n\nCuidar de você não diminui o cuidado com o outro — sustenta. Sem você bem, o cuidado se fragiliza.','Autocuidado não é egoísmo. É sustentação. Cuidar de você não diminui o cuidado com o outro, sustenta.',
+    `<div class="hquote">Você não pode dar o que não tem. E não pode ajudar de dentro de um copo vazio.</div>`);
+    setTimeout(()=>showTyping(()=>{
+      addAiMsg('Muitos cuidadores têm uma imagem de autocuidado muito idealizada:\n\n<em>"Só conta se for spa, viagem, academia..."</em>\n\nMas <strong>autocuidado real</strong> são os pequenos gestos possíveis dentro da sua rotina.','Muitos cuidadores têm uma imagem de autocuidado muito idealizada. Mas autocuidado real são os pequenos gestos possíveis dentro da sua rotina.',
+      `<div class="info-card"><div class="ic-title">🌿 Autocuidado possível</div><ul><li>5 minutos de silêncio antes de começar o dia</li><li>Uma xícara de café quente sem fazer mais nada ao mesmo tempo</li><li>Sair para uma caminhada curta</li><li>Falar com um amigo sem falar de cuidado</li><li>Dormir um pouco mais quando for possível</li><li>Dizer "não" a uma demanda extra</li></ul></div>`);
+      setTimeout(()=>showTyping(()=>{
+        addPicker('Qual dessas áreas você mais deixa de lado no seu autocuidado?','Qual dessas áreas você mais deixa de lado no seu autocuidado?',
+          [{emoji:'😴',label:'Sono e descanso'},{emoji:'🍎',label:'Alimentação e hidratação'},{emoji:'🤸',label:'Movimento e corpo'},{emoji:'👥',label:'Conexão social'},{emoji:'💆',label:'Saúde emocional'}],
+          (idx,label)=>{
+            profile.responses.push({type:'selfcare_gap',value:label}); updateMap();
+            const tips = [
+              'O sono é o autocuidado mais fundamental. Sem ele, tudo fica mais difícil. Pequenas melhorias no sono têm grande impacto.',
+              'O corpo precisa de combustível. Comer com atenção, mesmo que seja algo simples, já faz diferença.',
+              'Movimento, mesmo que leve, libera hormônios que ajudam com o estresse. Uma caminhada já conta.',
+              'Isolamento piora a sobrecarga. Manter ao menos uma conexão próxima é protetor para a saúde mental.',
+              'Sua saúde emocional é a base de tudo. Esta plataforma é um espaço para isso!'
+            ];
+            showTyping(()=>{
+              addAiMsg(tips[idx]||tips[0], tips[idx]||tips[0]);
+              setTimeout(()=>showTyping(()=>j5_limites(),2000),800);
+            });
+          });
+      },2200),800);
+    },2200),800);
+  });
+}
+
+function j5_limites() {
+  addAiMsg('Um aspecto essencial do autocuidado que pouco se fala:\n\n<strong>Limites saudáveis.</strong>\n\nLimite não é abandono. É a definição de até onde você pode ir sem se perder.','Um aspecto essencial do autocuidado que pouco se fala: limites saudáveis. Limite não é abandono. É a definição de até onde você pode ir sem se perder.',
+  `<div class="info-card"><div class="ic-title">🛡️ Limites saudáveis</div><ul><li>Dizer "não" sem culpa para demandas extras</li><li>Pedir ajuda sem se sentir fraco</li><li>Reconhecer quando precisa de uma pausa</li><li>Não se responsabilizar pelo que não é seu</li></ul></div>`);
+  setTimeout(()=>showTyping(()=>{
+    addAiMsg('Vamos fechar com um exercício de <strong>autocompaixão</strong>.\n\nImagine que um amigo querido te contasse tudo o que você vive como cuidador. Qual seria a primeira coisa que você diria a ele?',
+    'Vamos fechar com um exercício de autocompaixão. Imagine que um amigo querido te contasse tudo o que você vive como cuidador. Qual seria a primeira coisa que você diria a ele?');
+    setTimeout(()=>showTyping(()=>{
+      addAiMsg('Provavelmente você seria mais gentil com ele do que é com você mesmo(a).\n\n<em>Você merece essa mesma gentileza.</em>\n\n<strong>Jornada 5 concluída!</strong> 🌱','Provavelmente você seria mais gentil com ele do que é com você mesmo. Você merece essa mesma gentileza. Jornada 5 concluída!',
+      `<div class="reflection"><div class="r-title">💭 Para guardar</div><div class="r-q">Qual é o menor gesto de cuidado que você poderia se dar hoje? Não amanhã. Hoje.<br><br>Nem que seja fechar os olhos por 3 minutos e respirar.</div></div>`);
+      setTimeout(()=>addCtas([
+        {icon:'▶️',label:'Continuar — Jornada 6',style:'primary',action:'j6()'},
+        {icon:'📊',label:'Ver meu mapa',style:'secondary',action:'showScreen("mapScreen")'},
+        {icon:'💜',label:'Falar com psicólogo',style:'accent',action:'openPsych()'}
+      ]),400);
+    },2200),800);
+  },2200),800);
+}
+
+// ╔══════════════════════════════════════════════════════════╗
+// ║  JORNADA 6 — ESTRATÉGIAS DE MANEJO COM A CRIANÇA        ║
+// ╚══════════════════════════════════════════════════════════╝
+function j6() { addUserMsg('Jornada 6 — Estratégias de Manejo 🛠️');
+  showTyping(()=>{
+    addAiMsg('Esta jornada é sobre o dia a dia com a criança.\n\nAntes de falarmos sobre estratégias, precisamos estabelecer uma base fundamental:\n\n<strong>Todo comportamento é comunicação.</strong>','Esta jornada é sobre o dia a dia com a criança. Antes de falarmos sobre estratégias, precisamos estabelecer uma base fundamental: todo comportamento é comunicação.',
+    `<div class="hquote">A criança não está sendo difícil. Ela está tendo dificuldade.</div>`);
+    setTimeout(()=>showTyping(()=>{
+      addAiMsg('Quando uma criança com TEA tem uma crise ou comportamento desafiador, ela está comunicando que:\n\n• Algo no ambiente está demais para ela\n• Ela não tem as ferramentas para expressar o que sente\n• Uma necessidade está sendo ignorada\n• A rotina foi quebrada de forma inesperada','Quando uma criança com TEA tem uma crise, ela está comunicando que algo no ambiente está demais para ela, ou que uma necessidade não está sendo atendida.',
+      `<div class="info-card"><div class="ic-title">🧩 Antes de reagir, pergunte-se:</div><ul><li>O que a criança está tentando me dizer?</li><li>Qual necessidade não está sendo atendida?</li><li>Tem algo no ambiente que posso ajustar?</li><li>Ela tem as ferramentas para expressar isso?</li></ul></div>`);
+      setTimeout(()=>showTyping(()=>{
+        addPicker('Qual situação mais desafia você no dia a dia?','Qual situação mais desafia você no dia a dia?',
+          [{emoji:'🌪️',label:'Crises e desregulação'},{emoji:'🔄',label:'Resistência à rotina'},{emoji:'💬',label:'Comunicação difícil'},{emoji:'👥',label:'Situações sociais'}],
+          (idx,label)=>{
+            profile.responses.push({type:'daily_challenge',value:label}); updateMap();
+            const content = [
+              [`<strong>Manejo de crises:</strong>`,`<div class="info-card"><div class="ic-title">🌊 Durante a crise</div><ul><li>Mantenha a calma — seu estado emocional afeta o dela</li><li>Reduza estímulos: luzes, sons, pessoas ao redor</li><li>Fale menos e mais devagar</li><li>Ofereça um espaço seguro e acolhedor</li><li>Não tente "ensinar" durante a crise — o cérebro não aprende sob estresse intenso</li></ul></div><div class="info-card" style="margin-top:8px"><div class="ic-title">🌱 Depois da crise</div><ul><li>Ofereça conforto sem cobrar explicações</li><li>Aguarde a criança se reorganizar no tempo dela</li><li>Reflita: o que pode ter desencadeado?</li></ul></div>`],
+              [`<strong>Rotina e previsibilidade:</strong>`,`<div class="info-card"><div class="ic-title">🗓️ A rotina como âncora</div><ul><li>Antecipe mudanças com comunicação clara</li><li>Use recursos visuais: agenda, fotos, pictogramas</li><li>Avisos de transição: "Em 10 minutos vamos..."</li><li>Mantenha a previsibilidade mesmo em detalhes pequenos</li></ul></div>`],
+              [`<strong>Comunicação funcional:</strong>`,`<div class="info-card"><div class="ic-title">💬 Comunicando melhor</div><ul><li>Frases curtas e diretas — sem linguagem figurada</li><li>Um pedido de cada vez</li><li>Dê tempo para processar a resposta</li><li>Ofereça escolhas simples: "Você quer A ou B?"</li><li>Valide antes de corrigir</li></ul></div>`],
+              [`<strong>Situações sociais:</strong>`,`<div class="info-card"><div class="ic-title">👥 Preparando para o social</div><ul><li>Prepare antecipadamente: "Vamos a X e vai ter Y"</li><li>Crie uma estratégia de saída segura</li><li>Não force interação — apoie quando ela acontece</li><li>Celebre cada passo, mesmo os pequenos</li></ul></div>`]
+            ];
+            showTyping(()=>{
+              addAiMsg(content[idx][0], content[idx][0].replace(/<[^>]+>/g,''), content[idx][1]);
+              setTimeout(()=>showTyping(()=>{
+                addAiMsg('<strong>Jornada 6 concluída!</strong> 🛠️\n\nEstratégias práticas são mais eficazes quando vêm de uma postura de compreensão, não de controle.','Jornada 6 concluída! Estratégias práticas são mais eficazes quando vêm de uma postura de compreensão.');
+                setTimeout(()=>addCtas([
+                  {icon:'▶️',label:'Continuar — Jornada 7',style:'primary',action:'j7()'},
+                  {icon:'💜',label:'Falar com psicólogo',style:'accent',action:'openPsych()'}
+                ]),400);
+              },2200),800);
+            });
+          });
+      },2200),800);
+    },2200),800);
+  });
+}
+
+// ╔══════════════════════════════════════════════════════════╗
+// ║  JORNADA 7 — A REDE DE APOIO                            ║
+// ╚══════════════════════════════════════════════════════════╝
+function j7() { addUserMsg('Jornada 7 — A Rede de Apoio 🤝');
+  showTyping(()=>{
+    addAiMsg('Cuidar é um trabalho coletivo. 🤝\n\nAinda que muitas vezes pareça solitário, você não precisa — e não deveria — carregar tudo sozinho(a).','Cuidar é um trabalho coletivo. Ainda que muitas vezes pareça solitário, você não precisa carregar tudo sozinho.',
+    `<div class="hquote">Uma rede de apoio frágil fragiliza o cuidador. Uma rede forte sustenta o cuidado.</div>`);
+    setTimeout(()=>showTyping(()=>{
+      addPicker('Como você descreveria sua rede de apoio atual?','Como você descreveria sua rede de apoio atual?',
+        [{emoji:'🟢',label:'Tenho bom suporte'},{emoji:'🟡',label:'É limitada mas existe'},{emoji:'🔴',label:'Me sinto muito sozinho(a)'},{emoji:'🤷',label:'Não sei ao certo'}],
+        (idx,label)=>{
+          profile.supportNetwork = label; profile.responses.push({type:'support_network',value:label}); updateMap();
+          const resp = [
+            'Que bom! Uma rede de apoio sólida é um dos maiores fatores protetores da saúde mental do cuidador.',
+            'Uma rede limitada ainda é uma rede. Vamos pensar em como fortalecê-la com pequenos passos.',
+            'Sentir-se sozinho é muito pesado. Você não merece carregar isso assim. Vamos trabalhar isso juntos.',
+            'Às vezes não percebemos o apoio que temos — ou as possibilidades que existem ao redor.'
+          ];
+          showTyping(()=>{
+            addAiMsg(resp[idx]||resp[3], resp[idx]||resp[3]);
+            setTimeout(()=>showTyping(()=>{
+              addAiMsg('Sua rede de apoio pode incluir:\n\n• Família e amigos próximos\n• Outros pais de crianças com TEA\n• Profissionais de saúde da criança\n• Grupos de apoio presenciais ou online\n• Profissionais de saúde mental para você\n• Esta plataforma 💜','Sua rede de apoio pode incluir família, amigos, outros pais, profissionais e grupos de apoio.',
+              `<div class="info-card"><div class="ic-title">💬 Como pedir ajuda</div><ul><li>Seja específico: "Preciso de ajuda com X"</li><li>Aceite ajuda sem se sentir em dívida</li><li>Você não precisa explicar tudo para ser ajudado</li><li>Pedir ajuda é ato de coragem, não de fraqueza</li></ul></div>`);
+              setTimeout(()=>showTyping(()=>{
+                addAiMsg('<strong>Jornada 7 concluída!</strong> 🤝\n\nSe este conteúdo despertou algo difícil, o plantão psicológico está disponível.','Jornada 7 concluída!');
+                setTimeout(()=>addCtas([
+                  {icon:'▶️',label:'Continuar — Jornada 8',style:'primary',action:'j8()'},
+                  {icon:'💜',label:'Falar com psicólogo',style:'accent',action:'openPsych()'}
+                ]),400);
+              },2000),800);
+            },2200),800);
+          });
+        });
+    },2200),800);
+  });
+}
+
+// ╔══════════════════════════════════════════════════════════╗
+// ║  JORNADA 8 — DIREITOS, DEVERES E ORIENTAÇÕES            ║
+// ╚══════════════════════════════════════════════════════════╝
+function j8() { addUserMsg('Jornada 8 — Direitos, Deveres e Orientações 📋');
+  showTyping(()=>{
+    addAiMsg('Informação também é cuidado. 📋\n\nConhecer os direitos da criança com TEA e os seus como cuidador é uma ferramenta poderosa.','Informação também é cuidado. Conhecer os direitos da criança com TEA e os seus como cuidador é uma ferramenta poderosa.',
+    `<div class="info-card"><div class="ic-title">🏛️ Lei Berenice Piana (Lei 12.764/2012)</div><ul><li>Garante atenção integral à saúde da pessoa com autismo</li><li>Assegura acesso ao diagnóstico precoce e tratamento</li><li>Garante atendimento multiprofissional no SUS</li><li>Proíbe a recusa de matrícula em escolas regulares</li></ul></div>`);
+    setTimeout(()=>showTyping(()=>{
+      addAiMsg('Direitos essenciais da criança com TEA:\n\n• <strong>Inclusão escolar</strong> — direito à matrícula em escola regular com AEE\n• <strong>Atendimento no SUS</strong> — diagnóstico, terapias, acompanhamento\n• <strong>BPC</strong> — Benefício de Prestação Continuada para famílias de baixa renda\n• <strong>Passe livre</strong> em transporte interestadual\n• <strong>Isenção de IPTU</strong> em muitos municípios\n• <strong>Prioridade</strong> em filas e atendimentos','Direitos essenciais incluem inclusão escolar, atendimento no SUS, BPC para famílias de baixa renda, passe livre e prioridade em filas.',
+      `<div class="info-card"><div class="ic-title">👨‍👩‍👧 Direitos do cuidador</div><ul><li>Possibilidade de redução de jornada de trabalho</li><li>Licença para acompanhar consultas e terapias</li><li>Proteção contra demissão durante tratamento do dependente em alguns estados</li></ul></div>`);
+      setTimeout(()=>showTyping(()=>{
+        addAiMsg('A inclusão escolar é um direito — mas na prática, pode exigir advocacy.\n\nAlgumas orientações:\n\n• Formalize pedidos sempre por escrito\n• Solicite o PEI (Plano Educacional Individualizado)\n• Reporte situações de exclusão ao Conselho Tutelar\n• Busque apoio em associações de autismo da sua região','A inclusão escolar é um direito. Mas na prática pode exigir advocacy. Formalize pedidos por escrito e solicite o Plano Educacional Individualizado.',
+        `<div class="hquote">Você não precisa saber tudo. Precisa saber onde buscar ajuda — e que tem direito a ela.</div>`);
+        setTimeout(()=>showTyping(()=>{
+          addAiMsg('<strong>Jornada 8 concluída!</strong> 📋\n\nInformação empoderada é cuidado de qualidade.','Jornada 8 concluída! Informação empoderada é cuidado de qualidade.');
+          setTimeout(()=>addCtas([
+            {icon:'▶️',label:'Continuar — Jornada 9',style:'primary',action:'j9()'},
+            {icon:'💜',label:'Falar com psicólogo',style:'accent',action:'openPsych()'}
+          ]),400);
+        },2000),800);
+      },2200),800);
+    },2200),800);
+  });
+}
+
+// ╔══════════════════════════════════════════════════════════╗
+// ║  JORNADA 9 — MOMENTOS DE CRISE                          ║
+// ╚══════════════════════════════════════════════════════════╝
+function j9() { addUserMsg('Jornada 9 — Momentos de Crise 🌊');
+  showTyping(()=>{
+    addAiMsg('Você está num momento difícil e eu estou aqui. 💙\n\nPrimeiro: <strong>respire.</strong>\n\nTudo o que você está sentindo é válido. Vamos dar um passo de cada vez.','Você está num momento difícil e eu estou aqui. Primeiro, respire. Tudo o que você está sentindo é válido. Vamos dar um passo de cada vez.',
+    `<div class="reflection"><div class="r-title">🌬️ Exercício de respiração agora</div><div class="r-q">1. Inspire pelo nariz contando até 4<br>2. Segure contando até 4<br>3. Solte lentamente contando até 6<br><br>Repita 3 vezes. Isso ativa o sistema parassimpático e começa a desacelerar o estresse.</div></div>`);
+    setTimeout(()=>showTyping(()=>{
+      addPicker('Neste momento, como você está se sentindo?','Neste momento, como você está se sentindo?',
+        [{emoji:'🌪️',label:'Em colapso, não consigo parar'},{emoji:'😰',label:'Muito ansioso e assustado'},{emoji:'😶',label:'Desligado, no automático'},{emoji:'😤',label:'Cheio de raiva e frustração'}],
+        (idx,label)=>{
+          profile.stressLevel = 9; profile.responses.push({type:'crisis_state',value:label}); updateMap();
+          const resp = [
+            'Colapso é o corpo dizendo "chega". Não significa que você falhou. Significa que você chegou no limite humano. Agora o mais importante é segurança — sua e da criança.',
+            'A ansiedade intensa é muito angustiante. O corpo está em modo alerta máximo. A respiração pode ajudar a baixar esse nível.',
+            'Desligar é uma forma de proteção quando o estresse é demais. É o cérebro tentando sobreviver. Você não precisa sentir tudo de uma vez.',
+            'A raiva em situações de esgotamento é completamente normal. Ela frequentemente esconde dor, medo e exaustão.'
+          ];
+          showTyping(()=>{
+            addAiMsg(resp[idx]||resp[0], resp[idx]||resp[0]);
+            setTimeout(()=>showTyping(()=>{
+              addAiMsg('Técnicas de regulação emocional rápidas:','Técnicas de regulação emocional rápidas:',
+              `<div class="info-card"><div class="ic-title">⚡ Grounding 5-4-3-2-1</div><ul><li>5 coisas que você VÊ agora</li><li>4 coisas que você pode TOCAR</li><li>3 sons que você OUVE</li><li>2 cheiros que você sente</li><li>1 sabor</li></ul></div>
+              <div class="info-card" style="margin-top:8px"><div class="ic-title">🧊 Quando a ansiedade é intensa</div><ul><li>Coloque água gelada no rosto ou pulsos</li><li>Aperte algo firme com as mãos</li><li>Caminhe descalço no chão</li><li>Fale em voz alta: "Estou aqui. Estou seguro(a)."</li></ul></div>`);
+              setTimeout(()=>showTyping(()=>{
+                addAiMsg('Depois da crise: <strong>acolhimento, não cobrança.</strong>\n\nNão é hora de avaliar o que deu errado.\nÉ hora de cuidar.','Depois da crise, acolhimento, não cobrança. Não é hora de avaliar o que deu errado. É hora de cuidar.',
+                `<div class="hquote">Ter uma crise não te define. Como você se levanta depois dela, sim.</div>`);
+                setTimeout(()=>addCtas([
+                  {icon:'💜',label:'Falar com psicólogo AGORA',sub:'Plantão disponível 24h',style:'accent',action:'openPsych()'},
+                  {icon:'🌱',label:'Jornada 5 — Cuidar de Si',style:'primary',action:'j5()'},
+                  {icon:'📊',label:'Ver meu mapa',style:'secondary',action:'showScreen("mapScreen")'}
+                ]),400);
+              },2200),800);
+            },2200),800);
+          });
+        });
+    },2000),800);
+  });
+}
+
+// ╔══════════════════════════════════════════════════════════╗
+// ║  JORNADA 10 — COMO O CÉREBRO APRENDE                    ║
+// ╚══════════════════════════════════════════════════════════╝
+function j10() { addUserMsg('Jornada 10 — Como o Cérebro Aprende ⚡');
+  showTyping(()=>{
+    addAiMsg('Entender o cérebro muda o cuidado. ⚡\n\nNesta jornada, vamos falar sobre <strong>neuroplasticidade</strong> — a capacidade do cérebro de se adaptar e aprender — sem pressão por desempenho.','Entender o cérebro muda o cuidado. Nesta jornada, vamos falar sobre neuroplasticidade, a capacidade do cérebro de se adaptar e aprender.',
+    `<div class="hquote">O cérebro aprende ao longo de toda a vida. Não existe "janela perdida" — existe o melhor momento possível: agora.</div>`);
+    setTimeout(()=>showTyping(()=>{
+      addAiMsg('<strong>Neuroplasticidade</strong> significa que o cérebro forma novas conexões em resposta a experiências, aprendizado e suporte.\n\nIsso vale para TODAS as pessoas — incluindo pessoas com TEA.\n\nO que potencializa a neuroplasticidade:\n\n• Vínculo seguro e relação de confiança\n• Emoções positivas durante o aprendizado\n• Repetição com variação e motivação\n• Ambientes previsíveis e seguros\n• Sono de qualidade','Neuroplasticidade significa que o cérebro forma novas conexões em resposta a experiências e suporte. Isso vale para todas as pessoas, incluindo pessoas com TEA.',
+      `<div class="info-card"><div class="ic-title">❤️ Vínculo como base do desenvolvimento</div><ul><li>A relação segura é o melhor "terapêuta"</li><li>Emoções reguladas do cuidador regulam as da criança</li><li>Momentos lúdicos e de prazer ativam o aprendizado</li><li>Sua presença já é uma intervenção</li></ul></div>`);
+      setTimeout(()=>showTyping(()=>{
+        addAiMsg('Pequenos avanços também são avanços.\n\nÀs vezes o progresso é invisível para os olhos — mas acontece no cérebro. Um novo som, um olhar diferente, uma nova palavra, uma regulação mais rápida.\n\n<strong>Celebre cada passo.</strong>','Pequenos avanços também são avanços. Às vezes o progresso é invisível para os olhos, mas acontece no cérebro. Celebre cada passo.',
+        `<div class="info-card"><div class="ic-title">📊 O que NÃO acelera o desenvolvimento</div><ul><li>Pressão e cobrança excessiva</li><li>Comparação com outras crianças</li><li>Excesso de intervenções simultâneas</li><li>Ambiente de medo ou imprevisibilidade</li></ul></div>`);
+        setTimeout(()=>showTyping(()=>{
+          addAiMsg('<strong>Jornada 10 concluída!</strong> ⚡\n\nEntender o cérebro com mais ciência e menos julgamento transforma o cuidado.','Jornada 10 concluída! Entender o cérebro com mais ciência e menos julgamento transforma o cuidado.');
+          setTimeout(()=>addCtas([
+            {icon:'▶️',label:'Continuar — Jornada 11',style:'primary',action:'j11()'},
+            {icon:'💜',label:'Falar com psicólogo',style:'accent',action:'openPsych()'}
+          ]),400);
+        },2000),800);
+      },2200),800);
+    },2200),800);
+  });
+}
+
+// ╔══════════════════════════════════════════════════════════╗
+// ║  JORNADA 11 — POTENCIALIDADES, IDENTIDADE E FUTURO      ║
+// ╚══════════════════════════════════════════════════════════╝
+function j11() { addUserMsg('Jornada 11 — Potencialidades, Identidade e Futuro 🌟');
+  showTyping(()=>{
+    addAiMsg('Esta jornada é sobre sair do modo sobrevivência e entrar no modo possibilidade. 🌟\n\nÉ sobre olhar para a criança com TEA e ver:\n\n<strong>Quem ela é além do diagnóstico.</strong>','Esta jornada é sobre sair do modo sobrevivência e entrar no modo possibilidade. É sobre olhar para a criança com TEA e ver quem ela é além do diagnóstico.',
+    `<div class="hquote">O diagnóstico descreve algumas características. Não define a história.</div>`);
+    setTimeout(()=>showTyping(()=>{
+      addAiMsg('Toda criança com TEA tem potencialidades únicas.\n\nAlgumas características do TEA que podem se tornar grandes talentos:\n\n• Memória excepcional para assuntos de interesse\n• Atenção a detalhes que outros não percebem\n• Honestidade e pensamento direto\n• Criatividade em áreas específicas\n• Comprometimento profundo com o que ama','Toda criança com TEA tem potencialidades únicas. Características como memória excepcional, atenção a detalhes, honestidade e comprometimento profundo são comuns.',
+      `<div class="info-card"><div class="ic-title">🔍 Exercício de olhar</div><ul><li>Quais são os interesses intensos dessa criança?</li><li>Em que momentos ela parece mais viva e engajada?</li><li>Qual habilidade ela demonstra que te surpreende?</li><li>O que ela faz que revela quem ela é de verdade?</li></ul></div>`);
+      setTimeout(()=>showTyping(()=>{
+        addAiMsg('Sobre o futuro:\n\n<strong>Esperança realista</strong> — não ilusão, não pessimismo.\n\nPessoas com TEA constroem vidas plenas com o suporte adequado. Cada criança tem seu próprio ritmo e trajetória.\n\nAdolescência e vida adulta existem e podem ser ricas — com autonomia possível em cada fase, redes de apoio fortes e identidade respeitada.','Sobre o futuro, esperança realista. Não ilusão, não pessimismo. Pessoas com TEA constroem vidas plenas com suporte adequado.',
+        `<div class="hquote">Seu filho não precisa ser "curado". Ele precisa ser visto, apoiado e amado exatamente como é.</div>`);
+        setTimeout(()=>showTyping(()=>{
+          addAiMsg('<strong>Jornada 11 concluída!</strong> 🌟\n\nVocê está construindo uma visão mais completa — e isso faz toda a diferença.','Jornada 11 concluída! Você está construindo uma visão mais completa, e isso faz toda a diferença.');
+          setTimeout(()=>addCtas([
+            {icon:'▶️',label:'Continuar — Jornada 12',style:'primary',action:'j12()'},
+            {icon:'💜',label:'Falar com psicólogo',style:'accent',action:'openPsych()'}
+          ]),400);
+        },2000),800);
+      },2200),800);
+    },2200),800);
+  });
+}
+
+// ╔══════════════════════════════════════════════════════════╗
+// ║  JORNADA 12 — ESCOLA, SOCIEDADE E INCLUSÃO              ║
+// ╚══════════════════════════════════════════════════════════╝
+function j12() { addUserMsg('Jornada 12 — Escola, Sociedade e Inclusão 🏫');
+  showTyping(()=>{
+    addAiMsg('Cuidar também é enfrentar o mundo. 🏫\n\nEsta jornada fala sobre algo que muitos cuidadores vivem com muita dor: <strong>a exclusão.</strong>\n\nNa escola, na rua, na família, na sociedade.','Cuidar também é enfrentar o mundo. Esta jornada fala sobre algo que muitos cuidadores vivem com muita dor: a exclusão. Na escola, na rua, na família, na sociedade.',
+    `<div class="hquote">Inclusão de verdade não é tolerância. É pertencimento.</div>`);
+    setTimeout(()=>showTyping(()=>{
+      addPicker('Onde você encontra mais dificuldades relacionadas à inclusão?','Onde você encontra mais dificuldades relacionadas à inclusão?',
+        [{emoji:'🏫',label:'Na escola da criança'},{emoji:'👨‍👩‍👧‍👦',label:'Na família e relações próximas'},{emoji:'🌍',label:'Na sociedade em geral'},{emoji:'💼',label:'No trabalho (minha própria inclusão)'}],
+        (idx,label)=>{
+          profile.responses.push({type:'inclusion_challenge',value:label}); updateMap();
+          const content = [
+            ['Na escola, a inclusão tem lei — mas nem sempre tem prática. Você tem direito a:\n\n• Reuniões com equipe pedagógica\n• Plano Educacional Individualizado (PEI)\n• Acompanhante especializado quando necessário\n• Adaptações no currículo e avaliações','Estratégias de comunicação com a escola:\n\n• Documente tudo por escrito (e-mails, atas)\n• Construa aliança com a professora, não confronto\n• Compartilhe o que funciona em casa\n• Solicite formação para a equipe quando necessário'],
+            ['A família pode ser um dos maiores apoios — ou uma das maiores fontes de dor.\n\nComentários como "parece que é frescura" ou "você precisa ser mais firme" doem profundamente.','Como lidar com a família não compreensiva:\n\n• Estabeleça o que você precisa de cada pessoa\n• Não se gaste convencendo quem não quer entender\n• Cerque-se de quem valida sua experiência\n• Considere psicoeducação para familiares próximos'],
+            ['O preconceito social ainda é grande. E enfrentá-lo dia a dia é exaustivo.\n\nVocê não precisa educar o mundo inteiro.','Como cuidar de si diante do preconceito social:\n\n• Escolha suas batalhas\n• Não se justifique para estranhos\n• Construa comunidade com outros cuidadores\n• Permita-se sentir raiva e tristeza — elas são válidas'],
+            ['Sua inclusão no mercado de trabalho também importa.\n\nSer cuidador de criança com TEA impacta carreiras, finanças e identidade profissional.','Seus direitos trabalhistas:\n\n• Possibilidade de redução de jornada em alguns estados\n• Licenças para acompanhar tratamentos\n• Proteções específicas por estado — consulte um advogado trabalhista']
+          ];
+          showTyping(()=>{
+            addAiMsg(content[idx][0], content[idx][0].replace(/<[^>]+>/g,''));
+            setTimeout(()=>showTyping(()=>{
+              addAiMsg(content[idx][1], content[idx][1].replace(/<[^>]+>/g,''),
+              `<div class="hquote">Você não precisa sozinho(a) mudar a sociedade. Mas pode construir um círculo mais acolhedor ao redor da sua família.</div>`);
+              setTimeout(()=>showTyping(()=>{
+                addAiMsg('🎉 <strong>Parabéns! Você concluiu todas as 12 jornadas!</strong>\n\nEssa é uma conquista real. Você dedicou tempo e cuidado a entender sua própria jornada como cuidador.\n\nContinue aqui quando precisar — a Lia está sempre disponível. 💜','Parabéns! Você concluiu todas as 12 jornadas! Essa é uma conquista real. Você dedicou tempo e cuidado a entender sua própria jornada como cuidador. Continue aqui quando precisar. A Lia está sempre disponível.',
+                `<div class="info-card"><div class="ic-title">🌸 Lembre sempre</div><ul><li>Você não está sozinho(a)</li><li>Você está fazendo o melhor que pode</li><li>Cuidar de si é cuidar da criança</li><li>Esta plataforma existe para você</li></ul></div>`);
+                setTimeout(()=>addCtas([
+                  {icon:'📊',label:'Ver meu mapa completo',style:'primary',action:'showScreen("mapScreen")'},
+                  {icon:'🔄',label:'Revisitar jornadas',style:'secondary',action:'showScreen("journeyScreen")'},
+                  {icon:'💜',label:'Falar com psicólogo',style:'accent',action:'openPsych()'}
+                ]),400);
+                setProgress(100);
+              },2400),800);
+            },2200),800);
+          });
+        });
+    },2200),800);
+  });
+}
+
+// ═══════════════════════ ROUTING ═══════════════════════
+function startJourney(n) {
+  showScreen('chatScreen');
+  if (!profile.journeysCompleted.includes(n)) profile.journeysCompleted.push(n);
+  setProgress(Math.min(100, profile.journeysCompleted.length * 8 + 10));
+  updateMap();
+  const map = {1:j1,2:flowJ2,3:j3,4:j4,5:j5,6:j6,7:j7,8:j8,9:j9,10:j10,11:j11,12:j12};
+  if (map[n]) map[n](); else j1();
+}
+function j1() { addUserMsg('Jornada 1 — Acolhimento e Chegada 🤗'); j1_modoCuidado_intro(); }
+function j1_modoCuidado_intro() {
+  showTyping(()=>{
+    addAiMsg('Olá! Que coisa boa contar com a sua presença aqui! 🤗\n\nAntes de qualquer explicação, eu quero falar sobre <strong>estar aqui</strong>.\n\nEstar aqui não é um acaso. É um gesto silencioso de quem percebeu que seguir sozinho estava pesado demais.','Olá! Que coisa boa contar com a sua presença aqui. Antes de qualquer explicação, eu quero falar sobre estar aqui. Estar aqui não é um acaso. É um gesto silencioso de quem percebeu que seguir sozinho estava pesado demais.');
+    setTimeout(()=>showTyping(()=>{
+      addAiMsg('Muitas pessoas chegam até aqui depois de tentarem ser fortes por muito tempo.\n\nTentaram entender tudo sozinhas.\nTentaram dar conta de tudo.\nTentaram não incomodar.\n\nE, em algum momento, algo interno disse:\n<em>"Eu preciso de um lugar onde eu possa respirar."</em>','Muitas pessoas chegam até aqui depois de tentarem ser fortes por muito tempo. E em algum momento, algo interno disse: eu preciso de um lugar onde eu possa respirar.');
+      setTimeout(()=>showTyping(()=>j1_modoCuidado(),2400),800);
+    },2200),1000);
+  });
+}
+
+</script>
+</body>
+</html>
