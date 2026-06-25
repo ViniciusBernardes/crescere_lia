@@ -33,7 +33,7 @@ export function ChatInput() {
         <textarea
           ref={textareaRef}
           rows={1}
-          placeholder="Escreva aqui…"
+          placeholder="Compartilhe o que você sente…"
           onInput={(e) => autoResize(e.currentTarget)}
           onKeyDown={handleKey}
         />

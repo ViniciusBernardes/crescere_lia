@@ -20,28 +20,31 @@ export function IntroScreen() {
         <p className="tagline">Crescere · Apoio ao Cuidador</p>
       </div>
       <div className="intro-body">
-        <p className="intro-quote">
-          Se você está aqui, isso importa.
-          <br />
-          Este espaço foi criado <strong>para você</strong> —
-          <br />
-          quem cuida de uma criança com TEA.
-        </p>
-        <div className="feature-grid">
-          {FEATURES.map((f) => (
-            <div key={f.title} className="feat">
-              <div className="feat-icon">{f.icon}</div>
-              <div className="feat-text">
-                <strong>{f.title}</strong>
-                <span>{f.desc}</span>
+        <div className="intro-body-inner">
+          <p className="intro-eyebrow">Bem-vindo(a)</p>
+          <p className="intro-quote">
+            Se você está aqui, isso importa.
+            <br />
+            Este espaço foi criado <strong>para você</strong> — quem cuida de uma criança com TEA.
+          </p>
+          <div className="feature-grid">
+            {FEATURES.map((f) => (
+              <div key={f.title} className="feat">
+                <div className="feat-icon">{f.icon}</div>
+                <div className="feat-text">
+                  <strong>{f.title}</strong>
+                  <span>{f.desc}</span>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+          <div className="intro-actions">
+            <button type="button" className="start-btn" onClick={goToChat}>
+              Quero começar minha jornada <span className="btn-arrow">→</span>
+            </button>
+            <p className="crescere-brand">Crescere</p>
+          </div>
         </div>
-        <button type="button" className="start-btn" onClick={goToChat}>
-          Quero começar minha jornada →
-        </button>
-        <p className="crescere-brand">Crescere</p>
       </div>
     </div>
   )

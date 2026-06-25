@@ -148,16 +148,21 @@ export function MessageList() {
 
   return (
     <div className="messages">
-      <div className="date-chip">Hoje</div>
+      <div className="messages-inner">
+        <div className="date-chip">
+          <span>Hoje</span>
+        </div>
       {messages.map((msg) => {
         if (msg.kind === 'typing') {
           return (
             <MessageRow key={msg.id}>
               <LiaAvatar />
-              <div className="typing-bubble">
-                <span />
-                <span />
-                <span />
+              <div className="bwrap">
+                <div className="typing-bubble" aria-label="Lia está digitando">
+                  <span />
+                  <span />
+                  <span />
+                </div>
               </div>
             </MessageRow>
           )
@@ -191,6 +196,7 @@ export function MessageList() {
         }
         return null
       })}
+      </div>
     </div>
   )
 }
