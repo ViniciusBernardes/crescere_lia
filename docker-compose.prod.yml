@@ -1,0 +1,53 @@
+services:
+  back:
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    container_name: crescere-lia-back
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+    expose:
+      - "3000"
+    networks:
+      - lia
+
+  front:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    container_name: crescere-lia-front
+    restart: unless-stopped
+    depends_on:
+      - back
+    expose:
+      - "80"
+    networks:
+      - lia
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: crescere-lia-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?Defina DOMAIN no arquivo .env.production}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - front
+    networks:
+      - lia
+
+networks:
+  lia:
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:
