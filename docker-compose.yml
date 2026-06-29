@@ -8,8 +8,12 @@ services:
       - "3000:3000"
     volumes:
       - ./back/src:/app/src
+      - lia_back_data:/app/data
+    env_file:
+      - ./back/.env
     environment:
       PORT: 3000
+      DATA_DIR: /app/data
     restart: unless-stopped
 
   front:
@@ -23,8 +27,14 @@ services:
       - ./front/src:/app/src
       - ./front/index.html:/app/index.html
       - ./front/public:/app/public
+    env_file:
+      - ./front/.env
     environment:
       VITE_API_PROXY_TARGET: http://back:3000
+      VITE_USE_AI_CHAT: "true"
     depends_on:
       - back
     restart: unless-stopped
+
+volumes:
+  lia_back_data:

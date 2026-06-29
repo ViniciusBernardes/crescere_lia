@@ -20,9 +20,46 @@ docker compose up
 Ou sem Docker:
 
 ```bash
-cd back && npm install && npm run dev
+cd back && npm install && cp .env.example .env   # cole sua OPENAI_API_KEY
 cd front && npm install && npm run dev
 ```
+
+## Integração OpenAI (whitelabel)
+
+Cada **empresa (tenant)** tem sua própria chave OpenAI, **criptografada no banco** — nunca no `.env`.
+
+Isso prepara o produto para **whitelabel**: cada cliente cadastra a chave dele no painel admin.
+
+### Configurar
+
+```bash
+cp back/.env.example back/.env
+# Defina ADMIN_TOKEN e CREDENTIALS_ENCRYPTION_KEY (openssl rand -hex 32)
+```
+
+1. Suba o projeto
+2. Acesse **http://localhost:5173/admin**
+3. Cadastre empresas e, para cada uma, a chave OpenAI
+
+No front de cada cliente, defina `VITE_TENANT_SLUG=identificador-da-empresa` no build.
+
+### Modelo de dados
+
+| Tabela | Uso |
+|--------|-----|
+| `tenants` | Empresas do whitelabel (nome + slug) |
+| `tenant_openai_config` | Credenciais OpenAI criptografadas por empresa |
+
+O chat envia `X-Tenant-Slug` em cada requisição — a API usa a chave da empresa correspondente.
+
+### Rotas admin
+
+| Rota | Descrição |
+|------|-----------|
+| `GET /api/admin/tenants` | Listar empresas |
+| `POST /api/admin/tenants` | Criar empresa |
+| `GET /api/admin/tenants/:slug/openai` | Ler credenciais (mascaradas) |
+| `PUT /api/admin/tenants/:slug/openai` | Salvar credenciais |
 
 ## Deploy na AWS
 
