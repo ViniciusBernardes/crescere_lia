@@ -8,6 +8,11 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
+      DATA_DIR: /app/data
+      ADMIN_TOKEN: ${ADMIN_TOKEN:?Defina ADMIN_TOKEN no .env.production}
+      CREDENTIALS_ENCRYPTION_KEY: ${CREDENTIALS_ENCRYPTION_KEY:?Defina CREDENTIALS_ENCRYPTION_KEY no .env.production}
+    volumes:
+      - lia_back_data:/app/data
     expose:
       - "3000"
     networks:
@@ -17,6 +22,8 @@ services:
     build:
       context: ./front
       dockerfile: Dockerfile
+      args:
+        VITE_USE_AI_CHAT: "true"
     container_name: crescere-lia-front
     restart: unless-stopped
     depends_on:
@@ -51,3 +58,4 @@ networks:
 volumes:
   caddy_data:
   caddy_config:
+  lia_back_data:

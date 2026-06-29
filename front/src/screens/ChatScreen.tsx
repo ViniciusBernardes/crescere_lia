@@ -21,7 +21,8 @@ export function ChatScreen() {
               <div className="hdr-name">Lia</div>
               <div className="hdr-status">
                 <span className="status-pulse" />
-                Online agora · Apoio ao cuidador
+                <span className="hdr-status-short">Online agora</span>
+                <span className="hdr-status-long"> · Apoio ao cuidador</span>
               </div>
             </div>
             <div className="hdr-actions">

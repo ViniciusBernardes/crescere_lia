@@ -1,19 +1,22 @@
 // @ts-nocheck
 import type { ChatApi } from '../types/chat';
 import { JOURNEYS } from '../data/journeys';
+import { isAiChatEnabled, sendChatMessage } from '../services/liaApi';
+import { runAiJourney } from './journeyAiRunner';
+import { runAiIntro } from './introAiRunner';
+import { MOOD_CONFIG, resolveMoodKey } from '../data/moodConfig';
 
 export function createJourneyRunner(api: ChatApi) {
   const profile = api.getProfile();
 
-  const MOOD = {
-    'No limite':  {text:'Quando você está no limite, seu corpo e sua mente estão pedindo pausa, não cobrança.\n\nAqui, o cuidado começa com você. Vamos respirar juntos. 💙',audio:'Quando você está no limite, seu corpo e sua mente estão pedindo pausa. Aqui, o cuidado começa com você.',stress:8,sc:2,j:9},
-    'Cansado(a)': {text:'O cansaço é um sinal de amor prolongado sem descanso suficiente.\n\nVocê não está fraco(a) — está sobrecarregado(a). Aqui, isso tem espaço. 🌿',audio:'O cansaço é um sinal de amor prolongado sem descanso suficiente. Você não está fraco, está sobrecarregado.',stress:6,sc:3,j:5},
-    'Confuso(a)': {text:'A confusão é comum quando a informação é demais e o apoio é de menos.\n\nVamos organizar tudo em passos simples, sem pressa. 📚',audio:'A confusão é comum quando a informação é demais e o apoio é de menos. Vamos organizar tudo em passos simples.',stress:5,sc:4,j:2},
-    'Estou bem':  {text:'Que bom! 🙂 Mesmo nos dias bons, o cuidado preventivo fortalece você para os dias difíceis.\n\nVamos explorar juntos?',audio:'Que bom! Mesmo nos dias bons, o cuidado preventivo fortalece você para os dias difíceis.',stress:2,sc:7,j:2},
-    'Não sei dizer':{text:'Às vezes é difícil nomear o que sentimos. Isso também é um sinal importante.\n\nVamos começar com uma checagem para entender melhor o seu momento. 💭',audio:'Às vezes é difícil nomear o que sentimos. Isso também é um sinal importante. Vamos começar com uma checagem para entender melhor seu momento.',stress:4,sc:4,j:4},
-  } as const;
+  const MOOD = MOOD_CONFIG;
 
   function startIntroFlow() {
+  if (isAiChatEnabled()) {
+    runAiIntro(api);
+    return;
+  }
+
   api.setProgress(5);
   api.showTyping(()=>{
     api.addAiMsg('Olá! Que coisa boa contar com a sua presença aqui! 💜\n\nSe você está aqui, é porque uma parte sua também pediu atenção. Este espaço foi criado para você.','Olá! Que coisa boa contar com a sua presença aqui! Se você está aqui, é porque uma parte sua também pediu atenção. Este espaço foi criado para você.');
@@ -26,69 +29,106 @@ export function createJourneyRunner(api: ChatApi) {
 }
 
   function handleMoodPick(idx, label) {
-  const key = Object.keys(MOOD).find(k => label.includes(k)) || 'Não sei dizer';
+  const key = resolveMoodKey(label);
   const r = MOOD[key];
   profile.emotionToday = key; profile.stressLevel = r.stress; profile.selfcareLevel = r.sc;
   profile.responses.push({type:'mood',value:key}); api.updateMap(); api.setProgress(15);
   api.showTyping(()=>{
     api.addAiMsg(r.text, r.audio);
-    setTimeout(()=>api.showTyping(()=>api.suggestBlock(JOURNEYS.find(j=>j.n===r.j)||JOURNEYS[0]),1600),800);
+    setTimeout(()=>api.showTyping(()=>api.suggestBlock(JOURNEYS.find(j=>j.n===r.journey)||JOURNEYS[0]),1600),800);
   });
 }
+
+  function applyKeywordExtras(l: string) {
+    if (l.includes('crise') || l.includes('limite') || l.includes('desespero')) {
+      profile.stressLevel = Math.min(10, profile.stressLevel + 3);
+      setTimeout(
+        () =>
+          api.addCtas([
+            { icon: '🌊', label: 'Jornada 9 — Momentos de Crise', style: 'primary', action: () => startJourney(9) },
+            { icon: '💜', label: 'Falar com psicólogo agora', sub: 'Plantão 24h', style: 'accent', action: () => api.openPsych() },
+          ]),
+        700,
+      );
+    } else if (l.includes('cansad') || l.includes('exaust') || l.includes('esgot')) {
+      profile.stressLevel = Math.min(10, profile.stressLevel + 2);
+      setTimeout(
+        () =>
+          api.addCtas([
+            { icon: '🌱', label: 'Jornada 5 — Cuidar de Si', style: 'primary', action: () => startJourney(5) },
+            { icon: '💜', label: 'Falar com psicólogo', style: 'accent', action: () => api.openPsych() },
+          ]),
+        700,
+      );
+    } else if (l.includes('diagnósti') || l.includes('tea') || l.includes('autis')) {
+      setTimeout(
+        () =>
+          api.addCtas([
+            { icon: '🧩', label: 'Jornada 2 — Compreendendo o TEA', style: 'primary', action: () => startJourney(2) },
+          ]),
+        700,
+      );
+    }
+  }
+
+  function sendMessageMock(text: string) {
+    const l = text.toLowerCase();
+    if (l.includes('crise') || l.includes('limite') || l.includes('desespero')) {
+      api.addAiMsg(
+        'Ouço você. Esse momento pede cuidado imediato. 💙\nVocê não está sozinho(a).',
+        'Ouço você. Esse momento pede cuidado imediato. Você não está sozinho.',
+      );
+      applyKeywordExtras(l);
+    } else if (l.includes('cansad') || l.includes('exaust') || l.includes('esgot')) {
+      api.addAiMsg(
+        'O cansaço que você sente é real e válido. 🌱\nCuidadores não adoecem por serem fracos — adoecem por ficarem fortes por tempo demais.',
+        'O cansaço que você sente é real e válido. Cuidadores não adoecem por serem fracos. Adoecem por ficarem fortes por tempo demais.',
+      );
+      applyKeywordExtras(l);
+    } else if (l.includes('diagnósti') || l.includes('tea') || l.includes('autis')) {
+      api.addAiMsg(
+        'O diagnóstico traz muitas emoções ao mesmo tempo. É completamente normal. 🧩',
+        'O diagnóstico traz muitas emoções ao mesmo tempo. É completamente normal.',
+      );
+      applyKeywordExtras(l);
+    } else {
+      api.addAiMsg(
+        'Obrigada por compartilhar isso comigo. Estou aqui, escutando. 💙\nComo posso te ajudar?',
+        'Obrigada por compartilhar isso comigo. Estou aqui, escutando. Como posso te ajudar?',
+      );
+    }
+  }
 
   function sendMessage(text: string) {
     if (!text.trim()) return;
     api.addUserMsg(text);
     profile.responses.push({ type: 'text', text, time: Date.now() });
     api.updateMap();
-    api.showTyping(() => {
+
+    if (isAiChatEnabled()) {
       const l = text.toLowerCase();
-      if (l.includes('crise') || l.includes('limite') || l.includes('desespero')) {
-        api.addAiMsg(
-          'Ouço você. Esse momento pede cuidado imediato. 💙\nVocê não está sozinho(a).',
-          'Ouço você. Esse momento pede cuidado imediato. Você não está sozinho.',
-        );
-        profile.stressLevel = Math.min(10, profile.stressLevel + 3);
-        setTimeout(
-          () =>
-            api.addCtas([
-              { icon: '🌊', label: 'Jornada 9 — Momentos de Crise', style: 'primary', action: () => startJourney(9) },
-              { icon: '💜', label: 'Falar com psicólogo agora', sub: 'Plantão 24h', style: 'accent', action: () => api.openPsych() },
-            ]),
-          700,
-        );
-      } else if (l.includes('cansad') || l.includes('exaust') || l.includes('esgot')) {
-        api.addAiMsg(
-          'O cansaço que você sente é real e válido. 🌱\nCuidadores não adoecem por serem fracos — adoecem por ficarem fortes por tempo demais.',
-          'O cansaço que você sente é real e válido. Cuidadores não adoecem por serem fracos. Adoecem por ficarem fortes por tempo demais.',
-        );
-        profile.stressLevel = Math.min(10, profile.stressLevel + 2);
-        setTimeout(
-          () =>
-            api.addCtas([
-              { icon: '🌱', label: 'Jornada 5 — Cuidar de Si', style: 'primary', action: () => startJourney(5) },
-              { icon: '💜', label: 'Falar com psicólogo', style: 'accent', action: () => api.openPsych() },
-            ]),
-          700,
-        );
-      } else if (l.includes('diagnósti') || l.includes('tea') || l.includes('autis')) {
-        api.addAiMsg(
-          'O diagnóstico traz muitas emoções ao mesmo tempo. É completamente normal. 🧩',
-          'O diagnóstico traz muitas emoções ao mesmo tempo. É completamente normal.',
-        );
-        setTimeout(
-          () =>
-            api.addCtas([
-              { icon: '🧩', label: 'Jornada 2 — Compreendendo o TEA', style: 'primary', action: () => startJourney(2) },
-            ]),
-          700,
-        );
-      } else {
-        api.addAiMsg(
-          'Obrigada por compartilhar isso comigo. Estou aqui, escutando. 💙\nComo posso te ajudar?',
-          'Obrigada por compartilhar isso comigo. Estou aqui, escutando. Como posso te ajudar?',
-        );
-      }
+      const history = api.getChatHistory().slice(0, -1);
+      api.runWithTyping(async () => {
+        try {
+          const { reply, audioText } = await sendChatMessage(text, {
+            profile: api.getProfile(),
+            history,
+          });
+          api.addAiMsg(reply, audioText);
+          applyKeywordExtras(l);
+          api.updateMap();
+        } catch {
+          api.addAiMsg(
+            'Desculpe, não consegui responder agora. Verifique sua conexão e tente de novo em instantes. 💙',
+            'Desculpe, não consegui responder agora. Verifique sua conexão e tente de novo em instantes.',
+          );
+        }
+      });
+      return;
+    }
+
+    api.showTyping(() => {
+      sendMessageMock(text);
       api.updateMap();
     });
   }
@@ -99,6 +139,14 @@ export function createJourneyRunner(api: ChatApi) {
   if (!profile.journeysCompleted.includes(n)) profile.journeysCompleted.push(n);
   api.setProgress(Math.min(100, profile.journeysCompleted.length * 8 + 10));
   api.updateMap();
+
+  if (isAiChatEnabled()) {
+    const journey = JOURNEYS.find((j) => j.n === n) || JOURNEYS[0];
+    api.addUserMsg(`Jornada ${n} — ${journey.title} ${journey.icon}`);
+    runAiJourney(api, n, startJourney);
+    return;
+  }
+
   const flows = {1:j1,2:j2,3:j3,4:j4,5:j5,6:j6,7:j7,8:j8,9:j9,10:j10,11:j11,12:j12};
   (flows[n] || j1)();
 }

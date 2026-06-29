@@ -25,8 +25,15 @@ export interface JourneyItem {
   color: string
 }
 
+export interface ChatHistoryEntry {
+  role: 'user' | 'assistant'
+  content: string
+}
+
 export interface ChatApi {
   getProfile: () => UserProfile
+  getChatHistory: () => ChatHistoryEntry[]
+  runWithTyping: (work: () => void | Promise<void>, minDelay?: number) => void
   addAiMsg: (html: string, audioText?: string, extras?: string) => void
   addUserMsg: (text: string) => void
   showTyping: (cb: () => void, delay?: number) => void

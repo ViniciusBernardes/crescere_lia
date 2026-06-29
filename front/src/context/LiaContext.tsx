@@ -10,6 +10,8 @@ import {
 } from 'react'
 import { createJourneyRunner } from '../flows/journeyFlows'
 import { useSpeech } from '../hooks/useSpeech'
+import { isAiChatEnabled, transcribeAudio } from '../services/liaApi'
+import { stripHtml } from '../utils/html'
 import { formatTime, uid } from '../utils/time'
 import type { ChatApi, ChatMessage, ScreenId } from '../types/chat'
 import { createEmptyProfile, type UserProfile } from '../types/profile'
@@ -62,9 +64,12 @@ export function LiaProvider({ children }: { children: ReactNode }) {
   const pickerHandlers = useRef<Map<string, PickerHandler>>(new Map())
   const runnerRef = useRef<ReturnType<typeof createJourneyRunner> | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunksRef = useRef<Blob[]>([])
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
+  const messagesRef = useRef(messages)
 
   profileRef.current = profile
+  messagesRef.current = messages
 
   const { speak, cancel } = useSpeech(audioEnabled)
 
@@ -92,6 +97,25 @@ export function LiaProvider({ children }: { children: ReactNode }) {
   const chatApi = useMemo<ChatApi>(
     () => ({
       getProfile: () => profileRef.current,
+      getChatHistory: () =>
+        messagesRef.current
+          .filter((m): m is Extract<ChatMessage, { kind: 'user' | 'ai' }> => m.kind === 'user' || m.kind === 'ai')
+          .slice(-20)
+          .map((m) => ({
+            role: (m.kind === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
+            content: m.kind === 'user' ? m.text : stripHtml(m.html),
+          }))
+          .filter((m) => m.content.length > 0),
+      runWithTyping: (work, minDelay = 600) => {
+        setMessages((prev) => [...prev.filter((m) => m.kind !== 'typing'), { id: uid(), kind: 'typing' }])
+        const started = Date.now()
+        Promise.resolve(work()).finally(() => {
+          const remaining = Math.max(0, minDelay - (Date.now() - started))
+          setTimeout(() => {
+            setMessages((prev) => prev.filter((m) => m.kind !== 'typing'))
+          }, remaining)
+        })
+      },
       addAiMsg: (html, audioText, extras) => {
         appendMessage({
           id: uid(),
@@ -200,11 +224,33 @@ export function LiaProvider({ children }: { children: ReactNode }) {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
         const recorder = new MediaRecorder(stream)
         mediaRecorderRef.current = recorder
-        recorder.start()
-        setIsRecording(true)
+        audioChunksRef.current = []
+        recorder.addEventListener('dataavailable', (e) => {
+          if (e.data.size > 0) audioChunksRef.current.push(e.data)
+        })
         recorder.addEventListener('stop', () => {
           stream.getTracks().forEach((t) => t.stop())
           setIsRecording(false)
+          const blob = new Blob(audioChunksRef.current, {
+            type: recorder.mimeType || 'audio/webm',
+          })
+          audioChunksRef.current = []
+
+          if (isAiChatEnabled() && blob.size > 0) {
+            chatApi.runWithTyping(async () => {
+              try {
+                const text = await transcribeAudio(blob)
+                runnerRef.current?.sendMessage(text)
+              } catch {
+                chatApi.addAiMsg(
+                  'Não consegui entender o áudio. Pode tentar de novo ou escrever? 💙',
+                  'Não consegui entender o áudio. Pode tentar de novo ou escrever?',
+                )
+              }
+            })
+            return
+          }
+
           chatApi.addUserMsg('🎙️ Mensagem de voz')
           chatApi.showTyping(
             () =>
@@ -215,6 +261,8 @@ export function LiaProvider({ children }: { children: ReactNode }) {
             1400,
           )
         })
+        recorder.start()
+        setIsRecording(true)
       } catch {
         alert('Permita acesso ao microfone.')
       }

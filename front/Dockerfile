@@ -2,6 +2,9 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 
+ARG VITE_USE_AI_CHAT=true
+ENV VITE_USE_AI_CHAT=$VITE_USE_AI_CHAT
+
 COPY package*.json ./
 RUN npm ci
 
