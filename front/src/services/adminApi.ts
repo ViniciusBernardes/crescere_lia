@@ -27,35 +27,20 @@ export interface SaveOpenAiPayload {
 }
 
 const API_BASE = '/api/admin'
-const TOKEN_KEY = 'lia_admin_token'
-
-export function getAdminToken(): string {
-  return sessionStorage.getItem(TOKEN_KEY) || ''
-}
-
-export function setAdminToken(token: string) {
-  sessionStorage.setItem(TOKEN_KEY, token)
-}
-
-export function clearAdminToken() {
-  sessionStorage.removeItem(TOKEN_KEY)
-}
 
 async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = getAdminToken()
   let res: Response
   try {
     res = await fetch(`${API_BASE}${path}`, {
       ...init,
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
         ...(init?.headers || {}),
       },
     })
   } catch {
     throw new Error(
-      'Servidor indisponível. No localhost, suba o back com: cd back && npm run dev (ou npm run dev na raiz do projeto).',
+      'Servidor indisponível. No localhost, suba o back com: cd back && npm run dev (ou docker compose up).',
     )
   }
 
@@ -74,11 +59,6 @@ async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
     throw new Error(data.message || `Erro (${res.status})`)
   }
   return data
-}
-
-export async function verifyAdminToken(): Promise<boolean> {
-  await adminFetch<{ ok: boolean }>('/verify', { method: 'POST' })
-  return true
 }
 
 export async function fetchTenants(): Promise<Tenant[]> {

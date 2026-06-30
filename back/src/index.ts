@@ -1,7 +1,7 @@
 import "dotenv/config";
 import cors from "cors";
 import express from "express";
-import { config, isOpenAiConfigured, resolveOpenAiSettings } from "./config.js";
+import { config, getOpenAiCredentialsSource, isOpenAiConfigured, resolveOpenAiSettings } from "./config.js";
 import { getDb } from "./db/database.js";
 import { adminRouter } from "./routes/admin.js";
 import { chatRouter } from "./routes/chat.js";
@@ -23,7 +23,7 @@ app.get("/api/health", (_req, res) => {
     tenant: tenant.slug,
     openai: isOpenAiConfigured(tenant.slug) ? "configured" : "missing_key",
     model: settings?.model ?? null,
-    credentialsSource: "database",
+    credentialsSource: getOpenAiCredentialsSource(tenant.slug) ?? "none",
   });
 });
 
@@ -35,7 +35,12 @@ app.listen(config.port, "0.0.0.0", () => {
   const tenant = resolveTenant(config.defaultTenantSlug);
   if (!isOpenAiConfigured(tenant.slug)) {
     console.warn(
-      `OpenAI não configurada para "${tenant.slug}" — cadastre em /admin`,
+      `OpenAI não configurada — defina OPENAI_API_KEY no .env ou cadastre em /admin`,
     );
+    return;
+  }
+  const settings = resolveOpenAiSettings(tenant.slug);
+  if (getOpenAiCredentialsSource(tenant.slug) === "env") {
+    console.log(`OpenAI via .env (${settings?.model ?? "gpt-4o-mini"})`);
   }
 });
