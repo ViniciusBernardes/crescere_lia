@@ -83,8 +83,8 @@ export async function sendChatMessage(
 
 export async function sendJourneyStep(options: JourneyStepRequest): Promise<ChatResponse> {
   const message = options.userChoice
-    ? `Escolhi: ${options.userChoice}`
-    : options.instruction
+    ? `[Jornada ${options.journeyNumber}] ${options.instruction}`
+    : `[Jornada ${options.journeyNumber}] ${options.instruction}`
 
   const res = await fetch(`${API_BASE}/chat`, {
     method: 'POST',

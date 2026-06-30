@@ -27,13 +27,6 @@ async function requestAiStep(
   })
 }
 
-function aiFailureMessage(err: unknown): string | null {
-  if (err instanceof Error && err.message.trim()) {
-    return err.message
-  }
-  return null
-}
-
 function runAiStep(
   api: ChatApi,
   journeyNumber: number,
@@ -52,13 +45,12 @@ function runAiStep(
         step.instruction,
       )
       api.addAiMsg(reply, audioText, step.extras)
-    } catch (err) {
+    } catch {
       if (step.fallbackHtml) {
         api.addAiMsg(step.fallbackHtml, step.fallbackAudio || step.fallbackHtml, step.extras)
       } else {
         api.addAiMsg(
-          aiFailureMessage(err) ||
-            'Desculpe, tive uma dificuldade agora. Vamos continuar — você pode tentar de novo em instantes. 💙',
+          'Desculpe, tive uma dificuldade agora. Vamos continuar — você pode tentar de novo em instantes. 💙',
           'Desculpe, tive uma dificuldade agora. Vamos continuar.',
         )
       }
@@ -92,18 +84,12 @@ function runPickerStep(
           label,
         )
         api.addAiMsg(reply, audioText, step.extras)
-      } catch (err) {
-        const pickFallback = step.pickFallbacks?.[idx]
-        if (pickFallback) {
-          api.addAiMsg(pickFallback.html, pickFallback.audio, pickFallback.extras)
-        } else {
-          api.addAiMsg(
-            aiFailureMessage(err) ||
-              'Obrigada por compartilhar isso comigo. Sua resposta faz sentido no seu contexto. 💙',
-            'Obrigada por compartilhar isso comigo. Sua resposta faz sentido no seu contexto.',
-            step.extras,
-          )
-        }
+      } catch {
+        api.addAiMsg(
+          'Obrigada por compartilhar isso comigo. Sua resposta faz sentido no seu contexto. 💙',
+          'Obrigada por compartilhar isso comigo. Sua resposta faz sentido no seu contexto.',
+          step.extras,
+        )
       }
       onDone()
     })

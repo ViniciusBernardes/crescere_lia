@@ -1,5 +1,4 @@
 import { Router } from "express";
-import OpenAI from "openai";
 import multer from "multer";
 import { isOpenAiConfigured } from "../config.js";
 import { createChatReply, transcribeAudio } from "../services/openai.js";
@@ -29,37 +28,6 @@ function tenantError(res: import("express").Response, error: unknown) {
   const message =
     error instanceof Error ? error.message : "Empresa não encontrada.";
   return res.status(404).json({ error: "tenant_not_found", message });
-}
-
-function openAiErrorResponse(res: import("express").Response, error: unknown) {
-  console.error("[chat]", error);
-
-  if (error instanceof OpenAI.APIError) {
-    if (error.status === 429 && error.code === "insufficient_quota") {
-      return res.status(402).json({
-        error: "openai_quota",
-        message:
-          "Créditos da OpenAI esgotados. Adicione billing em platform.openai.com ou atualize a chave em /admin.",
-      });
-    }
-    if (error.status === 429) {
-      return res.status(429).json({
-        error: "openai_rate_limit",
-        message: "Muitas requisições à OpenAI. Aguarde alguns segundos e tente de novo.",
-      });
-    }
-    if (error.status === 401) {
-      return res.status(401).json({
-        error: "openai_auth",
-        message: "Chave OpenAI inválida. Atualize as credenciais em /admin.",
-      });
-    }
-  }
-
-  return res.status(502).json({
-    error: "openai_error",
-    message: "Não foi possível obter resposta da Lia. Tente novamente.",
-  });
 }
 
 function isValidHistory(history: unknown): history is ChatHistoryMessage[] {
@@ -126,7 +94,11 @@ chatRouter.post("/chat", async (req, res) => {
     );
     return res.json(result);
   } catch (error) {
-    return openAiErrorResponse(res, error);
+    console.error("[chat]", error);
+    return res.status(502).json({
+      error: "openai_error",
+      message: "Não foi possível obter resposta da Lia. Tente novamente.",
+    });
   }
 });
 
@@ -158,6 +130,10 @@ chatRouter.post("/transcribe", upload.single("audio"), async (req, res) => {
     );
     return res.json({ text });
   } catch (error) {
-    return openAiErrorResponse(res, error);
+    console.error("[transcribe]", error);
+    return res.status(502).json({
+      error: "transcription_error",
+      message: "Não foi possível transcrever o áudio. Tente novamente.",
+    });
   }
 });

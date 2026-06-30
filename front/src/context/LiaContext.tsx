@@ -67,6 +67,7 @@ export function LiaProvider({ children }: { children: ReactNode }) {
   const audioChunksRef = useRef<Blob[]>([])
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const messagesRef = useRef(messages)
+  const typingSessionRef = useRef(0)
 
   profileRef.current = profile
   messagesRef.current = messages
@@ -106,12 +107,14 @@ export function LiaProvider({ children }: { children: ReactNode }) {
             content: m.kind === 'user' ? m.text : stripHtml(m.html),
           }))
           .filter((m) => m.content.length > 0),
-      runWithTyping: (work, minDelay = 600) => {
+      runWithTyping: (work, minDelay = 900) => {
+        const session = ++typingSessionRef.current
         setMessages((prev) => [...prev.filter((m) => m.kind !== 'typing'), { id: uid(), kind: 'typing' }])
         const started = Date.now()
         Promise.resolve(work()).finally(() => {
           const remaining = Math.max(0, minDelay - (Date.now() - started))
           setTimeout(() => {
+            if (typingSessionRef.current !== session) return
             setMessages((prev) => prev.filter((m) => m.kind !== 'typing'))
           }, remaining)
         })
@@ -131,8 +134,10 @@ export function LiaProvider({ children }: { children: ReactNode }) {
         appendMessage({ id: uid(), kind: 'user', text, time: formatTime() })
       },
       showTyping: (cb, delay = 1600) => {
+        const session = ++typingSessionRef.current
         setMessages((prev) => [...prev.filter((m) => m.kind !== 'typing'), { id: uid(), kind: 'typing' }])
         setTimeout(() => {
+          if (typingSessionRef.current !== session) return
           setMessages((prev) => prev.filter((m) => m.kind !== 'typing'))
           cb()
         }, delay)
