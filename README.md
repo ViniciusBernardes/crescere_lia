@@ -17,12 +17,22 @@ docker compose up
 - Front: http://localhost:5173
 - Back: http://localhost:3000/api/health
 
-Ou sem Docker:
+Ou sem Docker (dois terminais ou um só na raiz):
 
 ```bash
-cd back && npm install && cp .env.example .env   # cole sua OPENAI_API_KEY
-cd front && npm install && npm run dev
+cd back && npm install && cp .env.example .env   # ADMIN_TOKEN e CREDENTIALS_ENCRYPTION_KEY
+cd front && npm install
+
+# Opção A — um comando (raiz do projeto):
+npm install
+npm run dev
+
+# Opção B — dois terminais:
+cd back && npm run dev    # http://localhost:3000
+cd front && npm run dev   # http://localhost:5173
 ```
+
+Admin local: **http://localhost:5173/admin** (exige o back na porta 3000).
 
 ## Integração OpenAI (whitelabel)
 

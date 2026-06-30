@@ -176,7 +176,12 @@ export function AdminScreen() {
         {!authenticated ? (
           <section className="admin-card">
             <h2>Acesso administrativo</h2>
-            <p className="admin-hint">Informe o token definido em <code>ADMIN_TOKEN</code> no servidor.</p>
+            <p className="admin-hint">
+              Informe o token definido em <code>ADMIN_TOKEN</code> no servidor.
+              <br />
+              Localmente, o back precisa estar rodando em <code>http://localhost:3000</code> — use{' '}
+              <code>npm run dev</code> na raiz ou <code>cd back && npm run dev</code> em outro terminal.
+            </p>
             <form onSubmit={handleLogin} className="admin-form">
               <label className="admin-field">
                 <span>Token de admin</span>

@@ -1,0 +1,12 @@
+{
+  "name": "crescere-lia",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n back,front -c blue,magenta \"npm run dev --prefix back\" \"npm run dev --prefix front\"",
+    "dev:back": "npm run dev --prefix back",
+    "dev:front": "npm run dev --prefix front"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
