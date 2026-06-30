@@ -43,16 +43,33 @@ export function clearAdminToken() {
 
 async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getAdminToken()
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-      ...(init?.headers || {}),
-    },
-  })
+  let res: Response
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      ...init,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        ...(init?.headers || {}),
+      },
+    })
+  } catch {
+    throw new Error(
+      'Servidor indisponível. No localhost, suba o back com: cd back && npm run dev (ou npm run dev na raiz do projeto).',
+    )
+  }
 
-  const data = (await res.json()) as T & { message?: string }
+  let data: T & { message?: string }
+  try {
+    data = (await res.json()) as T & { message?: string }
+  } catch {
+    throw new Error(
+      res.ok
+        ? 'Resposta inválida do servidor.'
+        : `Erro (${res.status}) — verifique se o back está rodando em http://localhost:3000`,
+    )
+  }
+
   if (!res.ok) {
     throw new Error(data.message || `Erro (${res.status})`)
   }
