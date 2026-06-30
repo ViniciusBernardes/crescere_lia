@@ -58,7 +58,7 @@ newgrp docker
 ```bash
 git clone https://github.com/ViniciusBernardes/crescere_lia.git
 cd crescere_lia
-git checkout Feat_01
+git checkout Feat_02
 ```
 
 ## 4. Configurar variáveis

@@ -9,11 +9,7 @@ source "$ROOT_DIR/deploy/lib.sh"
 
 ENV_FILE="${ENV_FILE:-.env.production}"
 
-if [[ ! -f "$ENV_FILE" ]]; then
-  echo "Arquivo $ENV_FILE não encontrado."
-  echo "Copie o exemplo: cp deploy/.env.production.example .env.production"
-  exit 1
-fi
+ensure_production_env "$ENV_FILE"
 
 # shellcheck disable=SC1090
 source "$ENV_FILE"

@@ -319,13 +319,15 @@ export function AdminScreen() {
                   </label>
                 </div>
 
-                <button
-                  type="submit"
-                  className="admin-btn admin-btn-primary"
-                  disabled={saving || loading || (!config?.configured && !apiKey.trim())}
-                >
-                  {saving ? 'Salvando…' : 'Salvar credenciais'}
-                </button>
+                <div className="admin-form-actions">
+                  <button
+                    type="submit"
+                    className="admin-btn admin-btn-primary"
+                    disabled={saving || loading || (!config?.configured && !apiKey.trim())}
+                  >
+                    {saving ? 'Salvando…' : 'Salvar credenciais'}
+                  </button>
+                </div>
               </form>
             </section>
           </>

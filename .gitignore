@@ -9,5 +9,5 @@ build
 .DS_Store
 coverage
 back/data/
-data/
+/data/
 *.db

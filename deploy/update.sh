@@ -9,8 +9,12 @@ source "$ROOT_DIR/deploy/lib.sh"
 
 ENV_FILE="${ENV_FILE:-.env.production}"
 
+ensure_production_env "$ENV_FILE"
+
 echo "==> Atualizando código..."
-git pull --ff-only origin "${BRANCH:-Feat_01}"
+git fetch origin "${BRANCH:-Feat_02}"
+git checkout "${BRANCH:-Feat_02}"
+git pull --ff-only origin "${BRANCH:-Feat_02}"
 
 echo "==> Rebuild e restart..."
 docker_compose -f docker-compose.prod.yml --env-file "$ENV_FILE" up -d --build --remove-orphans
