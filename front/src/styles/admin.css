@@ -1,5 +1,11 @@
 .admin-page {
-  min-height: 100dvh;
+  position: fixed;
+  inset: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
   background: linear-gradient(160deg, #f7f4fc 0%, #ede6f7 100%);
   padding: 24px var(--page-gutter, 16px) calc(48px + env(safe-area-inset-bottom, 0px));
 }
@@ -241,7 +247,7 @@
 
 @media (max-width: 640px) {
   .admin-page {
-    padding: max(16px, env(safe-area-inset-top)) 14px calc(32px + env(safe-area-inset-bottom, 0px));
+    padding: max(16px, env(safe-area-inset-top)) 14px calc(96px + env(safe-area-inset-bottom, 0px));
   }
 
   .admin-header {
