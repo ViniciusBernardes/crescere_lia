@@ -13,3 +13,11 @@ body,
   width: 100%;
   margin: 0;
 }
+
+html.admin-route,
+html.admin-route body,
+html.admin-route #root {
+  height: auto;
+  min-height: 100%;
+  overflow-x: hidden;
+}
