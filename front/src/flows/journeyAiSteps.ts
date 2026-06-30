@@ -17,6 +17,7 @@ export type PickerStep = {
   pills: PillOption[]
   pickInstruction: string
   extras?: string
+  pickFallbacks?: Array<{ html: string; audio: string; extras?: string }>
   onPick?: (profile: UserProfile, idx: number, label: string) => void
 }
 
@@ -352,6 +353,32 @@ export function buildJourneySteps(deps: JourneyDeps): Record<number, JourneyStep
         ],
         pickInstruction:
           'O maior desafio diário é: "{choice}". Ofereça estratégias práticas específicas para essa situação (durante e depois de crises, rotina, comunicação ou social). Use info-cards com listas curtas.',
+        pickFallbacks: [
+          {
+            html: '<strong>Manejo de crises:</strong>',
+            audio: 'Manejo de crises.',
+            extras:
+              '<div class="info-card"><div class="ic-title">🌊 Durante a crise</div><ul><li>Mantenha a calma — seu estado emocional afeta o dela</li><li>Reduza estímulos: luzes, sons, pessoas ao redor</li><li>Fale menos e mais devagar</li><li>Ofereça um espaço seguro e acolhedor</li><li>Não tente ensinar durante a crise — o cérebro não aprende sob estresse intenso</li></ul></div><div class="info-card" style="margin-top:8px"><div class="ic-title">🌱 Depois da crise</div><ul><li>Ofereça conforto sem cobrar explicações</li><li>Aguarde a criança se reorganizar no tempo dela</li><li>Reflita: o que pode ter desencadeado?</li></ul></div>',
+          },
+          {
+            html: '<strong>Rotina e previsibilidade:</strong>',
+            audio: 'Rotina e previsibilidade.',
+            extras:
+              '<div class="info-card"><div class="ic-title">🗓️ A rotina como âncora</div><ul><li>Antecipe mudanças com comunicação clara</li><li>Use recursos visuais: agenda, fotos, pictogramas</li><li>Avisos de transição: Em 10 minutos vamos...</li><li>Mantenha a previsibilidade mesmo em detalhes pequenos</li></ul></div>',
+          },
+          {
+            html: '<strong>Comunicação funcional:</strong>',
+            audio: 'Comunicação funcional.',
+            extras:
+              '<div class="info-card"><div class="ic-title">💬 Comunicando melhor</div><ul><li>Frases curtas e diretas — sem linguagem figurada</li><li>Um pedido de cada vez</li><li>Dê tempo para processar a resposta</li><li>Ofereça escolhas simples: Você quer A ou B?</li><li>Valide antes de corrigir</li></ul></div>',
+          },
+          {
+            html: '<strong>Situações sociais:</strong>',
+            audio: 'Situações sociais.',
+            extras:
+              '<div class="info-card"><div class="ic-title">👥 Preparando para o social</div><ul><li>Prepare antecipadamente: Vamos a X e vai ter Y</li><li>Crie uma estratégia de saída segura</li><li>Não force interação — apoie quando ela acontece</li><li>Celebre cada passo, mesmo os pequenos</li></ul></div>',
+          },
+        ],
         onPick: (p, _idx, label) => {
           p.responses.push({ type: 'daily_challenge', value: label })
         },
@@ -360,6 +387,10 @@ export function buildJourneySteps(deps: JourneyDeps): Record<number, JourneyStep
         type: 'ai',
         instruction:
           'Feche a Jornada 6: estratégias funcionam melhor com compreensão, não controle. Celebre a conclusão.',
+        fallbackHtml:
+          '<strong>Jornada 6 concluída!</strong> 🛠️\n\nEstratégias práticas são mais eficazes quando vêm de uma postura de compreensão, não de controle.',
+        fallbackAudio:
+          'Jornada 6 concluída! Estratégias práticas são mais eficazes quando vêm de uma postura de compreensão.',
       },
       {
         type: 'ctas',

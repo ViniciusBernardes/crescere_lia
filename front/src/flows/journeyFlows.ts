@@ -117,10 +117,12 @@ export function createJourneyRunner(api: ChatApi) {
           api.addAiMsg(reply, audioText);
           applyKeywordExtras(l);
           api.updateMap();
-        } catch {
+        } catch (err) {
           api.addAiMsg(
-            'Desculpe, não consegui responder agora. Verifique sua conexão e tente de novo em instantes. 💙',
-            'Desculpe, não consegui responder agora. Verifique sua conexão e tente de novo em instantes.',
+            (err instanceof Error && err.message) ||
+              'Desculpe, não consegui responder agora. Verifique sua conexão e tente de novo em instantes. 💙',
+            (err instanceof Error && err.message) ||
+              'Desculpe, não consegui responder agora. Verifique sua conexão e tente de novo em instantes.',
           );
         }
       });
