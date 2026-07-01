@@ -129,6 +129,7 @@ export function useSpeech(useOpenAiVoice: boolean) {
     audio.style.display = 'none'
     document.body.appendChild(audio)
     audioRef.current = audio
+    applySpeechRate(audio)
 
     const unlock = document.createElement('audio')
     configureAudioElement(unlock)
@@ -137,17 +138,25 @@ export function useSpeech(useOpenAiVoice: boolean) {
     document.body.appendChild(unlock)
     unlockAudioRef.current = unlock
 
-    const onPlay = () => syncFromElement()
+    const onPlay = () => {
+      applySpeechRate(audio)
+      syncFromElement()
+    }
     const onPause = () => syncFromElement()
     const onTimeUpdate = () => syncFromElement()
     const onEnded = () => syncFromElement()
-    const onLoadedMetadata = () => syncFromElement()
+    const onLoadedMetadata = () => {
+      applySpeechRate(audio)
+      syncFromElement()
+    }
+    const onCanPlay = () => applySpeechRate(audio)
 
     audio.addEventListener('play', onPlay)
     audio.addEventListener('pause', onPause)
     audio.addEventListener('timeupdate', onTimeUpdate)
     audio.addEventListener('ended', onEnded)
     audio.addEventListener('loadedmetadata', onLoadedMetadata)
+    audio.addEventListener('canplay', onCanPlay)
 
     return () => {
       audio.removeEventListener('play', onPlay)
@@ -155,6 +164,7 @@ export function useSpeech(useOpenAiVoice: boolean) {
       audio.removeEventListener('timeupdate', onTimeUpdate)
       audio.removeEventListener('ended', onEnded)
       audio.removeEventListener('loadedmetadata', onLoadedMetadata)
+      audio.removeEventListener('canplay', onCanPlay)
       audio.pause()
       unlock.pause()
       document.body.removeChild(audio)
@@ -166,7 +176,7 @@ export function useSpeech(useOpenAiVoice: boolean) {
         objectUrlRef.current = null
       }
     }
-  }, [syncFromElement])
+  }, [syncFromElement, applySpeechRate])
 
   const rememberDuration = useCallback((key: string, duration: number) => {
     if (!duration || !Number.isFinite(duration)) return
@@ -268,7 +278,11 @@ export function useSpeech(useOpenAiVoice: boolean) {
           audio.currentTime = seekTo
         }
         applySpeechRate(audio)
-        void audio.play().catch(() => {
+        void audio.play().then(() => {
+          if (requestId === requestIdRef.current) {
+            applySpeechRate(audio)
+          }
+        }).catch(() => {
           if (requestId === requestIdRef.current) {
             speakWithBrowserRef.current(text)
           }
@@ -283,6 +297,7 @@ export function useSpeech(useOpenAiVoice: boolean) {
       }
 
       audio.src = url
+      applySpeechRate(audio)
       audio.load()
 
       if (audio.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
@@ -290,6 +305,7 @@ export function useSpeech(useOpenAiVoice: boolean) {
       } else {
         audio.oncanplay = () => {
           audio.oncanplay = null
+          applySpeechRate(audio)
           startPlayback()
         }
       }
@@ -377,7 +393,9 @@ export function useSpeech(useOpenAiVoice: boolean) {
         }
 
         applySpeechRate(audio)
-        void audio.play().catch(() => {
+        void audio.play().then(() => {
+          applySpeechRate(audio)
+        }).catch(() => {
           const cached = getCachedSpeech(clean)
           if (!cached) {
             speakWithBrowserRef.current(clean)

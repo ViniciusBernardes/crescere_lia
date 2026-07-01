@@ -4,14 +4,29 @@ export type SpeechRate = (typeof SPEECH_RATE_OPTIONS)[number]
 
 export const DEFAULT_SPEECH_RATE: SpeechRate = 0.75
 
-const STORAGE_KEY = 'lia-speech-rate'
+const STORAGE_KEY = 'lia-speech-rate-v2'
+const LEGACY_STORAGE_KEY = 'lia-speech-rate'
 
 export function loadSpeechRate(): SpeechRate {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return DEFAULT_SPEECH_RATE
-    const value = Number(raw)
-    return SPEECH_RATE_OPTIONS.includes(value as SpeechRate) ? (value as SpeechRate) : DEFAULT_SPEECH_RATE
+    if (raw) {
+      const value = Number(raw)
+      return SPEECH_RATE_OPTIONS.includes(value as SpeechRate) ? (value as SpeechRate) : DEFAULT_SPEECH_RATE
+    }
+
+    // Migra chave antiga só se o usuário já escolheu velocidade manualmente.
+    const legacy = localStorage.getItem(LEGACY_STORAGE_KEY)
+    if (legacy) {
+      localStorage.removeItem(LEGACY_STORAGE_KEY)
+      const value = Number(legacy)
+      if (SPEECH_RATE_OPTIONS.includes(value as SpeechRate) && value !== 1) {
+        localStorage.setItem(STORAGE_KEY, legacy)
+        return value as SpeechRate
+      }
+    }
+
+    return DEFAULT_SPEECH_RATE
   } catch {
     return DEFAULT_SPEECH_RATE
   }
