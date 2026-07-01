@@ -69,6 +69,7 @@ export function useSpeech(useOpenAiVoice: boolean) {
   const requestIdRef = useRef(0)
   const unlockedRef = useRef(false)
   const durationsRef = useRef<Map<string, number>>(new Map())
+  const activeTextRef = useRef<string | null>(null)
 
   const [speechLoading, setSpeechLoading] = useState<string | null>(null)
   const [speechPlayback, setSpeechPlayback] = useState<SpeechPlayback>(emptyPlayback)
@@ -123,6 +124,7 @@ export function useSpeech(useOpenAiVoice: boolean) {
     requestIdRef.current += 1
     setSpeechLoading(null)
     setSpeechPlayback(emptyPlayback)
+    activeTextRef.current = null
 
     if (audioRef.current) {
       audioRef.current.pause()
@@ -183,6 +185,7 @@ export function useSpeech(useOpenAiVoice: boolean) {
     (blob: Blob, text: string, requestId: number) => {
       if (requestId !== requestIdRef.current) return
 
+      activeTextRef.current = text
       revokeObjectUrl()
       const url = URL.createObjectURL(blob)
       objectUrlRef.current = url
@@ -228,6 +231,8 @@ export function useSpeech(useOpenAiVoice: boolean) {
         if (requestId !== requestIdRef.current) return
         const duration = audio.duration || durationsRef.current.get(text) || 0
         setSpeechPlayback({ text, playing: false, currentTime: 0, duration })
+        audio.removeAttribute('src')
+        audio.load()
         cleanup()
       }
 
@@ -258,6 +263,25 @@ export function useSpeech(useOpenAiVoice: boolean) {
       }
     },
     [ensureAudioElement, rememberDuration, revokeObjectUrl, speakWithBrowser],
+  )
+
+  const resumeAudio = useCallback(
+    (audio: HTMLAudioElement, text: string) => {
+      if (audio.ended) {
+        audio.currentTime = 0
+      }
+
+      void audio.play().catch(() => {
+        const cached = getCachedSpeech(text)
+        if (!cached) {
+          speakWithBrowser(text)
+          return
+        }
+        const requestId = ++requestIdRef.current
+        playAudioBlob(cached, text, requestId)
+      })
+    },
+    [speakWithBrowser, playAudioBlob],
   )
 
   const playText = useCallback(
@@ -313,20 +337,27 @@ export function useSpeech(useOpenAiVoice: boolean) {
 
       primeAudio()
 
-      const cached = getCachedSpeech(clean)
-      const isActive = speechPlayback.text === clean && audioRef.current?.src
+      const audio = audioRef.current
+      const sameTrack = activeTextRef.current === clean && Boolean(audio?.src)
 
-      if (isActive && audioRef.current) {
-        if (speechPlayback.playing) {
-          audioRef.current.pause()
-        } else {
-          void audioRef.current.play().catch(() => speakWithBrowser(clean))
+      if (sameTrack && audio) {
+        if (!audio.paused) {
+          audio.pause()
+          setSpeechPlayback((prev) =>
+            prev.text === clean
+              ? { ...prev, playing: false, currentTime: audio.currentTime }
+              : prev,
+          )
+          return
         }
+
+        resumeAudio(audio, clean)
         return
       }
 
-      if (cached && !audioRef.current?.src) {
-        if (speechPlayback.text && speechPlayback.text !== clean) {
+      const cached = getCachedSpeech(clean)
+      if (cached) {
+        if (activeTextRef.current && activeTextRef.current !== clean) {
           stopPlayback()
         }
         const requestId = ++requestIdRef.current
@@ -337,13 +368,13 @@ export function useSpeech(useOpenAiVoice: boolean) {
 
       playText(text, { manual: true })
     },
-    [speechPlayback, playText, primeAudio, playAudioBlob, registerBlob, stopPlayback, speakWithBrowser],
+    [playText, primeAudio, playAudioBlob, registerBlob, stopPlayback, resumeAudio],
   )
 
   const seekSpeech = useCallback(
     (text: string, ratio: number) => {
       const clean = cleanSpeechText(text)
-      if (!audioRef.current || speechPlayback.text !== clean) return
+      if (!audioRef.current || activeTextRef.current !== clean) return
 
       const duration = audioRef.current.duration || durationsRef.current.get(clean) || 0
       if (duration <= 0) return
