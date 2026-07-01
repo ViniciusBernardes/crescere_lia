@@ -65,7 +65,6 @@ export function LiaProvider({ children }: { children: ReactNode }) {
   const runnerRef = useRef<ReturnType<typeof createJourneyRunner> | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
-  const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const messagesRef = useRef(messages)
   const typingSessionRef = useRef(0)
   const audioEnabledRef = useRef(audioEnabled)
@@ -75,16 +74,6 @@ export function LiaProvider({ children }: { children: ReactNode }) {
   audioEnabledRef.current = audioEnabled
 
   const { speak, listen, cancel, unlockAudio } = useSpeech(audioEnabled, isAiChatEnabled())
-
-  const scrollToBottom = useCallback(() => {
-    requestAnimationFrame(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-    })
-  }, [])
-
-  useEffect(() => {
-    scrollToBottom()
-  }, [messages, scrollToBottom])
 
   const appendMessage = useCallback((msg: ChatMessage) => {
     setMessages((prev) => {
@@ -310,7 +299,6 @@ export function LiaProvider({ children }: { children: ReactNode }) {
   return (
     <LiaContext.Provider value={value}>
       {children}
-      <div ref={messagesEndRef} style={{ height: 0 }} aria-hidden />
     </LiaContext.Provider>
   )
 }
