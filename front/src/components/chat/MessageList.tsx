@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useLia } from '../../context/LiaContext'
 import type { ChatMessage } from '../../types/chat'
 import { HtmlContent, LiaAvatar, ListenButton } from './ChatParts'
@@ -145,9 +145,34 @@ function SuggestBubble({ msg }: { msg: Extract<ChatMessage, { kind: 'suggest' }>
 
 export function MessageList() {
   const { messages } = useLia()
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
+    const container = containerRef.current
+    if (!container) return
+    container.scrollTo({ top: container.scrollHeight, behavior })
+  }, [])
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      requestAnimationFrame(() => scrollToBottom())
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [messages, scrollToBottom])
+
+  useEffect(() => {
+    const inner = containerRef.current?.querySelector('.messages-inner')
+    if (!inner) return
+
+    const observer = new ResizeObserver(() => {
+      scrollToBottom('auto')
+    })
+    observer.observe(inner)
+    return () => observer.disconnect()
+  }, [scrollToBottom])
 
   return (
-    <div className="messages">
+    <div className="messages" ref={containerRef}>
       <div className="messages-inner">
         <div className="date-chip">
           <span>Hoje</span>
