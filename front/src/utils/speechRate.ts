@@ -1,8 +1,8 @@
-export const SPEECH_RATE_OPTIONS = [0.75, 0.88, 1] as const
+export const SPEECH_RATE_OPTIONS = [0.75, 0.88, 1, 1.5, 2] as const
 
 export type SpeechRate = (typeof SPEECH_RATE_OPTIONS)[number]
 
-export const DEFAULT_SPEECH_RATE: SpeechRate = 0.88
+export const DEFAULT_SPEECH_RATE: SpeechRate = 0.75
 
 const STORAGE_KEY = 'lia-speech-rate'
 
@@ -31,7 +31,9 @@ export function nextSpeechRate(current: SpeechRate): SpeechRate {
 }
 
 export function formatSpeechRate(rate: number): string {
-  if (rate >= 0.995) return '1×'
+  if (Math.abs(rate - 1) < 0.005) return '1×'
+  if (rate === 1.5) return '1.5×'
+  if (rate === 2) return '2×'
   const label = rate.toFixed(2).replace(/0$/, '')
   return `${label}×`
 }
@@ -39,5 +41,7 @@ export function formatSpeechRate(rate: number): string {
 export function speechRateLabel(rate: SpeechRate): string {
   if (rate <= 0.75) return 'Voz lenta'
   if (rate < 1) return 'Voz calma'
-  return 'Voz normal'
+  if (rate <= 1) return 'Voz normal'
+  if (rate <= 1.5) return 'Voz rápida'
+  return 'Voz acelerada'
 }
