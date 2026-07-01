@@ -242,6 +242,54 @@ html,body{height:100%;height:100dvh;width:100%;overflow:hidden;font-family:'Nuni
   box-shadow: inset 0 0 0 1px rgba(139, 107, 177, 0.15);
 }
 
+.hdr-btn--hint {
+  animation: audioHintPulse 1.1s ease-in-out infinite;
+  border-color: var(--lilac);
+  box-shadow: 0 0 0 3px rgba(139, 107, 177, 0.22);
+}
+
+@keyframes audioHintPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+.audio-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 var(--page-gutter) 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f3ecff, #fff);
+  border: 1px solid rgba(139, 107, 177, 0.22);
+  box-shadow: 0 4px 16px rgba(99, 71, 160, 0.1);
+  animation: fadeUp 0.25s ease both;
+}
+
+.audio-notice p {
+  margin: 0;
+  flex: 1;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--lilac-dark);
+  font-weight: 600;
+}
+
+.audio-notice-close {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(139, 107, 177, 0.1);
+  color: var(--lilac-dark);
+  font-size: 14px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.audio-notice-close:hover { background: rgba(139, 107, 177, 0.18); }
+
 .hdr-btn:active { background: var(--mauve); }
 
 .progress-wrap { padding: 10px 0 12px; }
@@ -593,8 +641,8 @@ html,body{height:100%;height:100dvh;width:100%;overflow:hidden;font-family:'Nuni
   width: 100%;
 }
 
-.chat-footer .psych-bar { margin: 0 0 10px; }
-.chat-footer .input-area { padding: 0; border-top: none; background: transparent; }
+.chat-footer .input-area { padding: 0; border-top: none; background: transparent; margin: 0 0 10px; }
+.chat-footer .psych-bar { margin: 0; }
 
 .input-area {
   background: transparent;
@@ -609,9 +657,9 @@ html,body{height:100%;height:100dvh;width:100%;overflow:hidden;font-family:'Nuni
 
 .input-wrap {
   flex: 1;
-  background: var(--lilac-xpale);
+  background: #fff;
   border-radius: 22px;
-  border: 1.5px solid rgba(139, 107, 177, 0.16);
+  border: 1px solid var(--lilac-light);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -622,12 +670,15 @@ html,body{height:100%;height:100dvh;width:100%;overflow:hidden;font-family:'Nuni
 .input-wrap:focus-within {
   border-color: var(--lilac);
   background: #fff;
-  box-shadow: 0 0 0 3px rgba(139, 107, 177, 0.12);
+  box-shadow: 0 0 0 2px rgba(139, 107, 177, 0.14);
 }
 .input-wrap textarea{flex:1;border:none;background:none;font-family:'Nunito',sans-serif;font-size:14.5px;color:var(--text-dark);resize:none;outline:none;max-height:100px;min-height:22px;line-height:1.45;}
 .input-wrap textarea::placeholder{color:var(--text-xlight);}
 .mic-btn{border:none;background:none;color:var(--lilac);font-size:20px;cursor:pointer;padding:2px;display:flex;transition:color 0.2s;flex-shrink:0;}
 .mic-btn.rec{color:#E05555;animation:recPulse 1s infinite;}
+.mic-btn.busy{color:var(--lilac-dark);opacity:0.7;cursor:wait;}
+.mic-btn:disabled{opacity:0.55;cursor:not-allowed;}
+.input-wrap textarea:disabled{opacity:0.7;cursor:not-allowed;}
 @keyframes recPulse{0%,100%{opacity:1}50%{opacity:0.4}}
 .send-btn {
   width: 44px;
