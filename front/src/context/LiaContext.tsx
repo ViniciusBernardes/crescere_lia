@@ -41,6 +41,7 @@ interface LiaContextValue {
   toggleMic: () => void
   pickEmotion: (pickerId: string, idx: number, label: string) => void
   listen: (text: string) => void
+  primeAudio: () => void
   toggleSpeech: (text: string) => void
   seekSpeech: (text: string, ratio: number) => void
   isSpeechReady: (text: string) => boolean
@@ -80,7 +81,7 @@ export function LiaProvider({ children }: { children: ReactNode }) {
   profileRef.current = profile
   messagesRef.current = messages
 
-  const { speak, listen, toggleSpeech, seekSpeech, unlockAudio, speechLoading, speechPlayback, isSpeechReady, getSpeechDuration } =
+  const { speak, listen, toggleSpeech, seekSpeech, unlockAudio, primeAudio, speechLoading, speechPlayback, isSpeechReady, getSpeechDuration } =
     useSpeech(isAiChatEnabled())
   const speechPlayerEnabled = isAiChatEnabled()
 
@@ -340,6 +341,7 @@ export function LiaProvider({ children }: { children: ReactNode }) {
     toggleMic,
     pickEmotion,
     listen,
+    primeAudio,
     toggleSpeech,
     seekSpeech,
     isSpeechReady,

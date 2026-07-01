@@ -11,16 +11,19 @@ export function LiaAvatar({ size = 'sm' }: { size?: 'sm' | 'md' }) {
 export function ListenButton({
   text,
   onListen,
+  onPrime,
   loading,
 }: {
   text: string
   onListen: (t: string) => void
+  onPrime?: () => void
   loading?: boolean
 }) {
   return (
     <button
       type="button"
       className={`listen-btn${loading ? ' listen-btn--loading' : ''}`}
+      onPointerDown={() => onPrime?.()}
       onClick={() => onListen(text)}
       disabled={loading}
       aria-busy={loading}
