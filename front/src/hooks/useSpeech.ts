@@ -198,7 +198,7 @@ export function useSpeech(useOpenAiVoice: boolean) {
     synthRef.current.cancel()
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.lang = 'pt-BR'
-    utterance.rate = Math.min(1.1, Math.max(0.6, speechRateRef.current * 0.95))
+    utterance.rate = Math.min(2, Math.max(0.6, speechRateRef.current))
     utterance.pitch = 1.05
 
     const voice = pickBrowserVoice(synthRef.current)
