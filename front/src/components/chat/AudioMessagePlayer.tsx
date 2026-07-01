@@ -14,7 +14,6 @@ export function AudioMessagePlayer({ text }: { text: string }) {
     seekSpeech,
     isSpeechReady,
     getSpeechDuration,
-    primeAudio,
   } = useLia()
 
   const key = cleanSpeechText(text)
@@ -23,7 +22,7 @@ export function AudioMessagePlayer({ text }: { text: string }) {
   const bars = useMemo(() => waveformHeights(key, BAR_COUNT), [key])
 
   if (!ready) {
-    return <ListenButton text={text} onListen={toggleSpeech} onPrime={primeAudio} loading={loading} />
+    return <ListenButton text={text} onListen={toggleSpeech} loading={loading} />
   }
 
   const isActive = speechPlayback.text === key
@@ -49,7 +48,6 @@ export function AudioMessagePlayer({ text }: { text: string }) {
       <button
         type="button"
         className="audio-player-btn"
-        onPointerDown={() => primeAudio()}
         onClick={() => toggleSpeech(text)}
         aria-label={playing ? 'Pausar áudio' : 'Reproduzir áudio'}
       >
