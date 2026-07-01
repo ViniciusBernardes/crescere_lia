@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLia } from '../../context/LiaContext'
 import type { ChatMessage } from '../../types/chat'
 import { HtmlContent, LiaAvatar, ListenButton } from './ChatParts'
@@ -146,6 +146,7 @@ function SuggestBubble({ msg }: { msg: Extract<ChatMessage, { kind: 'suggest' }>
 export function MessageList() {
   const { messages } = useLia()
   const containerRef = useRef<HTMLDivElement>(null)
+  const scrollRafRef = useRef(0)
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
     const container = containerRef.current
@@ -153,23 +154,33 @@ export function MessageList() {
     container.scrollTo({ top: container.scrollHeight, behavior })
   }, [])
 
+  const scheduleScroll = useCallback(
+    (behavior: ScrollBehavior = 'smooth') => {
+      cancelAnimationFrame(scrollRafRef.current)
+      scrollRafRef.current = requestAnimationFrame(() => {
+        scrollToBottom(behavior)
+      })
+    },
+    [scrollToBottom],
+  )
+
   useEffect(() => {
-    const frame = requestAnimationFrame(() => {
-      requestAnimationFrame(() => scrollToBottom())
-    })
-    return () => cancelAnimationFrame(frame)
-  }, [messages, scrollToBottom])
+    scheduleScroll()
+  }, [messages, scheduleScroll])
 
   useEffect(() => {
     const inner = containerRef.current?.querySelector('.messages-inner')
     if (!inner) return
 
     const observer = new ResizeObserver(() => {
-      scrollToBottom('auto')
+      scheduleScroll('auto')
     })
     observer.observe(inner)
-    return () => observer.disconnect()
-  }, [scrollToBottom])
+    return () => {
+      observer.disconnect()
+      cancelAnimationFrame(scrollRafRef.current)
+    }
+  }, [scheduleScroll])
 
   return (
     <div className="messages" ref={containerRef}>
@@ -209,6 +220,7 @@ export function MessageList() {
         if (msg.kind === 'ctas') return <CtasBubble key={msg.id} msg={msg} />
         if (msg.kind === 'suggest') return <SuggestBubble key={msg.id} msg={msg} />
         if (msg.kind === 'ai') {
+          if (!msg.html?.trim()) return null
           return (
             <AiBubble
               key={msg.id}

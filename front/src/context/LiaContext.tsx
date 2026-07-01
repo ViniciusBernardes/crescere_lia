@@ -26,12 +26,14 @@ interface LiaContextValue {
   profile: UserProfile
   progress: number
   audioEnabled: boolean
+  audioNotice: boolean
   psychOpen: boolean
   mapBadge: boolean
   isRecording: boolean
   goToChat: () => void
   showScreen: (id: ScreenId) => void
   toggleAudio: () => void
+  dismissAudioNotice: () => void
   openPsych: () => void
   closePsych: () => void
   sendMessage: (text: string) => void
@@ -52,10 +54,11 @@ const screenMap: Record<string, ScreenId> = {
 
 export function LiaProvider({ children }: { children: ReactNode }) {
   const [screen, setScreen] = useState<ScreenId>('intro')
-  const [messages, setMessages] = useState<ChatMessage[]>([{ id: uid(), kind: 'ai', html: '', time: '' }])
+  const [messages, setMessages] = useState<ChatMessage[]>([])
   const [profile, setProfile] = useState<UserProfile>(createEmptyProfile)
   const [progress, setProgress] = useState(0)
   const [audioEnabled, setAudioEnabled] = useState(false)
+  const [audioNotice, setAudioNotice] = useState(false)
   const [psychOpen, setPsychOpen] = useState(false)
   const [mapBadge, setMapBadge] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
@@ -193,10 +196,30 @@ export function LiaProvider({ children }: { children: ReactNode }) {
         cancel()
       } else {
         void unlockAudio()
+        setAudioNotice(false)
       }
       return next
     })
   }, [cancel, unlockAudio])
+
+  const dismissAudioNotice = useCallback(() => setAudioNotice(false), [])
+
+  const listenWithCheck = useCallback(
+    (text: string) => {
+      if (!audioEnabledRef.current) {
+        setAudioNotice(true)
+        return
+      }
+      listen(text)
+    },
+    [listen],
+  )
+
+  useEffect(() => {
+    if (!audioNotice) return
+    const timer = window.setTimeout(() => setAudioNotice(false), 6000)
+    return () => window.clearTimeout(timer)
+  }, [audioNotice])
 
   const openPsych = useCallback(() => setPsychOpen(true), [])
   const closePsych = useCallback(() => setPsychOpen(false), [])
@@ -281,18 +304,20 @@ export function LiaProvider({ children }: { children: ReactNode }) {
     profile,
     progress,
     audioEnabled,
+    audioNotice,
     psychOpen,
     mapBadge,
     isRecording,
     goToChat,
     showScreen,
     toggleAudio,
+    dismissAudioNotice,
     openPsych,
     closePsych,
     sendMessage,
     toggleMic,
     pickEmotion,
-    listen,
+    listen: listenWithCheck,
     startJourney,
   }
 

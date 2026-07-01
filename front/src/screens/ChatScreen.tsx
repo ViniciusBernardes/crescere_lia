@@ -3,7 +3,16 @@ import { MessageList } from '../components/chat/MessageList'
 import { useLia } from '../context/LiaContext'
 
 export function ChatScreen() {
-  const { showScreen, toggleAudio, audioEnabled, progress, mapBadge, openPsych } = useLia()
+  const {
+    showScreen,
+    toggleAudio,
+    audioEnabled,
+    audioNotice,
+    dismissAudioNotice,
+    progress,
+    mapBadge,
+    openPsych,
+  } = useLia()
 
   return (
     <div className="screen slide-in" id="chatScreen">
@@ -28,7 +37,7 @@ export function ChatScreen() {
             <div className="hdr-actions">
               <button
                 type="button"
-                className={`hdr-btn${audioEnabled ? ' active' : ''}`}
+                className={`hdr-btn${audioEnabled ? ' active' : ''}${audioNotice ? ' hdr-btn--hint' : ''}`}
                 onClick={toggleAudio}
                 title={audioEnabled ? 'Desativar áudio da Lia' : 'Ativar áudio da Lia (voz nova)'}
               >
@@ -55,6 +64,22 @@ export function ChatScreen() {
             </div>
           </div>
         </header>
+
+        {audioNotice && (
+          <div className="audio-notice" role="status">
+            <p>
+              Para ouvir a Lia, ative o áudio <strong>🔊</strong> no canto superior direito.
+            </p>
+            <button
+              type="button"
+              className="audio-notice-close"
+              onClick={dismissAudioNotice}
+              aria-label="Fechar aviso"
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
         <MessageList />
 
