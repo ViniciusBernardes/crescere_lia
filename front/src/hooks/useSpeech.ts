@@ -1,9 +1,23 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { fetchSpeechAudio } from '../services/liaApi'
 import { cacheSpeech, getCachedSpeech } from '../services/ttsCache'
 
-function cleanSpeechText(text: string): string {
+export function cleanSpeechText(text: string): string {
   return text.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()
+}
+
+export interface SpeechPlayback {
+  text: string | null
+  playing: boolean
+  currentTime: number
+  duration: number
+}
+
+const emptyPlayback: SpeechPlayback = {
+  text: null,
+  playing: false,
+  currentTime: 0,
+  duration: 0,
 }
 
 function pickBrowserVoice(synth: SpeechSynthesis): SpeechSynthesisVoice | null {
@@ -24,20 +38,40 @@ function pickBrowserVoice(synth: SpeechSynthesis): SpeechSynthesisVoice | null {
 const SILENT_WAV =
   'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA'
 
-export function useSpeech(audioEnabled: boolean, useOpenAiVoice: boolean) {
+function probeDuration(blob: Blob, onReady: (duration: number) => void) {
+  const url = URL.createObjectURL(blob)
+  const probe = new Audio(url)
+
+  probe.onloadedmetadata = () => {
+    if (probe.duration && Number.isFinite(probe.duration)) {
+      onReady(probe.duration)
+    }
+    URL.revokeObjectURL(url)
+  }
+
+  probe.onerror = () => {
+    URL.revokeObjectURL(url)
+  }
+}
+
+export function useSpeech(useOpenAiVoice: boolean) {
   const synthRef = useRef(window.speechSynthesis)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const objectUrlRef = useRef<string | null>(null)
   const requestIdRef = useRef(0)
   const unlockedRef = useRef(false)
-  const voicesReadyRef = useRef(false)
+  const durationsRef = useRef<Map<string, number>>(new Map())
+
+  const [speechLoading, setSpeechLoading] = useState<string | null>(null)
+  const [speechPlayback, setSpeechPlayback] = useState<SpeechPlayback>(emptyPlayback)
+  const [readyVersion, setReadyVersion] = useState(0)
 
   useEffect(() => {
     const synth = synthRef.current
     if (!synth) return
 
     const loadVoices = () => {
-      voicesReadyRef.current = synth.getVoices().length > 0
+      synth.getVoices()
     }
 
     loadVoices()
@@ -45,8 +79,27 @@ export function useSpeech(audioEnabled: boolean, useOpenAiVoice: boolean) {
     return () => synth.removeEventListener('voiceschanged', loadVoices)
   }, [])
 
+  const rememberDuration = useCallback((key: string, duration: number) => {
+    if (!duration || !Number.isFinite(duration)) return
+    durationsRef.current.set(key, duration)
+    setReadyVersion((v) => v + 1)
+  }, [])
+
+  const registerBlob = useCallback(
+    (key: string, blob: Blob) => {
+      cacheSpeech(key, blob)
+      if (!durationsRef.current.has(key)) {
+        probeDuration(blob, (duration) => rememberDuration(key, duration))
+      }
+      setReadyVersion((v) => v + 1)
+    },
+    [rememberDuration],
+  )
+
   const stopPlayback = useCallback(() => {
     requestIdRef.current += 1
+    setSpeechLoading(null)
+    setSpeechPlayback(emptyPlayback)
 
     if (audioRef.current) {
       audioRef.current.pause()
@@ -103,6 +156,18 @@ export function useSpeech(audioEnabled: boolean, useOpenAiVoice: boolean) {
       const audio = new Audio(url)
       audioRef.current = audio
 
+      const sync = (playing: boolean) => {
+        if (requestId !== requestIdRef.current) return
+        const duration = audio.duration || durationsRef.current.get(text) || 0
+        if (duration > 0) rememberDuration(text, duration)
+        setSpeechPlayback({
+          text,
+          playing,
+          currentTime: audio.currentTime,
+          duration,
+        })
+      }
+
       const cleanup = () => {
         if (objectUrlRef.current === url) {
           URL.revokeObjectURL(url)
@@ -111,7 +176,32 @@ export function useSpeech(audioEnabled: boolean, useOpenAiVoice: boolean) {
         if (audioRef.current === audio) audioRef.current = null
       }
 
-      audio.onended = cleanup
+      audio.onloadedmetadata = () => {
+        if (requestId !== requestIdRef.current) return
+        rememberDuration(text, audio.duration)
+        setSpeechPlayback((prev) =>
+          prev.text === text
+            ? { ...prev, duration: audio.duration }
+            : { text, playing: false, currentTime: 0, duration: audio.duration },
+        )
+      }
+
+      audio.ontimeupdate = () => {
+        if (requestId !== requestIdRef.current) return
+        setSpeechPlayback((prev) =>
+          prev.text === text ? { ...prev, currentTime: audio.currentTime } : prev,
+        )
+      }
+
+      audio.onplay = () => sync(true)
+      audio.onpause = () => sync(false)
+      audio.onended = () => {
+        if (requestId !== requestIdRef.current) return
+        const duration = audio.duration || durationsRef.current.get(text) || 0
+        setSpeechPlayback({ text, playing: false, currentTime: 0, duration })
+        cleanup()
+      }
+
       audio.onerror = () => {
         cleanup()
         if (requestId === requestIdRef.current) speakWithBrowser(text)
@@ -122,16 +212,16 @@ export function useSpeech(audioEnabled: boolean, useOpenAiVoice: boolean) {
         if (requestId === requestIdRef.current) speakWithBrowser(text)
       })
     },
-    [speakWithBrowser],
+    [rememberDuration, speakWithBrowser],
   )
 
   const playText = useCallback(
-    (text: string, options?: { manual?: boolean; preloaded?: Blob }) => {
+    async (text: string, options?: { manual?: boolean; preloaded?: Blob }) => {
       const manual = options?.manual ?? false
-      if (!manual && !audioEnabled) return
-
       const clean = cleanSpeechText(text)
       if (!clean) return
+
+      if (!manual && !options?.preloaded) return
 
       stopPlayback()
 
@@ -144,36 +234,128 @@ export function useSpeech(audioEnabled: boolean, useOpenAiVoice: boolean) {
 
       const cached = options?.preloaded ?? getCachedSpeech(clean)
       if (cached) {
+        registerBlob(clean, cached)
         playAudioBlob(cached, clean, requestId)
         return
       }
 
-      void unlockAudio()
+      if (!manual) return
 
-      void fetchSpeechAudio(clean)
-        .then((blob) => {
-          cacheSpeech(clean, blob)
-          playAudioBlob(blob, clean, requestId)
-        })
-        .catch((error) => {
-          console.warn('[speech] OpenAI TTS indisponível, usando voz do navegador.', error)
-          if (requestId === requestIdRef.current) speakWithBrowser(clean)
-        })
+      setSpeechLoading(clean)
+      await unlockAudio()
+
+      try {
+        const blob = await fetchSpeechAudio(clean)
+        if (requestId !== requestIdRef.current) return
+        registerBlob(clean, blob)
+        playAudioBlob(blob, clean, requestId)
+      } catch (error) {
+        console.warn('[speech] OpenAI TTS indisponível, usando voz do navegador.', error)
+        if (requestId === requestIdRef.current) speakWithBrowser(clean)
+      } finally {
+        if (requestId === requestIdRef.current) setSpeechLoading(null)
+      }
     },
-    [audioEnabled, useOpenAiVoice, speakWithBrowser, stopPlayback, playAudioBlob, unlockAudio],
+    [useOpenAiVoice, speakWithBrowser, stopPlayback, playAudioBlob, unlockAudio, registerBlob],
+  )
+
+  const toggleSpeech = useCallback(
+    async (text: string) => {
+      const clean = cleanSpeechText(text)
+      if (!clean) return
+
+      const cached = getCachedSpeech(clean)
+      const isActive = speechPlayback.text === clean && audioRef.current
+
+      if (isActive && audioRef.current) {
+        if (speechPlayback.playing) {
+          audioRef.current.pause()
+        } else {
+          await unlockAudio()
+          void audioRef.current.play()
+        }
+        return
+      }
+
+      if (cached && !audioRef.current) {
+        let requestId = requestIdRef.current
+        if (speechPlayback.text && speechPlayback.text !== clean) {
+          stopPlayback()
+          requestId = requestIdRef.current
+        }
+        requestId = ++requestIdRef.current
+        registerBlob(clean, cached)
+        await unlockAudio()
+        playAudioBlob(cached, clean, requestId)
+        return
+      }
+
+      await unlockAudio()
+      await playText(text, { manual: true })
+    },
+    [speechPlayback, playText, unlockAudio, playAudioBlob, registerBlob, stopPlayback],
+  )
+
+  const seekSpeech = useCallback(
+    (text: string, ratio: number) => {
+      const clean = cleanSpeechText(text)
+      if (!audioRef.current || speechPlayback.text !== clean) return
+
+      const duration = audioRef.current.duration || durationsRef.current.get(clean) || 0
+      if (duration <= 0) return
+
+      const nextTime = Math.min(duration, Math.max(0, ratio * duration))
+      audioRef.current.currentTime = nextTime
+      setSpeechPlayback((prev) =>
+        prev.text === clean ? { ...prev, currentTime: nextTime, duration } : prev,
+      )
+    },
+    [speechPlayback.text],
+  )
+
+  const isSpeechReady = useCallback(
+    (text: string) => {
+      const clean = cleanSpeechText(text)
+      return Boolean(clean && getCachedSpeech(clean))
+    },
+    [readyVersion],
+  )
+
+  const getSpeechDuration = useCallback(
+    (text: string) => {
+      const clean = cleanSpeechText(text)
+      if (speechPlayback.text === clean && speechPlayback.duration > 0) {
+        return speechPlayback.duration
+      }
+      return durationsRef.current.get(clean) ?? 0
+    },
+    [speechPlayback, readyVersion],
   )
 
   const speak = useCallback(
-    (text: string, preloaded?: Blob) => playText(text, { preloaded }),
+    (text: string, preloaded?: Blob) => {
+      void playText(text, { preloaded })
+    },
     [playText],
   )
 
   const listen = useCallback(
     (text: string) => {
-      void unlockAudio().finally(() => playText(text, { manual: true }))
+      void toggleSpeech(text)
     },
-    [unlockAudio, playText],
+    [toggleSpeech],
   )
 
-  return { speak, listen, cancel: stopPlayback, unlockAudio }
+  return {
+    speak,
+    listen,
+    toggleSpeech,
+    seekSpeech,
+    cancel: stopPlayback,
+    unlockAudio,
+    speechLoading,
+    speechPlayback,
+    isSpeechReady,
+    getSpeechDuration,
+  }
 }

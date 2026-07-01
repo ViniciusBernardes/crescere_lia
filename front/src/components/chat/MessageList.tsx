@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLia } from '../../context/LiaContext'
 import type { ChatMessage } from '../../types/chat'
 import { HtmlContent, LiaAvatar, ListenButton } from './ChatParts'
+import { AudioMessagePlayer } from './AudioMessagePlayer'
 
 function MessageRow({ children, user }: { children: React.ReactNode; user?: boolean }) {
   return <div className={`mrow${user ? ' user' : ''}`}>{children}</div>
@@ -18,7 +19,7 @@ function AiBubble({
   extras?: string
   time: string
 }) {
-  const { listen } = useLia()
+  const { listen, speechPlayerEnabled } = useLia()
   return (
     <MessageRow>
       <LiaAvatar />
@@ -27,7 +28,12 @@ function AiBubble({
           <p>
             <HtmlContent html={html} />
           </p>
-          {audioText && <ListenButton text={audioText} onListen={listen} />}
+          {audioText &&
+            (speechPlayerEnabled ? (
+              <AudioMessagePlayer text={audioText} />
+            ) : (
+              <ListenButton text={audioText} onListen={listen} />
+            ))}
           {extras && <HtmlContent html={extras} />}
         </div>
         <span className="btime">{time}</span>
@@ -37,7 +43,7 @@ function AiBubble({
 }
 
 function PickerBubble({ msg }: { msg: Extract<ChatMessage, { kind: 'picker' }> }) {
-  const { listen, pickEmotion } = useLia()
+  const { pickEmotion, listen, speechPlayerEnabled } = useLia()
   const [selected, setSelected] = useState<number | null>(null)
 
   const handlePick = (idx: number, label: string) => {
@@ -54,7 +60,12 @@ function PickerBubble({ msg }: { msg: Extract<ChatMessage, { kind: 'picker' }> }
           <p>
             <HtmlContent html={msg.question} />
           </p>
-          {msg.audioQ && <ListenButton text={msg.audioQ} onListen={listen} />}
+          {msg.audioQ &&
+            (speechPlayerEnabled ? (
+              <AudioMessagePlayer text={msg.audioQ} />
+            ) : (
+              <ListenButton text={msg.audioQ} onListen={listen} />
+            ))}
           <div className="emotion-grid">
             {msg.pills.map((pill, idx) => (
               <button
