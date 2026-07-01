@@ -33,8 +33,9 @@ export interface ChatHistoryEntry {
 export interface ChatApi {
   getProfile: () => UserProfile
   getChatHistory: () => ChatHistoryEntry[]
+  isAudioEnabled: () => boolean
   runWithTyping: (work: () => void | Promise<void>, minDelay?: number) => void
-  addAiMsg: (html: string, audioText?: string, extras?: string) => void
+  addAiMsg: (html: string, audioText?: string, extras?: string, speechBlob?: Blob) => void
   addUserMsg: (text: string) => void
   showTyping: (cb: () => void, delay?: number) => void
   addPicker: (
@@ -50,7 +51,7 @@ export interface ChatApi {
   showScreen: (id: ScreenId | string) => void
   openPsych: () => void
   startJourney: (n: number) => void
-  speak: (text: string) => void
+  speak: (text: string, preloaded?: Blob) => void
 }
 
 export type AiMessage = {

@@ -2,6 +2,7 @@
 import type { ChatApi } from '../types/chat';
 import { JOURNEYS } from '../data/journeys';
 import { isAiChatEnabled, sendChatMessage } from '../services/liaApi';
+import { prepareSpeechFromResponse } from '../services/chatSpeech';
 import { runAiJourney } from './journeyAiRunner';
 import { runAiIntro } from './introAiRunner';
 import { MOOD_CONFIG, resolveMoodKey } from '../data/moodConfig';
@@ -110,11 +111,17 @@ export function createJourneyRunner(api: ChatApi) {
       const history = api.getChatHistory().slice(0, -1);
       api.runWithTyping(async () => {
         try {
-          const { reply, audioText } = await sendChatMessage(text, {
+          const response = await sendChatMessage(text, {
             profile: api.getProfile(),
             history,
+            includeSpeech: api.isAudioEnabled(),
           });
-          api.addAiMsg(reply, audioText);
+          api.addAiMsg(
+            response.reply,
+            response.audioText,
+            undefined,
+            prepareSpeechFromResponse(response),
+          );
           applyKeywordExtras(l);
           api.updateMap();
         } catch {

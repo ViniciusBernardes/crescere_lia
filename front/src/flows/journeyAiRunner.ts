@@ -1,6 +1,7 @@
 import type { ChatApi } from '../types/chat'
 import { JOURNEYS } from '../data/journeys'
 import { isAiChatEnabled, sendJourneyStep } from '../services/liaApi'
+import { prepareSpeechFromResponse } from '../services/chatSpeech'
 import { buildJourneySteps, type JourneyDeps, type JourneyStep } from './journeyAiSteps'
 
 function fillInstruction(template: string, choice: string) {
@@ -24,6 +25,7 @@ async function requestAiStep(
     userChoice,
     profile: api.getProfile(),
     history,
+    includeSpeech: api.isAudioEnabled(),
   })
 }
 
@@ -37,14 +39,19 @@ function runAiStep(
 ) {
   api.runWithTyping(async () => {
     try {
-      const { reply, audioText } = await requestAiStep(
+      const response = await requestAiStep(
         api,
         journeyNumber,
         journeyTitle,
         stepIndex,
         step.instruction,
       )
-      api.addAiMsg(reply, audioText, step.extras)
+      api.addAiMsg(
+        response.reply,
+        response.audioText,
+        step.extras,
+        prepareSpeechFromResponse(response),
+      )
     } catch {
       if (step.fallbackHtml) {
         api.addAiMsg(step.fallbackHtml, step.fallbackAudio || step.fallbackHtml, step.extras)
@@ -75,7 +82,7 @@ function runPickerStep(
     api.runWithTyping(async () => {
       try {
         const instruction = fillInstruction(step.pickInstruction, label)
-        const { reply, audioText } = await requestAiStep(
+        const response = await requestAiStep(
           api,
           journeyNumber,
           journeyTitle,
@@ -83,7 +90,12 @@ function runPickerStep(
           instruction,
           label,
         )
-        api.addAiMsg(reply, audioText, step.extras)
+        api.addAiMsg(
+          response.reply,
+          response.audioText,
+          step.extras,
+          prepareSpeechFromResponse(response),
+        )
       } catch {
         api.addAiMsg(
           'Obrigada por compartilhar isso comigo. Sua resposta faz sentido no seu contexto. 💙',

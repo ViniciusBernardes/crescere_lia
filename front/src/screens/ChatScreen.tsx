@@ -30,7 +30,7 @@ export function ChatScreen() {
                 type="button"
                 className={`hdr-btn${audioEnabled ? ' active' : ''}`}
                 onClick={toggleAudio}
-                title="Ativar/desativar áudio"
+                title={audioEnabled ? 'Desativar áudio da Lia' : 'Ativar áudio da Lia (voz nova)'}
               >
                 {audioEnabled ? '🔊' : '🔇'}
               </button>

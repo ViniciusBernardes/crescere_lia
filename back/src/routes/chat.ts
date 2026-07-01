@@ -2,7 +2,7 @@ import { Router } from "express";
 import OpenAI from "openai";
 import multer from "multer";
 import { isOpenAiConfigured } from "../config.js";
-import { createChatReply, transcribeAudio } from "../services/openai.js";
+import { createChatReply, synthesizeSpeech, transcribeAudio } from "../services/openai.js";
 import { resolveTenantSlug } from "../services/tenants.js";
 import type { ChatHistoryMessage, ChatRequestBody, JourneyContext } from "../types/chat.js";
 
@@ -79,6 +79,10 @@ function isValidJourney(journey: unknown): journey is JourneyContext {
   );
 }
 
+function wantsSpeech(req: import("express").Request): boolean {
+  return req.header("x-tts-enabled") === "true";
+}
+
 chatRouter.post("/chat", async (req, res) => {
   const tenantSlug = tenantSlugFromRequest(req);
 
@@ -118,8 +122,55 @@ chatRouter.post("/chat", async (req, res) => {
       history,
       journey,
     );
+
+    if (wantsSpeech(req) && result.audioText) {
+      try {
+        const audio = await synthesizeSpeech(tenantSlug, result.audioText);
+        result.speechAudio = audio.toString("base64");
+      } catch (error) {
+        console.warn("[chat] Falha ao gerar voz inline:", error);
+      }
+    }
+
     return res.json(result);
   } catch (error) {
+    return openAiErrorResponse(res, error);
+  }
+});
+
+chatRouter.post("/tts", async (req, res) => {
+  const tenantSlug = tenantSlugFromRequest(req);
+
+  try {
+    if (!isOpenAiConfigured(tenantSlug)) {
+      return openAiUnavailable(res);
+    }
+  } catch (error) {
+    return tenantError(res, error);
+  }
+
+  const text = typeof req.body?.text === "string" ? req.body.text.trim() : "";
+  if (!text) {
+    return res.status(400).json({
+      error: "invalid_text",
+      message: "O campo text é obrigatório.",
+    });
+  }
+
+  if (text.length > 4096) {
+    return res.status(400).json({
+      error: "text_too_long",
+      message: "Texto muito longo para síntese de voz (máx. 4096 caracteres).",
+    });
+  }
+
+  try {
+    const audio = await synthesizeSpeech(tenantSlug, text);
+    res.setHeader("Content-Type", "audio/mpeg");
+    res.setHeader("Cache-Control", "private, max-age=3600");
+    return res.send(audio);
+  } catch (error) {
+    console.error("[tts]", error);
     return openAiErrorResponse(res, error);
   }
 });

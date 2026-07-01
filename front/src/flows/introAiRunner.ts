@@ -2,6 +2,7 @@ import type { ChatApi } from '../types/chat'
 import { JOURNEYS } from '../data/journeys'
 import { MOOD_CONFIG, MOOD_PILLS, resolveMoodKey } from '../data/moodConfig'
 import { isAiChatEnabled, sendJourneyStep } from '../services/liaApi'
+import { prepareSpeechFromResponse } from '../services/chatSpeech'
 
 const INTRO_TITLE = 'Introdução — Primeiro contato'
 
@@ -38,15 +39,21 @@ export function runAiIntro(api: ChatApi) {
 
   api.runWithTyping(async () => {
     try {
-      const { reply, audioText } = await sendJourneyStep({
+      const response = await sendJourneyStep({
         journeyNumber: 0,
         journeyTitle: INTRO_TITLE,
         stepIndex: 0,
         instruction: WELCOME_INSTRUCTION,
         profile: api.getProfile(),
         history: api.getChatHistory(),
+        includeSpeech: api.isAudioEnabled(),
       })
-      api.addAiMsg(reply, audioText)
+      api.addAiMsg(
+        response.reply,
+        response.audioText,
+        undefined,
+        prepareSpeechFromResponse(response),
+      )
     } catch {
       api.addAiMsg(WELCOME_FALLBACK.html, WELCOME_FALLBACK.audio)
     }
@@ -69,7 +76,7 @@ export function runAiIntro(api: ChatApi) {
 
         api.runWithTyping(async () => {
           try {
-            const { reply, audioText } = await sendJourneyStep({
+            const response = await sendJourneyStep({
               journeyNumber: 0,
               journeyTitle: INTRO_TITLE,
               stepIndex: 1,
@@ -77,8 +84,14 @@ export function runAiIntro(api: ChatApi) {
               userChoice: label,
               profile: api.getProfile(),
               history: api.getChatHistory(),
+              includeSpeech: api.isAudioEnabled(),
             })
-            api.addAiMsg(reply, audioText)
+            api.addAiMsg(
+              response.reply,
+              response.audioText,
+              undefined,
+              prepareSpeechFromResponse(response),
+            )
           } catch {
             api.addAiMsg(mood.text, mood.audio)
           }

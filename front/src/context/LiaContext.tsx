@@ -68,11 +68,13 @@ export function LiaProvider({ children }: { children: ReactNode }) {
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const messagesRef = useRef(messages)
   const typingSessionRef = useRef(0)
+  const audioEnabledRef = useRef(audioEnabled)
 
   profileRef.current = profile
   messagesRef.current = messages
+  audioEnabledRef.current = audioEnabled
 
-  const { speak, cancel } = useSpeech(audioEnabled)
+  const { speak, listen, cancel, unlockAudio } = useSpeech(audioEnabled, isAiChatEnabled())
 
   const scrollToBottom = useCallback(() => {
     requestAnimationFrame(() => {
@@ -98,6 +100,7 @@ export function LiaProvider({ children }: { children: ReactNode }) {
   const chatApi = useMemo<ChatApi>(
     () => ({
       getProfile: () => profileRef.current,
+      isAudioEnabled: () => audioEnabledRef.current,
       getChatHistory: () =>
         messagesRef.current
           .filter((m): m is Extract<ChatMessage, { kind: 'user' | 'ai' }> => m.kind === 'user' || m.kind === 'ai')
@@ -119,7 +122,7 @@ export function LiaProvider({ children }: { children: ReactNode }) {
           }, remaining)
         })
       },
-      addAiMsg: (html, audioText, extras) => {
+      addAiMsg: (html, audioText, extras, speechBlob) => {
         appendMessage({
           id: uid(),
           kind: 'ai',
@@ -128,7 +131,7 @@ export function LiaProvider({ children }: { children: ReactNode }) {
           extras,
           time: formatTime(),
         })
-        if (audioText) speak(audioText)
+        if (audioText) speak(audioText, speechBlob)
       },
       addUserMsg: (text) => {
         appendMessage({ id: uid(), kind: 'user', text, time: formatTime() })
@@ -190,22 +193,29 @@ export function LiaProvider({ children }: { children: ReactNode }) {
   const goToChat = useCallback(() => {
     setScreen('chat')
     setMessages([])
+    void unlockAudio()
     setTimeout(() => runnerRef.current?.startIntroFlow(), 400)
-  }, [])
+  }, [unlockAudio])
 
   const toggleAudio = useCallback(() => {
     setAudioEnabled((v) => {
-      if (v) cancel()
-      return !v
+      const next = !v
+      if (!next) {
+        cancel()
+      } else {
+        void unlockAudio()
+      }
+      return next
     })
-  }, [cancel])
+  }, [cancel, unlockAudio])
 
   const openPsych = useCallback(() => setPsychOpen(true), [])
   const closePsych = useCallback(() => setPsychOpen(false), [])
 
   const sendMessage = useCallback((text: string) => {
+    void unlockAudio()
     runnerRef.current?.sendMessage(text)
-  }, [])
+  }, [unlockAudio])
 
   const startJourney = useCallback((n: number) => {
     setScreen('chat')
@@ -293,7 +303,7 @@ export function LiaProvider({ children }: { children: ReactNode }) {
     sendMessage,
     toggleMic,
     pickEmotion,
-    listen: speak,
+    listen,
     startJourney,
   }
 

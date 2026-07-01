@@ -10,6 +10,7 @@ export interface ChatHistoryMessage {
 export interface ChatResponse {
   reply: string
   audioText: string
+  speechAudio?: string
 }
 
 export interface JourneyStepRequest {
@@ -62,16 +63,21 @@ export async function fetchHealth(): Promise<HealthResponse> {
   return parseJson<HealthResponse>(res)
 }
 
+function chatHeaders(includeSpeech?: boolean): HeadersInit {
+  return apiHeaders(includeSpeech ? { 'X-TTS-Enabled': 'true' } : undefined)
+}
+
 export async function sendChatMessage(
   message: string,
   options?: {
     profile?: UserProfile
     history?: ChatHistoryMessage[]
+    includeSpeech?: boolean
   },
 ): Promise<ChatResponse> {
   const res = await fetch(`${API_BASE}/chat`, {
     method: 'POST',
-    headers: apiHeaders(),
+    headers: chatHeaders(options?.includeSpeech),
     body: JSON.stringify({
       message,
       profile: options?.profile,
@@ -81,14 +87,16 @@ export async function sendChatMessage(
   return parseJson<ChatResponse>(res)
 }
 
-export async function sendJourneyStep(options: JourneyStepRequest): Promise<ChatResponse> {
+export async function sendJourneyStep(
+  options: JourneyStepRequest & { includeSpeech?: boolean },
+): Promise<ChatResponse> {
   const message = options.userChoice
     ? `[Jornada ${options.journeyNumber}] ${options.instruction}`
     : `[Jornada ${options.journeyNumber}] ${options.instruction}`
 
   const res = await fetch(`${API_BASE}/chat`, {
     method: 'POST',
-    headers: apiHeaders(),
+    headers: chatHeaders(options.includeSpeech),
     body: JSON.stringify({
       message,
       profile: options.profile,
@@ -103,6 +111,26 @@ export async function sendJourneyStep(options: JourneyStepRequest): Promise<Chat
     }),
   })
   return parseJson<ChatResponse>(res)
+}
+
+export async function fetchSpeechAudio(text: string): Promise<Blob> {
+  const res = await fetch(`${API_BASE}/tts`, {
+    method: 'POST',
+    headers: apiHeaders(),
+    body: JSON.stringify({ text }),
+  })
+
+  if (!res.ok) {
+    const data = (await res.json().catch(() => ({}))) as LiaApiError
+    throw new Error(data.message || `Erro na síntese de voz (${res.status})`)
+  }
+
+  const contentType = res.headers.get('content-type') || ''
+  if (!contentType.includes('audio')) {
+    throw new Error('Resposta inválida da síntese de voz')
+  }
+
+  return res.blob()
 }
 
 export async function transcribeAudio(blob: Blob, filename = 'gravacao.webm'): Promise<string> {
