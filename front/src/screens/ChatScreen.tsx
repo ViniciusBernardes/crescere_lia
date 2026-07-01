@@ -84,6 +84,7 @@ export function ChatScreen() {
         <MessageList />
 
         <div className="chat-footer">
+          <ChatInput />
           <button type="button" className="psych-bar" onClick={openPsych}>
             <div className="pb-icon">💜</div>
             <div className="pb-main">
@@ -92,7 +93,6 @@ export function ChatScreen() {
             </div>
             <div className="pb-arrow">›</div>
           </button>
-          <ChatInput />
         </div>
       </div>
     </div>
