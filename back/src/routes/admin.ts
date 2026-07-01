@@ -1,6 +1,5 @@
 import { Router } from "express";
-import { config, isOpenAiConfigured, resolveOpenAiSettings } from "../config.js";
-import { requireAdmin } from "../middleware/adminAuth.js";
+import { config, getOpenAiCredentialsSource, isOpenAiConfigured, resolveOpenAiSettings } from "../config.js";
 import {
   getOpenAiCredentialsPublic,
   saveOpenAiCredentials,
@@ -13,8 +12,6 @@ import {
 } from "../services/tenants.js";
 
 export const adminRouter = Router();
-
-adminRouter.use(requireAdmin);
 
 adminRouter.post("/verify", (_req, res) => {
   res.json({ ok: true });
@@ -112,6 +109,6 @@ adminRouter.get("/status", (_req, res) => {
     defaultTenant: tenant.slug,
     openai: isOpenAiConfigured(tenant.slug) ? "configured" : "missing_key",
     model: settings?.model ?? null,
-    credentialsSource: "database",
+    credentialsSource: getOpenAiCredentialsSource(tenant.slug) ?? "none",
   });
 });

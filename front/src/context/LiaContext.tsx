@@ -67,11 +67,14 @@ export function LiaProvider({ children }: { children: ReactNode }) {
   const audioChunksRef = useRef<Blob[]>([])
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const messagesRef = useRef(messages)
+  const typingSessionRef = useRef(0)
+  const audioEnabledRef = useRef(audioEnabled)
 
   profileRef.current = profile
   messagesRef.current = messages
+  audioEnabledRef.current = audioEnabled
 
-  const { speak, cancel } = useSpeech(audioEnabled)
+  const { speak, listen, cancel, unlockAudio } = useSpeech(audioEnabled, isAiChatEnabled())
 
   const scrollToBottom = useCallback(() => {
     requestAnimationFrame(() => {
@@ -97,6 +100,7 @@ export function LiaProvider({ children }: { children: ReactNode }) {
   const chatApi = useMemo<ChatApi>(
     () => ({
       getProfile: () => profileRef.current,
+      isAudioEnabled: () => audioEnabledRef.current,
       getChatHistory: () =>
         messagesRef.current
           .filter((m): m is Extract<ChatMessage, { kind: 'user' | 'ai' }> => m.kind === 'user' || m.kind === 'ai')
@@ -106,17 +110,19 @@ export function LiaProvider({ children }: { children: ReactNode }) {
             content: m.kind === 'user' ? m.text : stripHtml(m.html),
           }))
           .filter((m) => m.content.length > 0),
-      runWithTyping: (work, minDelay = 600) => {
+      runWithTyping: (work, minDelay = 900) => {
+        const session = ++typingSessionRef.current
         setMessages((prev) => [...prev.filter((m) => m.kind !== 'typing'), { id: uid(), kind: 'typing' }])
         const started = Date.now()
         Promise.resolve(work()).finally(() => {
           const remaining = Math.max(0, minDelay - (Date.now() - started))
           setTimeout(() => {
+            if (typingSessionRef.current !== session) return
             setMessages((prev) => prev.filter((m) => m.kind !== 'typing'))
           }, remaining)
         })
       },
-      addAiMsg: (html, audioText, extras) => {
+      addAiMsg: (html, audioText, extras, speechBlob) => {
         appendMessage({
           id: uid(),
           kind: 'ai',
@@ -125,14 +131,16 @@ export function LiaProvider({ children }: { children: ReactNode }) {
           extras,
           time: formatTime(),
         })
-        if (audioText) speak(audioText)
+        if (audioText) speak(audioText, speechBlob)
       },
       addUserMsg: (text) => {
         appendMessage({ id: uid(), kind: 'user', text, time: formatTime() })
       },
       showTyping: (cb, delay = 1600) => {
+        const session = ++typingSessionRef.current
         setMessages((prev) => [...prev.filter((m) => m.kind !== 'typing'), { id: uid(), kind: 'typing' }])
         setTimeout(() => {
+          if (typingSessionRef.current !== session) return
           setMessages((prev) => prev.filter((m) => m.kind !== 'typing'))
           cb()
         }, delay)
@@ -185,22 +193,29 @@ export function LiaProvider({ children }: { children: ReactNode }) {
   const goToChat = useCallback(() => {
     setScreen('chat')
     setMessages([])
+    void unlockAudio()
     setTimeout(() => runnerRef.current?.startIntroFlow(), 400)
-  }, [])
+  }, [unlockAudio])
 
   const toggleAudio = useCallback(() => {
     setAudioEnabled((v) => {
-      if (v) cancel()
-      return !v
+      const next = !v
+      if (!next) {
+        cancel()
+      } else {
+        void unlockAudio()
+      }
+      return next
     })
-  }, [cancel])
+  }, [cancel, unlockAudio])
 
   const openPsych = useCallback(() => setPsychOpen(true), [])
   const closePsych = useCallback(() => setPsychOpen(false), [])
 
   const sendMessage = useCallback((text: string) => {
+    void unlockAudio()
     runnerRef.current?.sendMessage(text)
-  }, [])
+  }, [unlockAudio])
 
   const startJourney = useCallback((n: number) => {
     setScreen('chat')
@@ -288,7 +303,7 @@ export function LiaProvider({ children }: { children: ReactNode }) {
     sendMessage,
     toggleMic,
     pickEmotion,
-    listen: speak,
+    listen,
     startJourney,
   }
 

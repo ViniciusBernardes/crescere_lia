@@ -55,6 +55,22 @@ export async function createChatReply(
   };
 }
 
+export async function synthesizeSpeech(
+  tenantSlug: string,
+  text: string,
+): Promise<Buffer> {
+  const openai = getClient(tenantSlug);
+  const settings = resolveOpenAiSettings(tenantSlug)!;
+
+  const speech = await openai.audio.speech.create({
+    model: settings.ttsModel,
+    voice: settings.ttsVoice,
+    input: text,
+  });
+
+  return Buffer.from(await speech.arrayBuffer());
+}
+
 export async function transcribeAudio(
   tenantSlug: string,
   buffer: Buffer,

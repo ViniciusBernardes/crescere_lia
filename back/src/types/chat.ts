@@ -36,6 +36,7 @@ export interface JourneyContext {
 export interface ChatResponseBody {
   reply: string;
   audioText: string;
+  speechAudio?: string;
 }
 
 export interface TranscribeResponseBody {

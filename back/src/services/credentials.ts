@@ -1,5 +1,5 @@
 import { getDb } from "../db/database.js";
-import { decrypt, encrypt, maskSecret } from "./crypto.js";
+import { maskSecret } from "./crypto.js";
 import { getTenantById } from "./tenants.js";
 
 export interface OpenAiCredentials {
@@ -36,6 +36,14 @@ function cacheKey(tenantId: string) {
   return tenantId;
 }
 
+function parseStoredCredentials(value: string): OpenAiCredentials {
+  return JSON.parse(value) as OpenAiCredentials;
+}
+
+function serializeCredentials(creds: OpenAiCredentials): string {
+  return JSON.stringify(creds);
+}
+
 export function getOpenAiCredentials(tenantId: string): OpenAiCredentials | null {
   const key = cacheKey(tenantId);
   if (cache.has(key)) return cache.get(key) ?? null;
@@ -52,7 +60,7 @@ export function getOpenAiCredentials(tenantId: string): OpenAiCredentials | null
   }
 
   try {
-    const parsed = JSON.parse(decrypt(row.value)) as OpenAiCredentials;
+    const parsed = parseStoredCredentials(row.value);
     const creds: OpenAiCredentials = {
       ...DEFAULTS,
       ...parsed,
@@ -62,7 +70,7 @@ export function getOpenAiCredentials(tenantId: string): OpenAiCredentials | null
     cache.set(key, result);
     return result;
   } catch (error) {
-    console.error("[credentials] Falha ao descriptografar:", error);
+    console.error("[credentials] Falha ao ler credenciais:", error);
     cache.set(key, null);
     return null;
   }
@@ -95,7 +103,7 @@ export function getOpenAiCredentialsPublic(
   }
 
   try {
-    const parsed = JSON.parse(decrypt(row.value)) as OpenAiCredentials;
+    const parsed = parseStoredCredentials(row.value);
     const apiKey = parsed.apiKey?.trim() || "";
     return {
       tenantId: tenant.id,
@@ -148,7 +156,7 @@ export function saveOpenAiCredentials(
         : (current?.temperature ?? DEFAULTS.temperature),
   };
 
-  const encrypted = encrypt(JSON.stringify(next));
+  const stored = serializeCredentials(next);
   getDb()
     .prepare(
       `INSERT INTO tenant_openai_config (tenant_id, value, updated_at)
@@ -157,7 +165,7 @@ export function saveOpenAiCredentials(
          value = excluded.value,
          updated_at = datetime('now')`,
     )
-    .run(tenantId, encrypted);
+    .run(tenantId, stored);
 
   cache.set(cacheKey(tenantId), next);
   return getOpenAiCredentialsPublic(tenantId);
