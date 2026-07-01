@@ -11,6 +11,7 @@ import {
 import { createJourneyRunner } from '../flows/journeyFlows'
 import { useSpeech } from '../hooks/useSpeech'
 import { isAiChatEnabled, transcribeAudio } from '../services/liaApi'
+import { canUseMicrophone, getRecorderFormat } from '../utils/voiceRecorder'
 import { stripHtml } from '../utils/html'
 import { formatTime, uid } from '../utils/time'
 import type { ChatApi, ChatMessage, ScreenId } from '../types/chat'
@@ -30,6 +31,7 @@ interface LiaContextValue {
   psychOpen: boolean
   mapBadge: boolean
   isRecording: boolean
+  isTranscribing: boolean
   goToChat: () => void
   showScreen: (id: ScreenId) => void
   toggleAudio: () => void
@@ -62,11 +64,14 @@ export function LiaProvider({ children }: { children: ReactNode }) {
   const [psychOpen, setPsychOpen] = useState(false)
   const [mapBadge, setMapBadge] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
+  const [isTranscribing, setIsTranscribing] = useState(false)
 
   const profileRef = useRef(profile)
   const pickerHandlers = useRef<Map<string, PickerHandler>>(new Map())
   const runnerRef = useRef<ReturnType<typeof createJourneyRunner> | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const mediaStreamRef = useRef<MediaStream | null>(null)
+  const recorderFormatRef = useRef<{ extension: string }>({ extension: 'webm' })
   const audioChunksRef = useRef<Blob[]>([])
   const messagesRef = useRef(messages)
   const typingSessionRef = useRef(0)
@@ -246,57 +251,105 @@ export function LiaProvider({ children }: { children: ReactNode }) {
   )
 
   const toggleMic = useCallback(async () => {
+    if (isTranscribing) return
+
     if (!isRecording) {
+      if (!canUseMicrophone()) {
+        chatApi.addAiMsg(
+          'Seu navegador não suporta gravação de áudio aqui. Escreva sua mensagem no campo de texto. 💙',
+          'Seu navegador não suporta gravação de áudio aqui. Escreva sua mensagem no campo de texto.',
+        )
+        return
+      }
+
+      const format = getRecorderFormat()
+      if (!format) {
+        chatApi.addAiMsg(
+          'Gravação de áudio não disponível neste dispositivo. Escreva sua mensagem no campo de texto. 💙',
+          'Gravação de áudio não disponível neste dispositivo. Escreva sua mensagem no campo de texto.',
+        )
+        return
+      }
+
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-        const recorder = new MediaRecorder(stream)
+        mediaStreamRef.current = stream
+        recorderFormatRef.current = format
+
+        const recorder = new MediaRecorder(stream, { mimeType: format.mimeType })
         mediaRecorderRef.current = recorder
         audioChunksRef.current = []
+
         recorder.addEventListener('dataavailable', (e) => {
           if (e.data.size > 0) audioChunksRef.current.push(e.data)
         })
+
         recorder.addEventListener('stop', () => {
           stream.getTracks().forEach((t) => t.stop())
+          mediaStreamRef.current = null
           setIsRecording(false)
-          const blob = new Blob(audioChunksRef.current, {
-            type: recorder.mimeType || 'audio/webm',
-          })
+
+          const blob = new Blob(audioChunksRef.current, { type: format.mimeType })
           audioChunksRef.current = []
 
-          if (isAiChatEnabled() && blob.size > 0) {
-            chatApi.runWithTyping(async () => {
-              try {
-                const text = await transcribeAudio(blob)
-                runnerRef.current?.sendMessage(text)
-              } catch {
-                chatApi.addAiMsg(
-                  'Não consegui entender o áudio. Pode tentar de novo ou escrever? 💙',
-                  'Não consegui entender o áudio. Pode tentar de novo ou escrever?',
-                )
-              }
-            })
+          if (blob.size < 800) {
+            chatApi.addAiMsg(
+              'Gravação muito curta. Segure o microfone um pouco mais e tente de novo. 💙',
+              'Gravação muito curta. Segure o microfone um pouco mais e tente de novo.',
+            )
             return
           }
 
-          chatApi.addUserMsg('🎙️ Mensagem de voz')
-          chatApi.showTyping(
-            () =>
+          if (!isAiChatEnabled()) {
+            chatApi.addUserMsg('🎙️ Mensagem de voz')
+            chatApi.showTyping(
+              () =>
+                chatApi.addAiMsg(
+                  'Recebi sua mensagem de voz! 💙 Pode também escrever se preferir.',
+                  'Recebi sua mensagem de voz. Estou aqui para você.',
+                ),
+              1400,
+            )
+            return
+          }
+
+          setIsTranscribing(true)
+          chatApi.runWithTyping(async () => {
+            try {
+              const text = await transcribeAudio(blob, `gravacao.${format.extension}`)
+              const trimmed = text.trim()
+              if (!trimmed) {
+                chatApi.addAiMsg(
+                  'Não consegui entender o áudio. Pode falar de novo ou escrever? 💙',
+                  'Não consegui entender o áudio. Pode falar de novo ou escrever?',
+                )
+                return
+              }
+              runnerRef.current?.sendMessage(trimmed)
+            } catch {
               chatApi.addAiMsg(
-                'Recebi sua mensagem de voz! 💙 Pode também escrever se preferir.',
-                'Recebi sua mensagem de voz. Estou aqui para você.',
-              ),
-            1400,
-          )
+                'Não consegui transcrever o áudio. Verifique sua conexão e tente de novo. 💙',
+                'Não consegui transcrever o áudio. Verifique sua conexão e tente de novo.',
+              )
+            } finally {
+              setIsTranscribing(false)
+            }
+          })
         })
-        recorder.start()
+
+        recorder.start(250)
         setIsRecording(true)
       } catch {
-        alert('Permita acesso ao microfone.')
+        chatApi.addAiMsg(
+          'Permita o acesso ao microfone nas configurações do navegador para enviar áudio. 💙',
+          'Permita o acesso ao microfone nas configurações do navegador para enviar áudio.',
+        )
       }
-    } else {
-      mediaRecorderRef.current?.stop()
+      return
     }
-  }, [chatApi, isRecording])
+
+    mediaRecorderRef.current?.stop()
+  }, [chatApi, isRecording, isTranscribing])
 
   const value: LiaContextValue = {
     screen,
@@ -308,6 +361,7 @@ export function LiaProvider({ children }: { children: ReactNode }) {
     psychOpen,
     mapBadge,
     isRecording,
+    isTranscribing,
     goToChat,
     showScreen,
     toggleAudio,
