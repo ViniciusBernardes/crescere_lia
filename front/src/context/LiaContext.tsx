@@ -13,6 +13,7 @@ import { useSpeech, type SpeechPlayback } from '../hooks/useSpeech'
 import { isAiChatEnabled, transcribeAudio } from '../services/liaApi'
 import { canUseMicrophone, createMediaRecorder, getRecorderFormat, micErrorMessage } from '../utils/voiceRecorder'
 import { stripHtml } from '../utils/html'
+import type { SpeechRate } from '../utils/speechRate'
 import { formatTime, uid } from '../utils/time'
 import type { ChatApi, ChatMessage, ScreenId } from '../types/chat'
 import { createEmptyProfile, type UserProfile } from '../types/profile'
@@ -46,6 +47,8 @@ interface LiaContextValue {
   seekSpeech: (text: string, ratio: number) => void
   isSpeechReady: (text: string) => boolean
   getSpeechDuration: (text: string) => number
+  speechRate: SpeechRate
+  cycleSpeechRate: () => void
   startJourney: (n: number) => void
 }
 
@@ -82,7 +85,7 @@ export function LiaProvider({ children }: { children: ReactNode }) {
   profileRef.current = profile
   messagesRef.current = messages
 
-  const { speak, listen, toggleSpeech, seekSpeech, unlockAudio, primeAudio, speechLoading, speechPlayback, isSpeechReady, getSpeechDuration } =
+  const { speak, listen, toggleSpeech, seekSpeech, unlockAudio, primeAudio, speechLoading, speechPlayback, isSpeechReady, getSpeechDuration, speechRate, cycleSpeechRate } =
     useSpeech(isAiChatEnabled())
   const speechPlayerEnabled = isAiChatEnabled()
 
@@ -361,6 +364,8 @@ export function LiaProvider({ children }: { children: ReactNode }) {
     seekSpeech,
     isSpeechReady,
     getSpeechDuration,
+    speechRate,
+    cycleSpeechRate,
     startJourney,
   }
 
