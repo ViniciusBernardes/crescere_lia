@@ -5,6 +5,8 @@ services:
       dockerfile: Dockerfile
     container_name: crescere-lia-back
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       NODE_ENV: production
       PORT: 3000
