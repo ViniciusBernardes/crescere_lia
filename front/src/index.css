@@ -20,6 +20,8 @@ html.admin-route body {
   height: 100dvh;
   overflow: hidden;
   overscroll-behavior: none;
+  font-family: 'Nunito', sans-serif;
+  color: #1e1530;
 }
 
 html.admin-route #root {

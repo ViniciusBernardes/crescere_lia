@@ -2,6 +2,8 @@ import OpenAI from "openai";
 import { toFile } from "openai/uploads";
 import { resolveOpenAiSettings } from "../config.js";
 import { buildChatMessages, toAudioText } from "../prompts/lia.js";
+import { resolveSystemPrompt } from "./promptConfig.js";
+import { resolveTenant } from "./tenants.js";
 import type {
   ChatHistoryMessage,
   ChatResponseBody,
@@ -35,7 +37,15 @@ export async function createChatReply(
 ): Promise<ChatResponseBody> {
   const openai = await getClient(tenantSlug);
   const settings = (await resolveOpenAiSettings(tenantSlug))!;
-  const messages = buildChatMessages(message, profile, history, journey);
+  const tenant = await resolveTenant(tenantSlug);
+  const systemPrompt = await resolveSystemPrompt(tenant.id);
+  const messages = buildChatMessages(
+    message,
+    profile,
+    history,
+    journey,
+    systemPrompt,
+  );
 
   const completion = await openai.chat.completions.create({
     model: settings.model,

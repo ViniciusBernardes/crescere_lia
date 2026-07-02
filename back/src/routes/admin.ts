@@ -7,8 +7,13 @@ import {
 } from "../config.js";
 import {
   getOpenAiCredentialsPublic,
+  importEnvOpenAiCredentials,
   saveOpenAiCredentials,
 } from "../services/credentials.js";
+import {
+  getPromptConfigPublic,
+  savePromptConfig,
+} from "../services/promptConfig.js";
 import {
   createTenant,
   getTenantBySlug,
@@ -94,6 +99,25 @@ adminRouter.put("/tenants/:slug/openai", async (req, res) => {
   }
 });
 
+adminRouter.post("/tenants/:slug/openai/import-env", async (req, res) => {
+  const tenant = await getTenantBySlug(req.params.slug);
+  if (!tenant) {
+    return res.status(404).json({
+      error: "tenant_not_found",
+      message: "Empresa não encontrada.",
+    });
+  }
+
+  try {
+    const result = await importEnvOpenAiCredentials(tenant.id);
+    res.json(result);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível importar.";
+    res.status(400).json({ error: "import_failed", message });
+  }
+});
+
 adminRouter.get("/openai", async (_req, res) => {
   const tenant = await resolveTenant(config.defaultTenantSlug);
   res.json(await getOpenAiCredentialsPublic(tenant.id));
@@ -123,4 +147,38 @@ adminRouter.get("/status", async (_req, res) => {
     model: settings?.model ?? null,
     credentialsSource: (await getOpenAiCredentialsSource(tenant.slug)) ?? "none",
   });
+});
+
+adminRouter.get("/tenants/:slug/prompt", async (req, res) => {
+  const tenant = await getTenantBySlug(req.params.slug);
+  if (!tenant) {
+    return res.status(404).json({
+      error: "tenant_not_found",
+      message: "Empresa não encontrada.",
+    });
+  }
+  res.json(await getPromptConfigPublic(tenant.id));
+});
+
+adminRouter.put("/tenants/:slug/prompt", async (req, res) => {
+  const tenant = await getTenantBySlug(req.params.slug);
+  if (!tenant) {
+    return res.status(404).json({
+      error: "tenant_not_found",
+      message: "Empresa não encontrada.",
+    });
+  }
+
+  const body = req.body as Record<string, unknown>;
+  const systemPrompt =
+    typeof body.systemPrompt === "string" ? body.systemPrompt : "";
+
+  try {
+    const result = await savePromptConfig(tenant.id, systemPrompt);
+    res.json(result);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível salvar o prompt.";
+    res.status(400).json({ error: "save_failed", message });
+  }
 });

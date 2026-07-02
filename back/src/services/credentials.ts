@@ -11,11 +11,15 @@ export interface OpenAiCredentials {
   temperature: number;
 }
 
+export type CredentialsSource = "database" | "env" | "none";
+
 export interface OpenAiCredentialsPublic {
   tenantId: string;
   tenantName: string;
   tenantSlug: string;
   configured: boolean;
+  storedInDatabase: boolean;
+  credentialsSource: CredentialsSource;
   apiKeyMasked: string | null;
   model: string;
   whisperModel: string;
@@ -61,6 +65,55 @@ function serializeCredentials(creds: OpenAiCredentials): string {
 function formatUpdatedAt(value: Date | string | null | undefined): string | null {
   if (!value) return null;
   return value instanceof Date ? value.toISOString() : String(value);
+}
+
+function readEnvApiKey(): string {
+  return process.env.OPENAI_API_KEY?.trim() || "";
+}
+
+function readEnvDefaults(): Omit<OpenAiCredentials, "apiKey"> {
+  return {
+    model: process.env.OPENAI_MODEL?.trim() || DEFAULTS.model,
+    whisperModel:
+      process.env.OPENAI_WHISPER_MODEL?.trim() || DEFAULTS.whisperModel,
+    maxTokens: Number(process.env.OPENAI_MAX_TOKENS) || DEFAULTS.maxTokens,
+    temperature:
+      process.env.OPENAI_TEMPERATURE !== undefined
+        ? Number(process.env.OPENAI_TEMPERATURE)
+        : DEFAULTS.temperature,
+  };
+}
+
+function buildPublicCredentials(
+  tenant: { id: string; name: string; slug: string },
+  parsed: Partial<OpenAiCredentials> | null,
+  updatedAt: string | null,
+): OpenAiCredentialsPublic {
+  const dbApiKey = parsed?.apiKey?.trim() || "";
+  const envApiKey = readEnvApiKey();
+  const storedInDatabase = dbApiKey.length > 0;
+  const configured = storedInDatabase || envApiKey.length > 0;
+  const credentialsSource: CredentialsSource = storedInDatabase
+    ? "database"
+    : envApiKey
+      ? "env"
+      : "none";
+  const activeKey = storedInDatabase ? dbApiKey : envApiKey;
+
+  return {
+    tenantId: tenant.id,
+    tenantName: tenant.name,
+    tenantSlug: tenant.slug,
+    configured,
+    storedInDatabase,
+    credentialsSource,
+    apiKeyMasked: activeKey ? maskSecret(activeKey) : null,
+    model: parsed?.model || readEnvDefaults().model,
+    whisperModel: parsed?.whisperModel || readEnvDefaults().whisperModel,
+    maxTokens: parsed?.maxTokens || readEnvDefaults().maxTokens,
+    temperature: parsed?.temperature ?? readEnvDefaults().temperature,
+    updatedAt,
+  };
 }
 
 export async function getOpenAiCredentials(
@@ -120,42 +173,22 @@ export async function getOpenAiCredentialsPublic(
 
   const row = rows[0];
   if (!row) {
-    return {
-      tenantId: tenant.id,
-      tenantName: tenant.name,
-      tenantSlug: tenant.slug,
-      configured: false,
-      apiKeyMasked: null,
-      ...DEFAULTS,
-      updatedAt: null,
-    };
+    return buildPublicCredentials(tenant, null, null);
   }
 
   try {
     const parsed = parseStoredCredentials(row.value);
-    const apiKey = parsed.apiKey?.trim() || "";
-    return {
-      tenantId: tenant.id,
-      tenantName: tenant.name,
-      tenantSlug: tenant.slug,
-      configured: apiKey.length > 0,
-      apiKeyMasked: apiKey ? maskSecret(apiKey) : null,
-      model: parsed.model || DEFAULTS.model,
-      whisperModel: parsed.whisperModel || DEFAULTS.whisperModel,
-      maxTokens: parsed.maxTokens || DEFAULTS.maxTokens,
-      temperature: parsed.temperature ?? DEFAULTS.temperature,
-      updatedAt: formatUpdatedAt(row.updated_at),
-    };
+    return buildPublicCredentials(
+      tenant,
+      parsed,
+      formatUpdatedAt(row.updated_at),
+    );
   } catch {
-    return {
-      tenantId: tenant.id,
-      tenantName: tenant.name,
-      tenantSlug: tenant.slug,
-      configured: false,
-      apiKeyMasked: null,
-      ...DEFAULTS,
-      updatedAt: formatUpdatedAt(row.updated_at),
-    };
+    return buildPublicCredentials(
+      tenant,
+      null,
+      formatUpdatedAt(row.updated_at),
+    );
   }
 }
 
@@ -198,6 +231,23 @@ export async function saveOpenAiCredentials(
 
   cache.set(cacheKey(tenantId), next);
   return getOpenAiCredentialsPublic(tenantId);
+}
+
+export async function importEnvOpenAiCredentials(
+  tenantId: string,
+): Promise<OpenAiCredentialsPublic> {
+  const apiKey = readEnvApiKey();
+  if (!apiKey) {
+    throw new Error(
+      "Nenhuma OPENAI_API_KEY definida no servidor (.env). Cole a chave manualmente.",
+    );
+  }
+
+  const envDefaults = readEnvDefaults();
+  return saveOpenAiCredentials(tenantId, {
+    apiKey,
+    ...envDefaults,
+  });
 }
 
 export function clearCredentialsCache(tenantId?: string) {

@@ -75,12 +75,13 @@ function getEnvOpenAiCredentials(): OpenAiCredentials | null {
 export async function getOpenAiCredentialsSource(
   tenantSlug?: string,
 ): Promise<"env" | "database" | null> {
-  if (getEnvOpenAiCredentials()) return "env";
   const tenant = tenantSlug
     ? await resolveTenant(tenantSlug)
     : await resolveTenant();
   const creds = await getOpenAiCredentials(tenant.id);
-  return creds?.apiKey ? "database" : null;
+  if (creds?.apiKey) return "database";
+  if (getEnvOpenAiCredentials()) return "env";
+  return null;
 }
 
 function withTtsSettings(
@@ -98,18 +99,21 @@ function withTtsSettings(
 export async function getOpenAiConfigForTenant(
   tenantSlug?: string,
 ): Promise<(OpenAiRuntimeSettings & { tenantSlug: string }) | null> {
-  const envCreds = getEnvOpenAiCredentials();
   const tenant = tenantSlug
     ? await resolveTenant(tenantSlug)
     : await resolveTenant();
 
+  const creds = await getOpenAiCredentials(tenant.id);
+  if (creds?.apiKey) {
+    return withTtsSettings(creds, tenant.slug);
+  }
+
+  const envCreds = getEnvOpenAiCredentials();
   if (envCreds) {
     return withTtsSettings(envCreds, tenant.slug);
   }
 
-  const creds = await getOpenAiCredentials(tenant.id);
-  if (!creds) return null;
-  return withTtsSettings(creds, tenant.slug);
+  return null;
 }
 
 export async function isOpenAiConfigured(tenantSlug?: string): Promise<boolean> {

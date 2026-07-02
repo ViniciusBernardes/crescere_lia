@@ -14,10 +14,34 @@ Plataforma de apoio a cuidadores de crianças com TEA — assistente virtual **L
 docker compose up
 ```
 
-- Front: http://localhost:8080
+- Front (Docker): http://localhost:8081
+- Front (`npm run dev`): http://localhost:8080
 - Back (Docker local): http://localhost:3001/api/health
+- Back (`npm run dev`): http://localhost:3000/api/health
 
 Produção (AWS): **porta 80/443** — sem alteração (`docker-compose.prod.yml`).
+
+### Se não abrir / erro de conexão
+
+A LIA **depende do MySQL do telemedicina**. Se o back não subir:
+
+```bash
+# 1. MySQL
+cd ~/Documentos/telemedicina && docker compose up -d mysql
+
+# 2. Migrations (primeira vez ou após atualizar)
+cd ~/Documentos/telemedicina
+docker compose up -d mysql redis
+docker compose run --rm back php artisan migrate --force
+
+# 3. LIA (sem Docker — recomendado para dev)
+cd ~/Documentos/crescere_lia
+npm run dev
+```
+
+**Porta 8080 ocupada?** Use Docker da LIA em http://localhost:8081 ou pare o processo na 8080.
+
+**Porta 3000 ocupada?** Pare o Docker da LIA (`docker compose down`) antes de `npm run dev` no back.
 
 Ou sem Docker (dois terminais ou um só na raiz):
 
@@ -50,8 +74,9 @@ A LIA usa o **mesmo MySQL** do projeto `telemedicina`:
 No projeto telemedicina, rode a migration:
 
 ```bash
-cd ../telemedicina/back
-php artisan migrate
+cd ../telemedicina
+docker compose up -d mysql redis
+docker compose run --rm back php artisan migrate --force
 ```
 
 Configure o `back/.env` da LIA com as mesmas credenciais (`DB_HOST`, `DB_DATABASE`, etc.).

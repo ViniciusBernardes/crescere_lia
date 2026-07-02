@@ -10,6 +10,8 @@ export interface OpenAiCredentialsPublic {
   tenantName: string
   tenantSlug: string
   configured: boolean
+  storedInDatabase: boolean
+  credentialsSource: 'database' | 'env' | 'none'
   apiKeyMasked: string | null
   model: string
   whisperModel: string
@@ -24,6 +26,16 @@ export interface SaveOpenAiPayload {
   whisperModel: string
   maxTokens: number
   temperature: number
+}
+
+export interface PromptConfigPublic {
+  tenantId: string
+  tenantName: string
+  tenantSlug: string
+  systemPrompt: string
+  isCustom: boolean
+  defaultPrompt: string
+  updatedAt: string | null
 }
 
 const API_BASE = '/api/admin'
@@ -85,5 +97,28 @@ export async function saveOpenAiCredentials(
   return adminFetch<OpenAiCredentialsPublic>(`/tenants/${encodeURIComponent(slug)}/openai`, {
     method: 'PUT',
     body: JSON.stringify(payload),
+  })
+}
+
+export async function importEnvOpenAiCredentials(
+  slug: string,
+): Promise<OpenAiCredentialsPublic> {
+  return adminFetch<OpenAiCredentialsPublic>(
+    `/tenants/${encodeURIComponent(slug)}/openai/import-env`,
+    { method: 'POST' },
+  )
+}
+
+export async function fetchPromptConfig(slug: string): Promise<PromptConfigPublic> {
+  return adminFetch<PromptConfigPublic>(`/tenants/${encodeURIComponent(slug)}/prompt`)
+}
+
+export async function savePromptConfig(
+  slug: string,
+  systemPrompt: string,
+): Promise<PromptConfigPublic> {
+  return adminFetch<PromptConfigPublic>(`/tenants/${encodeURIComponent(slug)}/prompt`, {
+    method: 'PUT',
+    body: JSON.stringify({ systemPrompt }),
   })
 }
