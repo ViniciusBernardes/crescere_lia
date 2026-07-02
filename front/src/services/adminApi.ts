@@ -1,3 +1,9 @@
+import {
+  AdminAuthError,
+  clearAdminToken,
+  getAdminToken,
+} from './adminAuth'
+
 export interface Tenant {
   id: string
   name: string
@@ -41,12 +47,14 @@ export interface PromptConfigPublic {
 const API_BASE = '/api/admin'
 
 async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = getAdminToken()
   let res: Response
   try {
     res = await fetch(`${API_BASE}${path}`, {
       ...init,
       headers: {
         'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(init?.headers || {}),
       },
     })
@@ -65,6 +73,11 @@ async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
         ? 'Resposta inválida do servidor.'
         : `Erro (${res.status}) — verifique se o back está rodando em http://localhost:3000`,
     )
+  }
+
+  if (res.status === 401) {
+    clearAdminToken()
+    throw new AdminAuthError(data.message || 'Sessão expirada. Faça login novamente.')
   }
 
   if (!res.ok) {

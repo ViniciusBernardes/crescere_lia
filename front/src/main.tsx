@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
-import { AdminScreen } from './screens/AdminScreen.tsx'
+import { AdminApp } from './screens/AdminApp.tsx'
 
 const isAdminRoute = window.location.pathname.startsWith('/admin')
 
@@ -14,7 +14,7 @@ const root = createRoot(document.getElementById('root')!)
 if (isAdminRoute) {
   root.render(
     <StrictMode>
-      <AdminScreen />
+      <AdminApp />
     </StrictMode>,
   )
 } else {

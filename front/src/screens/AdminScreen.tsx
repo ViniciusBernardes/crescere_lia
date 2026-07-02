@@ -11,7 +11,17 @@ import {
   type PromptConfigPublic,
   type Tenant,
 } from '../services/adminApi'
+import { AdminAuthError, clearAdminToken } from '../services/adminAuth'
 import '../styles/admin.css'
+
+function handleAdminError(err: unknown, onLogout?: () => void): string {
+  if (err instanceof AdminAuthError) {
+    clearAdminToken()
+    onLogout?.()
+    return 'Sessão expirada. Faça login novamente.'
+  }
+  return err instanceof Error ? err.message : 'Erro'
+}
 
 function CardHead({
   icon,
@@ -38,7 +48,7 @@ function CardHead({
   )
 }
 
-export function AdminScreen() {
+export function AdminScreen({ onLogout }: { onLogout?: () => void }) {
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [savingPrompt, setSavingPrompt] = useState(false)
@@ -82,17 +92,17 @@ export function AdminScreen() {
       setTemperature(openAiData.temperature)
       setSystemPrompt(promptData.systemPrompt)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar')
+      setError(handleAdminError(err, onLogout))
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [onLogout])
 
   useEffect(() => {
     loadTenants().catch((err) => {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar empresas')
+      setError(handleAdminError(err, onLogout))
     })
-  }, [loadTenants])
+  }, [loadTenants, onLogout])
 
   useEffect(() => {
     if (!selectedSlug) return
@@ -112,7 +122,7 @@ export function AdminScreen() {
       setNewTenantSlug('')
       setSuccess(`Empresa "${tenant.name}" criada.`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao criar empresa')
+      setError(handleAdminError(err, onLogout))
     } finally {
       setLoading(false)
     }
@@ -136,7 +146,7 @@ export function AdminScreen() {
       setApiKey('')
       setSuccess(`Credenciais OpenAI salvas para ${data.tenantName}.`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao salvar')
+      setError(handleAdminError(err, onLogout))
     } finally {
       setSaving(false)
     }
@@ -157,7 +167,7 @@ export function AdminScreen() {
       setApiKey('')
       setSuccess(`Chave do servidor cadastrada no banco para ${data.tenantName}.`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao importar chave')
+      setError(handleAdminError(err, onLogout))
     } finally {
       setSaving(false)
     }
@@ -175,7 +185,7 @@ export function AdminScreen() {
       setSystemPrompt(data.systemPrompt)
       setSuccess(`Prompt de atendimento salvo para ${data.tenantName}.`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao salvar prompt')
+      setError(handleAdminError(err, onLogout))
     } finally {
       setSavingPrompt(false)
     }
@@ -197,7 +207,7 @@ export function AdminScreen() {
       setSystemPrompt(data.systemPrompt)
       setSuccess(`Prompt restaurado para o padrão da Lia (${data.tenantName}).`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao restaurar prompt')
+      setError(handleAdminError(err, onLogout))
     } finally {
       setSavingPrompt(false)
     }
@@ -231,6 +241,11 @@ export function AdminScreen() {
               <strong>Crescere LIA</strong>
             </div>
           </div>
+          {onLogout && (
+            <button type="button" className="admin-btn admin-btn-ghost admin-topbar-logout" onClick={onLogout}>
+              Sair
+            </button>
+          )}
         </div>
       </header>
 

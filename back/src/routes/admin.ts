@@ -1,5 +1,12 @@
 import { Router } from "express";
 import {
+  createSessionToken,
+  isAdminAuthConfigured,
+  requireAdmin,
+  validateAdminLogin,
+  verifySessionToken,
+} from "../middleware/adminAuth.js";
+import {
   config,
   getOpenAiCredentialsSource,
   isOpenAiConfigured,
@@ -22,6 +29,57 @@ import {
 } from "../services/tenants.js";
 
 export const adminRouter = Router();
+
+adminRouter.post("/login", (req, res) => {
+  if (!isAdminAuthConfigured()) {
+    return res.status(503).json({
+      error: "admin_not_configured",
+      message:
+        "Painel admin não configurado. Defina ADMIN_USERNAME e ADMIN_PASSWORD no servidor.",
+    });
+  }
+
+  const body = req.body as Record<string, unknown>;
+  const username = typeof body.username === "string" ? body.username.trim() : "";
+  const password = typeof body.password === "string" ? body.password : "";
+
+  if (!username || !password) {
+    return res.status(400).json({
+      error: "invalid_credentials",
+      message: "Informe usuário e senha.",
+    });
+  }
+
+  if (!validateAdminLogin(username, password)) {
+    return res.status(401).json({
+      error: "unauthorized",
+      message: "Usuário ou senha inválidos.",
+    });
+  }
+
+  res.json({
+    ok: true,
+    token: createSessionToken(username),
+    username,
+  });
+});
+
+adminRouter.use(requireAdmin);
+
+adminRouter.get("/session", (req, res) => {
+  const header = req.headers.authorization || "";
+  const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
+  const username = token ? verifySessionToken(token) : null;
+
+  if (!username) {
+    return res.status(401).json({
+      error: "unauthorized",
+      message: "Sessão expirada.",
+    });
+  }
+
+  res.json({ ok: true, username });
+});
 
 adminRouter.post("/verify", (_req, res) => {
   res.json({ ok: true });

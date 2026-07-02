@@ -26,4 +26,4 @@ echo ""
 echo "Deploy concluído."
 echo "  App:  https://${DOMAIN}"
 echo "  API:  https://${DOMAIN}/api/health"
-docker_compose -f docker-compose.prod.yml ps
+docker_compose -f docker-compose.prod.yml --env-file "$ENV_FILE" ps

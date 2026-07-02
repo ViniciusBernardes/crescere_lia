@@ -46,7 +46,7 @@ npm run dev
 Ou sem Docker (dois terminais ou um só na raiz):
 
 ```bash
-cd back && npm install && cp .env.example .env   # ADMIN_TOKEN e CREDENTIALS_ENCRYPTION_KEY
+cd back && npm install && cp .env.example .env   # ADMIN_USERNAME e ADMIN_PASSWORD
 cd front && npm install
 
 # Opção A — um comando (raiz do projeto):
