@@ -8,7 +8,11 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-      DATA_DIR: /app/data
+      DB_HOST: ${DB_HOST:?Defina DB_HOST no .env.production}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_DATABASE: ${DB_DATABASE:?Defina DB_DATABASE no .env.production}
+      DB_USERNAME: ${DB_USERNAME:?Defina DB_USERNAME no .env.production}
+      DB_PASSWORD: ${DB_PASSWORD:?Defina DB_PASSWORD no .env.production}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
       OPENAI_WHISPER_MODEL: ${OPENAI_WHISPER_MODEL:-whisper-1}
@@ -18,8 +22,6 @@ services:
       OPENAI_TTS_VOICE: ${OPENAI_TTS_VOICE:-nova}
       DEFAULT_TENANT_SLUG: ${DEFAULT_TENANT_SLUG:-crescere}
       DEFAULT_TENANT_NAME: ${DEFAULT_TENANT_NAME:-Crescere}
-    volumes:
-      - lia_back_data:/app/data
     expose:
       - "3000"
     networks:
@@ -65,4 +67,3 @@ networks:
 volumes:
   caddy_data:
   caddy_config:
-  lia_back_data:

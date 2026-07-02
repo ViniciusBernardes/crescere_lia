@@ -11,8 +11,8 @@ import type {
 
 const clients = new Map<string, OpenAI>();
 
-function getClient(tenantSlug: string): OpenAI {
-  const settings = resolveOpenAiSettings(tenantSlug);
+async function getClient(tenantSlug: string): Promise<OpenAI> {
+  const settings = await resolveOpenAiSettings(tenantSlug);
   if (!settings?.apiKey) {
     throw new Error("Credenciais OpenAI não configuradas para esta empresa");
   }
@@ -33,8 +33,8 @@ export async function createChatReply(
   history: ChatHistoryMessage[] = [],
   journey?: JourneyContext,
 ): Promise<ChatResponseBody> {
-  const openai = getClient(tenantSlug);
-  const settings = resolveOpenAiSettings(tenantSlug)!;
+  const openai = await getClient(tenantSlug);
+  const settings = (await resolveOpenAiSettings(tenantSlug))!;
   const messages = buildChatMessages(message, profile, history, journey);
 
   const completion = await openai.chat.completions.create({
@@ -59,8 +59,8 @@ export async function synthesizeSpeech(
   tenantSlug: string,
   text: string,
 ): Promise<Buffer> {
-  const openai = getClient(tenantSlug);
-  const settings = resolveOpenAiSettings(tenantSlug)!;
+  const openai = await getClient(tenantSlug);
+  const settings = (await resolveOpenAiSettings(tenantSlug))!;
 
   const speech = await openai.audio.speech.create({
     model: settings.ttsModel,
@@ -77,8 +77,8 @@ export async function transcribeAudio(
   mimeType: string,
   filename = "audio.webm",
 ): Promise<string> {
-  const openai = getClient(tenantSlug);
-  const settings = resolveOpenAiSettings(tenantSlug)!;
+  const openai = await getClient(tenantSlug);
+  const settings = (await resolveOpenAiSettings(tenantSlug))!;
   const file = await toFile(buffer, filename, { type: mimeType });
 
   const result = await openai.audio.transcriptions.create({

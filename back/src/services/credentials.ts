@@ -1,4 +1,5 @@
-import { getDb } from "../db/database.js";
+import type { RowDataPacket } from "mysql2/promise";
+import { getPool } from "../db/database.js";
 import { maskSecret } from "./crypto.js";
 import { getTenantById } from "./tenants.js";
 
@@ -32,8 +33,21 @@ const DEFAULTS: Omit<OpenAiCredentials, "apiKey"> = {
 
 const cache = new Map<string, OpenAiCredentials | null>();
 
+interface ConfigRow extends RowDataPacket {
+  value: string;
+  updated_at: Date | string;
+}
+
 function cacheKey(tenantId: string) {
   return tenantId;
+}
+
+function parseCompanyId(tenantId: string): number {
+  const companyId = Number(tenantId);
+  if (!Number.isFinite(companyId) || companyId <= 0) {
+    throw new Error("Empresa inválida");
+  }
+  return companyId;
 }
 
 function parseStoredCredentials(value: string): OpenAiCredentials {
@@ -44,16 +58,27 @@ function serializeCredentials(creds: OpenAiCredentials): string {
   return JSON.stringify(creds);
 }
 
-export function getOpenAiCredentials(tenantId: string): OpenAiCredentials | null {
+function formatUpdatedAt(value: Date | string | null | undefined): string | null {
+  if (!value) return null;
+  return value instanceof Date ? value.toISOString() : String(value);
+}
+
+export async function getOpenAiCredentials(
+  tenantId: string,
+): Promise<OpenAiCredentials | null> {
   const key = cacheKey(tenantId);
   if (cache.has(key)) return cache.get(key) ?? null;
 
-  const row = getDb()
-    .prepare(
-      "SELECT value, updated_at FROM tenant_openai_config WHERE tenant_id = ?",
-    )
-    .get(tenantId) as { value: string; updated_at: string } | undefined;
+  const companyId = parseCompanyId(tenantId);
+  const [rows] = await getPool().execute<ConfigRow[]>(
+    `SELECT value, updated_at
+     FROM lia_openai_config
+     WHERE company_id = ?
+     LIMIT 1`,
+    [companyId],
+  );
 
+  const row = rows[0];
   if (!row) {
     cache.set(key, null);
     return null;
@@ -76,20 +101,24 @@ export function getOpenAiCredentials(tenantId: string): OpenAiCredentials | null
   }
 }
 
-export function getOpenAiCredentialsPublic(
+export async function getOpenAiCredentialsPublic(
   tenantId: string,
-): OpenAiCredentialsPublic {
-  const tenant = getTenantById(tenantId);
+): Promise<OpenAiCredentialsPublic> {
+  const tenant = await getTenantById(tenantId);
   if (!tenant) {
     throw new Error("Empresa não encontrada");
   }
 
-  const row = getDb()
-    .prepare(
-      "SELECT value, updated_at FROM tenant_openai_config WHERE tenant_id = ?",
-    )
-    .get(tenantId) as { value: string; updated_at: string } | undefined;
+  const companyId = parseCompanyId(tenantId);
+  const [rows] = await getPool().execute<ConfigRow[]>(
+    `SELECT value, updated_at
+     FROM lia_openai_config
+     WHERE company_id = ?
+     LIMIT 1`,
+    [companyId],
+  );
 
+  const row = rows[0];
   if (!row) {
     return {
       tenantId: tenant.id,
@@ -115,7 +144,7 @@ export function getOpenAiCredentialsPublic(
       whisperModel: parsed.whisperModel || DEFAULTS.whisperModel,
       maxTokens: parsed.maxTokens || DEFAULTS.maxTokens,
       temperature: parsed.temperature ?? DEFAULTS.temperature,
-      updatedAt: row.updated_at,
+      updatedAt: formatUpdatedAt(row.updated_at),
     };
   } catch {
     return {
@@ -125,19 +154,19 @@ export function getOpenAiCredentialsPublic(
       configured: false,
       apiKeyMasked: null,
       ...DEFAULTS,
-      updatedAt: row.updated_at,
+      updatedAt: formatUpdatedAt(row.updated_at),
     };
   }
 }
 
-export function saveOpenAiCredentials(
+export async function saveOpenAiCredentials(
   tenantId: string,
   input: Partial<OpenAiCredentials> & { apiKey?: string },
-): OpenAiCredentialsPublic {
-  const tenant = getTenantById(tenantId);
+): Promise<OpenAiCredentialsPublic> {
+  const tenant = await getTenantById(tenantId);
   if (!tenant) throw new Error("Empresa não encontrada");
 
-  const current = getOpenAiCredentials(tenantId);
+  const current = await getOpenAiCredentials(tenantId);
   const apiKey = input.apiKey?.trim() || current?.apiKey || "";
 
   if (!apiKey) {
@@ -156,16 +185,16 @@ export function saveOpenAiCredentials(
         : (current?.temperature ?? DEFAULTS.temperature),
   };
 
+  const companyId = parseCompanyId(tenantId);
   const stored = serializeCredentials(next);
-  getDb()
-    .prepare(
-      `INSERT INTO tenant_openai_config (tenant_id, value, updated_at)
-       VALUES (?, ?, datetime('now'))
-       ON CONFLICT(tenant_id) DO UPDATE SET
-         value = excluded.value,
-         updated_at = datetime('now')`,
-    )
-    .run(tenantId, stored);
+  await getPool().execute(
+    `INSERT INTO lia_openai_config (company_id, value, updated_at)
+     VALUES (?, ?, NOW())
+     ON DUPLICATE KEY UPDATE
+       value = VALUES(value),
+       updated_at = NOW()`,
+    [companyId, stored],
+  );
 
   cache.set(cacheKey(tenantId), next);
   return getOpenAiCredentialsPublic(tenantId);

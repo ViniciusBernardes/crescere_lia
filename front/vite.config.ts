@@ -6,7 +6,8 @@ export default defineConfig({
   appType: 'spa',
   server: {
     host: true,
-    port: 5173,
+    // Somente desenvolvimento local (produção usa Nginx na porta 80).
+    port: 8080,
     proxy: {
       '/api': {
         target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:3000',

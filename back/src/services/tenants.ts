@@ -1,5 +1,5 @@
-import { randomUUID } from "node:crypto";
-import { getDb } from "../db/database.js";
+import type { RowDataPacket, ResultSetHeader } from "mysql2/promise";
+import { getPool } from "../db/database.js";
 
 export interface Tenant {
   id: string;
@@ -8,52 +8,84 @@ export interface Tenant {
   createdAt: string;
 }
 
+interface CompanyRow extends RowDataPacket {
+  id: number;
+  name: string;
+  slug: string | null;
+  created_at: Date | string;
+}
+
 const DEFAULT_SLUG = process.env.DEFAULT_TENANT_SLUG?.trim() || "crescere";
 const DEFAULT_NAME = process.env.DEFAULT_TENANT_NAME?.trim() || "Crescere";
 
-export function ensureDefaultTenant(): Tenant {
-  const existing = getTenantBySlug(DEFAULT_SLUG);
+function mapCompany(row: CompanyRow): Tenant {
+  return {
+    id: String(row.id),
+    name: row.name,
+    slug: row.slug?.trim() || String(row.id),
+    createdAt:
+      row.created_at instanceof Date
+        ? row.created_at.toISOString()
+        : String(row.created_at),
+  };
+}
+
+export async function ensureDefaultTenant(): Promise<Tenant> {
+  const existing = await getTenantBySlug(DEFAULT_SLUG);
   if (existing) return existing;
 
-  const tenant: Tenant = {
-    id: randomUUID(),
-    name: DEFAULT_NAME,
-    slug: DEFAULT_SLUG,
-    createdAt: new Date().toISOString(),
-  };
+  const pool = getPool();
+  const [result] = await pool.execute<ResultSetHeader>(
+    `INSERT INTO companies (person_type, name, slug, plan_type, active, created_at, updated_at)
+     VALUES ('juridica', ?, ?, 'teste', 1, NOW(), NOW())`,
+    [DEFAULT_NAME, DEFAULT_SLUG],
+  );
 
-  getDb()
-    .prepare("INSERT INTO tenants (id, name, slug) VALUES (?, ?, ?)")
-    .run(tenant.id, tenant.name, tenant.slug);
+  const created = await getTenantById(String(result.insertId));
+  if (!created) {
+    throw new Error("Não foi possível criar a empresa padrão da Lia");
+  }
 
-  return tenant;
+  return created;
 }
 
-export function listTenants(): Tenant[] {
-  return getDb()
-    .prepare("SELECT id, name, slug, created_at as createdAt FROM tenants ORDER BY name")
-    .all() as Tenant[];
+export async function listTenants(): Promise<Tenant[]> {
+  const [rows] = await getPool().execute<CompanyRow[]>(
+    `SELECT id, name, slug, created_at
+     FROM companies
+     WHERE active = 1
+     ORDER BY name`,
+  );
+  return rows.map(mapCompany);
 }
 
-export function getTenantBySlug(slug: string): Tenant | null {
-  const row = getDb()
-    .prepare(
-      "SELECT id, name, slug, created_at as createdAt FROM tenants WHERE slug = ?",
-    )
-    .get(slug) as Tenant | undefined;
-  return row ?? null;
+export async function getTenantBySlug(slug: string): Promise<Tenant | null> {
+  const cleanSlug = slug.trim().toLowerCase();
+  const [rows] = await getPool().execute<CompanyRow[]>(
+    `SELECT id, name, slug, created_at
+     FROM companies
+     WHERE slug = ? AND active = 1
+     LIMIT 1`,
+    [cleanSlug],
+  );
+  return rows[0] ? mapCompany(rows[0]) : null;
 }
 
-export function getTenantById(id: string): Tenant | null {
-  const row = getDb()
-    .prepare(
-      "SELECT id, name, slug, created_at as createdAt FROM tenants WHERE id = ?",
-    )
-    .get(id) as Tenant | undefined;
-  return row ?? null;
+export async function getTenantById(id: string): Promise<Tenant | null> {
+  const companyId = Number(id);
+  if (!Number.isFinite(companyId) || companyId <= 0) return null;
+
+  const [rows] = await getPool().execute<CompanyRow[]>(
+    `SELECT id, name, slug, created_at
+     FROM companies
+     WHERE id = ? AND active = 1
+     LIMIT 1`,
+    [companyId],
+  );
+  return rows[0] ? mapCompany(rows[0]) : null;
 }
 
-export function createTenant(name: string, slug: string): Tenant {
+export async function createTenant(name: string, slug: string): Promise<Tenant> {
   const cleanName = name.trim();
   const cleanSlug = slug
     .trim()
@@ -64,19 +96,19 @@ export function createTenant(name: string, slug: string): Tenant {
   if (!cleanName) throw new Error("Nome da empresa é obrigatório");
   if (!cleanSlug) throw new Error("Identificador (slug) é obrigatório");
 
-  const exists = getTenantBySlug(cleanSlug);
+  const exists = await getTenantBySlug(cleanSlug);
   if (exists) throw new Error("Já existe uma empresa com este identificador");
 
-  const tenant: Tenant = {
-    id: randomUUID(),
-    name: cleanName,
-    slug: cleanSlug,
-    createdAt: new Date().toISOString(),
-  };
+  await getPool().execute(
+    `INSERT INTO companies (person_type, name, slug, plan_type, active, created_at, updated_at)
+     VALUES ('juridica', ?, ?, 'teste', 1, NOW(), NOW())`,
+    [cleanName, cleanSlug],
+  );
 
-  getDb()
-    .prepare("INSERT INTO tenants (id, name, slug) VALUES (?, ?, ?)")
-    .run(tenant.id, tenant.name, tenant.slug);
+  const tenant = await getTenantBySlug(cleanSlug);
+  if (!tenant) {
+    throw new Error("Não foi possível criar a empresa");
+  }
 
   return tenant;
 }
@@ -89,9 +121,11 @@ export function resolveTenantSlug(headerValue?: string | string[]): string {
   return DEFAULT_SLUG;
 }
 
-export function resolveTenant(headerValue?: string | string[]): Tenant {
+export async function resolveTenant(
+  headerValue?: string | string[],
+): Promise<Tenant> {
   const slug = resolveTenantSlug(headerValue);
-  const tenant = getTenantBySlug(slug);
+  const tenant = await getTenantBySlug(slug);
   if (!tenant) {
     throw new Error(`Empresa não encontrada: ${slug}`);
   }
