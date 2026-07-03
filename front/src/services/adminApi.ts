@@ -1,3 +1,9 @@
+import {
+  AdminAuthError,
+  clearAdminToken,
+  getAdminToken,
+} from './adminAuth'
+
 export interface Tenant {
   id: string
   name: string
@@ -10,6 +16,8 @@ export interface OpenAiCredentialsPublic {
   tenantName: string
   tenantSlug: string
   configured: boolean
+  storedInDatabase: boolean
+  credentialsSource: 'database' | 'env' | 'none'
   apiKeyMasked: string | null
   model: string
   whisperModel: string
@@ -26,15 +34,27 @@ export interface SaveOpenAiPayload {
   temperature: number
 }
 
+export interface PromptConfigPublic {
+  tenantId: string
+  tenantName: string
+  tenantSlug: string
+  systemPrompt: string
+  isCustom: boolean
+  defaultPrompt: string
+  updatedAt: string | null
+}
+
 const API_BASE = '/api/admin'
 
 async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = getAdminToken()
   let res: Response
   try {
     res = await fetch(`${API_BASE}${path}`, {
       ...init,
       headers: {
         'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(init?.headers || {}),
       },
     })
@@ -53,6 +73,11 @@ async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
         ? 'Resposta inválida do servidor.'
         : `Erro (${res.status}) — verifique se o back está rodando em http://localhost:3000`,
     )
+  }
+
+  if (res.status === 401) {
+    clearAdminToken()
+    throw new AdminAuthError(data.message || 'Sessão expirada. Faça login novamente.')
   }
 
   if (!res.ok) {
@@ -85,5 +110,28 @@ export async function saveOpenAiCredentials(
   return adminFetch<OpenAiCredentialsPublic>(`/tenants/${encodeURIComponent(slug)}/openai`, {
     method: 'PUT',
     body: JSON.stringify(payload),
+  })
+}
+
+export async function importEnvOpenAiCredentials(
+  slug: string,
+): Promise<OpenAiCredentialsPublic> {
+  return adminFetch<OpenAiCredentialsPublic>(
+    `/tenants/${encodeURIComponent(slug)}/openai/import-env`,
+    { method: 'POST' },
+  )
+}
+
+export async function fetchPromptConfig(slug: string): Promise<PromptConfigPublic> {
+  return adminFetch<PromptConfigPublic>(`/tenants/${encodeURIComponent(slug)}/prompt`)
+}
+
+export async function savePromptConfig(
+  slug: string,
+  systemPrompt: string,
+): Promise<PromptConfigPublic> {
+  return adminFetch<PromptConfigPublic>(`/tenants/${encodeURIComponent(slug)}/prompt`, {
+    method: 'PUT',
+    body: JSON.stringify({ systemPrompt }),
   })
 }

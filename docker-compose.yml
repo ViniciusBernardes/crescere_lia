@@ -1,3 +1,4 @@
+# Desenvolvimento local — portas do host (produção usa docker-compose.prod.yml na 80/443).
 services:
   back:
     build:
@@ -5,15 +6,20 @@ services:
       dockerfile: Dockerfile.dev
     container_name: crescere-lia-back
     ports:
-      - "3000:3000"
+      - "3001:3000"
     volumes:
       - ./back/src:/app/src
-      - lia_back_data:/app/data
     env_file:
       - ./back/.env
     environment:
       PORT: 3000
-      DATA_DIR: /app/data
+      DB_HOST: ${DB_HOST:-host.docker.internal}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_DATABASE: ${DB_DATABASE:-laravel}
+      DB_USERNAME: ${DB_USERNAME:-sail}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
   front:
@@ -22,7 +28,7 @@ services:
       dockerfile: Dockerfile.dev
     container_name: crescere-lia-front
     ports:
-      - "5173:5173"
+      - "8081:8080"
     volumes:
       - ./front/src:/app/src
       - ./front/index.html:/app/index.html
@@ -35,6 +41,3 @@ services:
     depends_on:
       - back
     restart: unless-stopped
-
-volumes:
-  lia_back_data:

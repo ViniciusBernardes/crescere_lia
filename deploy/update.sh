@@ -20,4 +20,4 @@ echo "==> Rebuild e restart..."
 docker_compose -f docker-compose.prod.yml --env-file "$ENV_FILE" up -d --build --remove-orphans
 
 echo "==> Pronto."
-docker_compose -f docker-compose.prod.yml ps
+docker_compose -f docker-compose.prod.yml --env-file "$ENV_FILE" ps

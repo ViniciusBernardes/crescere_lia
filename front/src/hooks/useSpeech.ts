@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { fetchSpeechAudio } from '../services/liaApi'
 import { cacheSpeech, getCachedSpeech } from '../services/ttsCache'
+import {
+  loadSpeechRate,
+  nextSpeechRate,
+  saveSpeechRate,
+  type SpeechRate,
+} from '../utils/speechRate'
 
 export function cleanSpeechText(text: string): string {
   return text.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()
@@ -76,6 +82,15 @@ export function useSpeech(useOpenAiVoice: boolean) {
   const [speechLoading, setSpeechLoading] = useState<string | null>(null)
   const [speechPlayback, setSpeechPlayback] = useState<SpeechPlayback>(emptyPlayback)
   const [readyVersion, setReadyVersion] = useState(0)
+  const [speechRate, setSpeechRate] = useState<SpeechRate>(() => loadSpeechRate())
+  const speechRateRef = useRef(speechRate)
+
+  speechRateRef.current = speechRate
+
+  const applySpeechRate = useCallback((audio: HTMLAudioElement) => {
+    audio.defaultPlaybackRate = speechRateRef.current
+    audio.playbackRate = speechRateRef.current
+  }, [])
 
   const syncFromElement = useCallback(() => {
     const audio = audioRef.current
@@ -114,6 +129,7 @@ export function useSpeech(useOpenAiVoice: boolean) {
     audio.style.display = 'none'
     document.body.appendChild(audio)
     audioRef.current = audio
+    applySpeechRate(audio)
 
     const unlock = document.createElement('audio')
     configureAudioElement(unlock)
@@ -122,17 +138,25 @@ export function useSpeech(useOpenAiVoice: boolean) {
     document.body.appendChild(unlock)
     unlockAudioRef.current = unlock
 
-    const onPlay = () => syncFromElement()
+    const onPlay = () => {
+      applySpeechRate(audio)
+      syncFromElement()
+    }
     const onPause = () => syncFromElement()
     const onTimeUpdate = () => syncFromElement()
     const onEnded = () => syncFromElement()
-    const onLoadedMetadata = () => syncFromElement()
+    const onLoadedMetadata = () => {
+      applySpeechRate(audio)
+      syncFromElement()
+    }
+    const onCanPlay = () => applySpeechRate(audio)
 
     audio.addEventListener('play', onPlay)
     audio.addEventListener('pause', onPause)
     audio.addEventListener('timeupdate', onTimeUpdate)
     audio.addEventListener('ended', onEnded)
     audio.addEventListener('loadedmetadata', onLoadedMetadata)
+    audio.addEventListener('canplay', onCanPlay)
 
     return () => {
       audio.removeEventListener('play', onPlay)
@@ -140,6 +164,7 @@ export function useSpeech(useOpenAiVoice: boolean) {
       audio.removeEventListener('timeupdate', onTimeUpdate)
       audio.removeEventListener('ended', onEnded)
       audio.removeEventListener('loadedmetadata', onLoadedMetadata)
+      audio.removeEventListener('canplay', onCanPlay)
       audio.pause()
       unlock.pause()
       document.body.removeChild(audio)
@@ -151,7 +176,7 @@ export function useSpeech(useOpenAiVoice: boolean) {
         objectUrlRef.current = null
       }
     }
-  }, [syncFromElement])
+  }, [syncFromElement, applySpeechRate])
 
   const rememberDuration = useCallback((key: string, duration: number) => {
     if (!duration || !Number.isFinite(duration)) return
@@ -183,7 +208,7 @@ export function useSpeech(useOpenAiVoice: boolean) {
     synthRef.current.cancel()
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.lang = 'pt-BR'
-    utterance.rate = 0.93
+    utterance.rate = Math.min(2, Math.max(0.6, speechRateRef.current))
     utterance.pitch = 1.05
 
     const voice = pickBrowserVoice(synthRef.current)
@@ -252,7 +277,12 @@ export function useSpeech(useOpenAiVoice: boolean) {
         if (seekTo > 0) {
           audio.currentTime = seekTo
         }
-        void audio.play().catch(() => {
+        applySpeechRate(audio)
+        void audio.play().then(() => {
+          if (requestId === requestIdRef.current) {
+            applySpeechRate(audio)
+          }
+        }).catch(() => {
           if (requestId === requestIdRef.current) {
             speakWithBrowserRef.current(text)
           }
@@ -267,6 +297,7 @@ export function useSpeech(useOpenAiVoice: boolean) {
       }
 
       audio.src = url
+      applySpeechRate(audio)
       audio.load()
 
       if (audio.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
@@ -274,12 +305,24 @@ export function useSpeech(useOpenAiVoice: boolean) {
       } else {
         audio.oncanplay = () => {
           audio.oncanplay = null
+          applySpeechRate(audio)
           startPlayback()
         }
       }
     },
-    [revokeObjectUrl],
+    [revokeObjectUrl, applySpeechRate],
   )
+
+  const cycleSpeechRate = useCallback(() => {
+    setSpeechRate((current) => {
+      const next = nextSpeechRate(current)
+      saveSpeechRate(next)
+      if (audioRef.current) {
+        applySpeechRate(audioRef.current)
+      }
+      return next
+    })
+  }, [applySpeechRate])
 
   const playText = useCallback(
     (text: string, options?: { manual?: boolean; preloaded?: Blob }) => {
@@ -349,7 +392,10 @@ export function useSpeech(useOpenAiVoice: boolean) {
           audio.currentTime = 0
         }
 
-        void audio.play().catch(() => {
+        applySpeechRate(audio)
+        void audio.play().then(() => {
+          applySpeechRate(audio)
+        }).catch(() => {
           const cached = getCachedSpeech(clean)
           if (!cached) {
             speakWithBrowserRef.current(clean)
@@ -374,7 +420,7 @@ export function useSpeech(useOpenAiVoice: boolean) {
 
       playText(text, { manual: true })
     },
-    [playText, primeAudio, loadTrack, registerBlob, stopPlayback, syncFromElement],
+    [playText, primeAudio, loadTrack, registerBlob, stopPlayback, syncFromElement, applySpeechRate],
   )
 
   const seekSpeech = useCallback(
@@ -434,6 +480,8 @@ export function useSpeech(useOpenAiVoice: boolean) {
     cancel: stopPlayback,
     unlockAudio,
     primeAudio,
+    speechRate,
+    cycleSpeechRate,
     speechLoading,
     speechPlayback,
     isSpeechReady,

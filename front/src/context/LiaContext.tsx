@@ -11,8 +11,9 @@ import {
 import { createJourneyRunner } from '../flows/journeyFlows'
 import { useSpeech, type SpeechPlayback } from '../hooks/useSpeech'
 import { isAiChatEnabled, transcribeAudio } from '../services/liaApi'
-import { canUseMicrophone, getRecorderFormat } from '../utils/voiceRecorder'
+import { canUseMicrophone, createMediaRecorder, getRecorderFormat, micErrorMessage } from '../utils/voiceRecorder'
 import { stripHtml } from '../utils/html'
+import type { SpeechRate } from '../utils/speechRate'
 import { formatTime, uid } from '../utils/time'
 import type { ChatApi, ChatMessage, ScreenId } from '../types/chat'
 import { createEmptyProfile, type UserProfile } from '../types/profile'
@@ -46,6 +47,8 @@ interface LiaContextValue {
   seekSpeech: (text: string, ratio: number) => void
   isSpeechReady: (text: string) => boolean
   getSpeechDuration: (text: string) => number
+  speechRate: SpeechRate
+  cycleSpeechRate: () => void
   startJourney: (n: number) => void
 }
 
@@ -77,11 +80,12 @@ export function LiaProvider({ children }: { children: ReactNode }) {
   const audioChunksRef = useRef<Blob[]>([])
   const messagesRef = useRef(messages)
   const typingSessionRef = useRef(0)
+  const lastMicErrorRef = useRef<string | null>(null)
 
   profileRef.current = profile
   messagesRef.current = messages
 
-  const { speak, listen, toggleSpeech, seekSpeech, unlockAudio, primeAudio, speechLoading, speechPlayback, isSpeechReady, getSpeechDuration } =
+  const { speak, listen, toggleSpeech, seekSpeech, unlockAudio, primeAudio, speechLoading, speechPlayback, isSpeechReady, getSpeechDuration, speechRate, cycleSpeechRate } =
     useSpeech(isAiChatEnabled())
   const speechPlayerEnabled = isAiChatEnabled()
 
@@ -91,6 +95,21 @@ export function LiaProvider({ children }: { children: ReactNode }) {
       return [...withoutTyping, msg]
     })
   }, [])
+
+  const addMicError = useCallback(
+    (spoken: string) => {
+      if (lastMicErrorRef.current === spoken) return
+      lastMicErrorRef.current = spoken
+      appendMessage({
+        id: uid(),
+        kind: 'ai',
+        html: spoken,
+        audioText: spoken.replace(/💙/g, '').trim(),
+        time: formatTime(),
+      })
+    },
+    [appendMessage],
+  )
 
   const showScreen = useCallback((id: ScreenId) => {
     setScreen(id)
@@ -243,10 +262,11 @@ export function LiaProvider({ children }: { children: ReactNode }) {
 
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+        lastMicErrorRef.current = null
         mediaStreamRef.current = stream
-        recorderFormatRef.current = format
 
-        const recorder = new MediaRecorder(stream, { mimeType: format.mimeType })
+        const { recorder, format: activeFormat } = createMediaRecorder(stream, format)
+        recorderFormatRef.current = activeFormat
         mediaRecorderRef.current = recorder
         audioChunksRef.current = []
 
@@ -259,7 +279,8 @@ export function LiaProvider({ children }: { children: ReactNode }) {
           mediaStreamRef.current = null
           setIsRecording(false)
 
-          const blob = new Blob(audioChunksRef.current, { type: format.mimeType })
+          const blobType = activeFormat.mimeType || recorder.mimeType || 'audio/mp4'
+          const blob = new Blob(audioChunksRef.current, { type: blobType })
           audioChunksRef.current = []
 
           if (blob.size < 800) {
@@ -286,7 +307,7 @@ export function LiaProvider({ children }: { children: ReactNode }) {
           setIsTranscribing(true)
           chatApi.runWithTyping(async () => {
             try {
-              const text = await transcribeAudio(blob, `gravacao.${format.extension}`)
+              const text = await transcribeAudio(blob, `gravacao.${activeFormat.extension}`)
               const trimmed = text.trim()
               if (!trimmed) {
                 chatApi.addAiMsg(
@@ -309,17 +330,14 @@ export function LiaProvider({ children }: { children: ReactNode }) {
 
         recorder.start(250)
         setIsRecording(true)
-      } catch {
-        chatApi.addAiMsg(
-          'Permita o acesso ao microfone nas configurações do navegador para enviar áudio. 💙',
-          'Permita o acesso ao microfone nas configurações do navegador para enviar áudio.',
-        )
+      } catch (error) {
+        addMicError(micErrorMessage(error))
       }
       return
     }
 
     mediaRecorderRef.current?.stop()
-  }, [chatApi, isRecording, isTranscribing])
+  }, [addMicError, chatApi, isRecording, isTranscribing])
 
   const value: LiaContextValue = {
     screen,
@@ -346,6 +364,8 @@ export function LiaProvider({ children }: { children: ReactNode }) {
     seekSpeech,
     isSpeechReady,
     getSpeechDuration,
+    speechRate,
+    cycleSpeechRate,
     startJourney,
   }
 

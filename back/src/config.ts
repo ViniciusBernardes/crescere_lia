@@ -7,7 +7,6 @@ import { resolveTenant, resolveTenantSlug } from "./services/tenants.js";
 export const config = {
   port: Number(process.env.PORT) || 3000,
   nodeEnv: process.env.NODE_ENV || "development",
-  dataDir: process.env.DATA_DIR || "data",
   defaultTenantSlug: resolveTenantSlug(),
 };
 
@@ -73,13 +72,16 @@ function getEnvOpenAiCredentials(): OpenAiCredentials | null {
   };
 }
 
-export function getOpenAiCredentialsSource(
+export async function getOpenAiCredentialsSource(
   tenantSlug?: string,
-): "env" | "database" | null {
+): Promise<"env" | "database" | null> {
+  const tenant = tenantSlug
+    ? await resolveTenant(tenantSlug)
+    : await resolveTenant();
+  const creds = await getOpenAiCredentials(tenant.id);
+  if (creds?.apiKey) return "database";
   if (getEnvOpenAiCredentials()) return "env";
-  const tenant = tenantSlug ? resolveTenant(tenantSlug) : resolveTenant();
-  const creds = getOpenAiCredentials(tenant.id);
-  return creds?.apiKey ? "database" : null;
+  return null;
 }
 
 function withTtsSettings(
@@ -94,29 +96,35 @@ function withTtsSettings(
   };
 }
 
-export function getOpenAiConfigForTenant(
+export async function getOpenAiConfigForTenant(
   tenantSlug?: string,
-): (OpenAiRuntimeSettings & { tenantSlug: string }) | null {
-  const envCreds = getEnvOpenAiCredentials();
-  const tenant = tenantSlug ? resolveTenant(tenantSlug) : resolveTenant();
+): Promise<(OpenAiRuntimeSettings & { tenantSlug: string }) | null> {
+  const tenant = tenantSlug
+    ? await resolveTenant(tenantSlug)
+    : await resolveTenant();
 
+  const creds = await getOpenAiCredentials(tenant.id);
+  if (creds?.apiKey) {
+    return withTtsSettings(creds, tenant.slug);
+  }
+
+  const envCreds = getEnvOpenAiCredentials();
   if (envCreds) {
     return withTtsSettings(envCreds, tenant.slug);
   }
 
-  const creds = getOpenAiCredentials(tenant.id);
-  if (!creds) return null;
-  return withTtsSettings(creds, tenant.slug);
+  return null;
 }
 
-export function isOpenAiConfigured(tenantSlug?: string): boolean {
+export async function isOpenAiConfigured(tenantSlug?: string): Promise<boolean> {
   try {
-    return Boolean(getOpenAiConfigForTenant(tenantSlug)?.apiKey);
+    const settings = await getOpenAiConfigForTenant(tenantSlug);
+    return Boolean(settings?.apiKey);
   } catch {
     return false;
   }
 }
 
-export function resolveOpenAiSettings(tenantSlug?: string) {
+export async function resolveOpenAiSettings(tenantSlug?: string) {
   return getOpenAiConfigForTenant(tenantSlug);
 }

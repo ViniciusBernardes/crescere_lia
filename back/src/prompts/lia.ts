@@ -37,6 +37,10 @@ ${JOURNEY_SUMMARY}
 
 Nunca invente diagnósticos, medicamentos ou promessas de cura. Se não souber, diga com honestidade e ofereça caminhos de apoio dentro do app.`;
 
+export function getDefaultSystemPrompt(): string {
+  return LIA_SYSTEM_PROMPT;
+}
+
 function buildJourneySupplement(journey: JourneyContext): string {
   const choiceLine = journey.userChoice
     ? `\nEscolha recente do cuidador neste passo: ${journey.userChoice}`
@@ -101,8 +105,10 @@ export function buildChatMessages(
   profile?: UserProfileContext,
   history: ChatHistoryMessage[] = [],
   journey?: JourneyContext,
+  systemPrompt?: string,
 ) {
-  let systemContent = `${LIA_SYSTEM_PROMPT}\n\n${formatProfile(profile)}`;
+  const basePrompt = systemPrompt?.trim() || LIA_SYSTEM_PROMPT;
+  let systemContent = `${basePrompt}\n\n${formatProfile(profile)}`;
 
   if (journey) {
     systemContent += `\n\n${buildJourneySupplement(journey)}`;

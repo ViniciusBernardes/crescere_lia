@@ -1,74 +1,97 @@
-import fs from "node:fs";
-import path from "node:path";
-import Database from "better-sqlite3";
+import mysql from "mysql2/promise";
 import { ensureDefaultTenant } from "../services/tenants.js";
 
-const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), "data");
+let pool: mysql.Pool | null = null;
 
-let db: Database.Database | null = null;
-
-export function getDb(): Database.Database {
-  if (!db) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-    const dbPath = path.join(DATA_DIR, "lia.db");
-    db = new Database(dbPath);
-    db.pragma("journal_mode = WAL");
-    migrate(db);
-  }
-  return db;
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function migrate(database: Database.Database) {
-  database.exec(`
-    CREATE TABLE IF NOT EXISTS tenants (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      slug TEXT NOT NULL UNIQUE,
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
-
-    CREATE TABLE IF NOT EXISTS tenant_openai_config (
-      tenant_id TEXT PRIMARY KEY,
-      value TEXT NOT NULL,
-      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-      FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
-    );
-
-    CREATE TABLE IF NOT EXISTS settings (
-      key TEXT PRIMARY KEY,
-      value TEXT NOT NULL,
-      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
-  `);
-
-  migrateLegacySettings(database);
-  ensureDefaultTenant();
+function readDbConfig(): mysql.PoolOptions {
+  return {
+    host: process.env.DB_HOST || "127.0.0.1",
+    port: Number(process.env.DB_PORT || 3306),
+    user: process.env.DB_USERNAME || "root",
+    password: process.env.DB_PASSWORD || "",
+    database: process.env.DB_DATABASE || "laravel",
+    waitForConnections: true,
+    connectionLimit: 10,
+    enableKeepAlive: true,
+  };
 }
 
-function migrateLegacySettings(database: Database.Database) {
-  const legacy = database
-    .prepare("SELECT value FROM settings WHERE key = 'openai_credentials'")
-    .get() as { value: string } | undefined;
+function dbHelpMessage(): string {
+  const host = process.env.DB_HOST || "127.0.0.1";
+  const port = process.env.DB_PORT || "3306";
+  const database = process.env.DB_DATABASE || "laravel";
+  return [
+    "",
+    "MySQL indisponível — a LIA precisa do banco do telemedicina.",
+    "",
+    "1) Suba o MySQL:",
+    "   cd ~/Documentos/telemedicina && docker compose up -d mysql",
+    "",
+    "2) Rode as migrations (primeira vez):",
+    "   cd ~/Documentos/telemedicina",
+    "   docker compose up -d mysql redis",
+    "   docker compose run --rm back php artisan migrate --force",
+    "",
+    "3) Confira back/.env:",
+    `   DB_HOST=${host}`,
+    `   DB_PORT=${port}`,
+    `   DB_DATABASE=${database}`,
+    "",
+    "4) Suba a LIA:",
+    "   cd ~/Documentos/crescere_lia && npm run dev",
+    "   (ou docker compose up -d na raiz da LIA)",
+    "",
+    "App: http://localhost:8080  |  Admin: http://localhost:8080/admin",
+    "",
+  ].join("\n");
+}
 
-  if (!legacy) return;
+export function getPool(): mysql.Pool {
+  if (!pool) {
+    pool = mysql.createPool(readDbConfig());
+  }
+  return pool;
+}
 
-  const tenant = ensureDefaultTenant();
-  const exists = database
-    .prepare("SELECT tenant_id FROM tenant_openai_config WHERE tenant_id = ?")
-    .get(tenant.id);
+export async function initDb(): Promise<void> {
+  const maxAttempts = Number(process.env.DB_CONNECT_RETRIES || 8);
+  let lastError: unknown;
 
-  if (!exists) {
-    database
-      .prepare(
-        `INSERT INTO tenant_openai_config (tenant_id, value, updated_at)
-         VALUES (?, ?, datetime('now'))`,
-      )
-      .run(tenant.id, legacy.value);
-    console.log(
-      "[db] Credenciais OpenAI migradas para tenant padrão:",
-      tenant.slug,
-    );
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const connection = await getPool().getConnection();
+      try {
+        await connection.ping();
+        await ensureDefaultTenant();
+        console.log(
+          `[db] MySQL conectado (${process.env.DB_DATABASE}@${process.env.DB_HOST || "127.0.0.1"})`,
+        );
+        return;
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      lastError = error;
+      if (attempt < maxAttempts) {
+        console.warn(
+          `[db] MySQL indisponível (tentativa ${attempt}/${maxAttempts})…`,
+        );
+        await sleep(1500);
+      }
+    }
   }
 
-  database.prepare("DELETE FROM settings WHERE key = 'openai_credentials'").run();
+  console.error(dbHelpMessage());
+  throw lastError;
+}
+
+export async function closeDb(): Promise<void> {
+  if (pool) {
+    await pool.end();
+    pool = null;
+  }
 }

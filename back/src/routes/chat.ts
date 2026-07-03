@@ -87,7 +87,7 @@ chatRouter.post("/chat", async (req, res) => {
   const tenantSlug = tenantSlugFromRequest(req);
 
   try {
-    if (!isOpenAiConfigured(tenantSlug)) {
+    if (!(await isOpenAiConfigured(tenantSlug))) {
       return openAiUnavailable(res);
     }
   } catch (error) {
@@ -142,7 +142,7 @@ chatRouter.post("/tts", async (req, res) => {
   const tenantSlug = tenantSlugFromRequest(req);
 
   try {
-    if (!isOpenAiConfigured(tenantSlug)) {
+    if (!(await isOpenAiConfigured(tenantSlug))) {
       return openAiUnavailable(res);
     }
   } catch (error) {
@@ -179,7 +179,7 @@ chatRouter.post("/transcribe", upload.single("audio"), async (req, res) => {
   const tenantSlug = tenantSlugFromRequest(req);
 
   try {
-    if (!isOpenAiConfigured(tenantSlug)) {
+    if (!(await isOpenAiConfigured(tenantSlug))) {
       return openAiUnavailable(res);
     }
   } catch (error) {

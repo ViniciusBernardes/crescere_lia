@@ -1,9 +1,26 @@
 import { Router } from "express";
-import { config, getOpenAiCredentialsSource, isOpenAiConfigured, resolveOpenAiSettings } from "../config.js";
+import {
+  createSessionToken,
+  isAdminAuthConfigured,
+  requireAdmin,
+  validateAdminLogin,
+  verifySessionToken,
+} from "../middleware/adminAuth.js";
+import {
+  config,
+  getOpenAiCredentialsSource,
+  isOpenAiConfigured,
+  resolveOpenAiSettings,
+} from "../config.js";
 import {
   getOpenAiCredentialsPublic,
+  importEnvOpenAiCredentials,
   saveOpenAiCredentials,
 } from "../services/credentials.js";
+import {
+  getPromptConfigPublic,
+  savePromptConfig,
+} from "../services/promptConfig.js";
 import {
   createTenant,
   getTenantBySlug,
@@ -13,18 +30,76 @@ import {
 
 export const adminRouter = Router();
 
+adminRouter.post("/login", (req, res) => {
+  if (!isAdminAuthConfigured()) {
+    return res.status(503).json({
+      error: "admin_not_configured",
+      message:
+        "Painel admin não configurado. Defina ADMIN_USERNAME e ADMIN_PASSWORD no servidor.",
+    });
+  }
+
+  const body = req.body as Record<string, unknown>;
+  const username = typeof body.username === "string" ? body.username.trim() : "";
+  const password = typeof body.password === "string" ? body.password : "";
+
+  if (!username || !password) {
+    return res.status(400).json({
+      error: "invalid_credentials",
+      message: "Informe usuário e senha.",
+    });
+  }
+
+  if (!validateAdminLogin(username, password)) {
+    return res.status(401).json({
+      error: "unauthorized",
+      message: "Usuário ou senha inválidos.",
+    });
+  }
+
+  res.json({
+    ok: true,
+    token: createSessionToken(username),
+    username,
+  });
+});
+
+adminRouter.use(requireAdmin);
+
+adminRouter.get("/session", (req, res) => {
+  const header = req.headers.authorization || "";
+  const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
+  const username = token ? verifySessionToken(token) : null;
+
+  if (!username) {
+    return res.status(401).json({
+      error: "unauthorized",
+      message: "Sessão expirada.",
+    });
+  }
+
+  res.json({ ok: true, username });
+});
+
 adminRouter.post("/verify", (_req, res) => {
   res.json({ ok: true });
 });
 
-adminRouter.get("/tenants", (_req, res) => {
-  res.json({ tenants: listTenants() });
+adminRouter.get("/tenants", async (_req, res) => {
+  try {
+    const tenants = await listTenants();
+    res.json({ tenants });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível listar empresas.";
+    res.status(503).json({ error: "database_error", message });
+  }
 });
 
-adminRouter.post("/tenants", (req, res) => {
+adminRouter.post("/tenants", async (req, res) => {
   const body = req.body as Record<string, unknown>;
   try {
-    const tenant = createTenant(
+    const tenant = await createTenant(
       typeof body.name === "string" ? body.name : "",
       typeof body.slug === "string" ? body.slug : "",
     );
@@ -49,19 +124,19 @@ function parseOpenAiBody(body: Record<string, unknown>) {
   };
 }
 
-adminRouter.get("/tenants/:slug/openai", (req, res) => {
-  const tenant = getTenantBySlug(req.params.slug);
+adminRouter.get("/tenants/:slug/openai", async (req, res) => {
+  const tenant = await getTenantBySlug(req.params.slug);
   if (!tenant) {
     return res.status(404).json({
       error: "tenant_not_found",
       message: "Empresa não encontrada.",
     });
   }
-  res.json(getOpenAiCredentialsPublic(tenant.id));
+  res.json(await getOpenAiCredentialsPublic(tenant.id));
 });
 
-adminRouter.put("/tenants/:slug/openai", (req, res) => {
-  const tenant = getTenantBySlug(req.params.slug);
+adminRouter.put("/tenants/:slug/openai", async (req, res) => {
+  const tenant = await getTenantBySlug(req.params.slug);
   if (!tenant) {
     return res.status(404).json({
       error: "tenant_not_found",
@@ -70,7 +145,7 @@ adminRouter.put("/tenants/:slug/openai", (req, res) => {
   }
 
   try {
-    const result = saveOpenAiCredentials(
+    const result = await saveOpenAiCredentials(
       tenant.id,
       parseOpenAiBody(req.body as Record<string, unknown>),
     );
@@ -82,15 +157,34 @@ adminRouter.put("/tenants/:slug/openai", (req, res) => {
   }
 });
 
-adminRouter.get("/openai", (_req, res) => {
-  const tenant = resolveTenant(config.defaultTenantSlug);
-  res.json(getOpenAiCredentialsPublic(tenant.id));
+adminRouter.post("/tenants/:slug/openai/import-env", async (req, res) => {
+  const tenant = await getTenantBySlug(req.params.slug);
+  if (!tenant) {
+    return res.status(404).json({
+      error: "tenant_not_found",
+      message: "Empresa não encontrada.",
+    });
+  }
+
+  try {
+    const result = await importEnvOpenAiCredentials(tenant.id);
+    res.json(result);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível importar.";
+    res.status(400).json({ error: "import_failed", message });
+  }
 });
 
-adminRouter.put("/openai", (req, res) => {
-  const tenant = resolveTenant(config.defaultTenantSlug);
+adminRouter.get("/openai", async (_req, res) => {
+  const tenant = await resolveTenant(config.defaultTenantSlug);
+  res.json(await getOpenAiCredentialsPublic(tenant.id));
+});
+
+adminRouter.put("/openai", async (req, res) => {
+  const tenant = await resolveTenant(config.defaultTenantSlug);
   try {
-    const result = saveOpenAiCredentials(
+    const result = await saveOpenAiCredentials(
       tenant.id,
       parseOpenAiBody(req.body as Record<string, unknown>),
     );
@@ -102,13 +196,47 @@ adminRouter.put("/openai", (req, res) => {
   }
 });
 
-adminRouter.get("/status", (_req, res) => {
-  const tenant = resolveTenant(config.defaultTenantSlug);
-  const settings = resolveOpenAiSettings(tenant.slug);
+adminRouter.get("/status", async (_req, res) => {
+  const tenant = await resolveTenant(config.defaultTenantSlug);
+  const settings = await resolveOpenAiSettings(tenant.slug);
   res.json({
     defaultTenant: tenant.slug,
-    openai: isOpenAiConfigured(tenant.slug) ? "configured" : "missing_key",
+    openai: (await isOpenAiConfigured(tenant.slug)) ? "configured" : "missing_key",
     model: settings?.model ?? null,
-    credentialsSource: getOpenAiCredentialsSource(tenant.slug) ?? "none",
+    credentialsSource: (await getOpenAiCredentialsSource(tenant.slug)) ?? "none",
   });
+});
+
+adminRouter.get("/tenants/:slug/prompt", async (req, res) => {
+  const tenant = await getTenantBySlug(req.params.slug);
+  if (!tenant) {
+    return res.status(404).json({
+      error: "tenant_not_found",
+      message: "Empresa não encontrada.",
+    });
+  }
+  res.json(await getPromptConfigPublic(tenant.id));
+});
+
+adminRouter.put("/tenants/:slug/prompt", async (req, res) => {
+  const tenant = await getTenantBySlug(req.params.slug);
+  if (!tenant) {
+    return res.status(404).json({
+      error: "tenant_not_found",
+      message: "Empresa não encontrada.",
+    });
+  }
+
+  const body = req.body as Record<string, unknown>;
+  const systemPrompt =
+    typeof body.systemPrompt === "string" ? body.systemPrompt : "";
+
+  try {
+    const result = await savePromptConfig(tenant.id, systemPrompt);
+    res.json(result);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível salvar o prompt.";
+    res.status(400).json({ error: "save_failed", message });
+  }
 });

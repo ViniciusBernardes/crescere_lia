@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useLia } from '../../context/LiaContext'
 import { cleanSpeechText } from '../../hooks/useSpeech'
 import { formatAudioTime, waveformHeights } from '../../utils/audioTime'
+import { formatSpeechRate, speechRateLabel } from '../../utils/speechRate'
 import { ListenButton } from './ChatParts'
 
 const BAR_COUNT = 32
@@ -14,6 +15,8 @@ export function AudioMessagePlayer({ text }: { text: string }) {
     seekSpeech,
     isSpeechReady,
     getSpeechDuration,
+    speechRate,
+    cycleSpeechRate,
   } = useLia()
 
   const key = cleanSpeechText(text)
@@ -80,7 +83,18 @@ export function AudioMessagePlayer({ text }: { text: string }) {
           ))}
           <span className="audio-wave-dot" style={{ left: `${progress * 100}%` }} aria-hidden />
         </div>
-        <span className="audio-player-time">{timeLabel}</span>
+        <div className="audio-player-meta">
+          <span className="audio-player-time">{timeLabel}</span>
+          <button
+            type="button"
+            className="audio-speed-btn"
+            onClick={cycleSpeechRate}
+            title={`${speechRateLabel(speechRate)} — toque para alternar`}
+            aria-label={`Velocidade da voz: ${formatSpeechRate(speechRate)}`}
+          >
+            {formatSpeechRate(speechRate)}
+          </button>
+        </div>
       </div>
     </div>
   )

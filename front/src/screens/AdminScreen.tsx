@@ -2,21 +2,62 @@ import { useCallback, useEffect, useState } from 'react'
 import {
   createTenant,
   fetchOpenAiCredentials,
+  fetchPromptConfig,
   fetchTenants,
+  importEnvOpenAiCredentials,
   saveOpenAiCredentials,
+  savePromptConfig,
   type OpenAiCredentialsPublic,
+  type PromptConfigPublic,
   type Tenant,
 } from '../services/adminApi'
+import { AdminAuthError, clearAdminToken } from '../services/adminAuth'
 import '../styles/admin.css'
 
-export function AdminScreen() {
+function handleAdminError(err: unknown, onLogout?: () => void): string {
+  if (err instanceof AdminAuthError) {
+    clearAdminToken()
+    onLogout?.()
+    return 'Sessão expirada. Faça login novamente.'
+  }
+  return err instanceof Error ? err.message : 'Erro'
+}
+
+function CardHead({
+  icon,
+  title,
+  subtitle,
+  description,
+}: {
+  icon: string
+  title: string
+  subtitle?: string
+  description: string
+}) {
+  return (
+    <div className="admin-card-head">
+      <div className="admin-card-icon" aria-hidden>
+        {icon}
+      </div>
+      <div className="admin-card-head-text">
+        <h2>{title}</h2>
+        {subtitle ? <p className="admin-card-subtitle">{subtitle}</p> : null}
+        <p>{description}</p>
+      </div>
+    </div>
+  )
+}
+
+export function AdminScreen({ onLogout }: { onLogout?: () => void }) {
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [savingPrompt, setSavingPrompt] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [tenants, setTenants] = useState<Tenant[]>([])
   const [selectedSlug, setSelectedSlug] = useState('crescere')
   const [config, setConfig] = useState<OpenAiCredentialsPublic | null>(null)
+  const [promptConfig, setPromptConfig] = useState<PromptConfigPublic | null>(null)
 
   const [newTenantName, setNewTenantName] = useState('')
   const [newTenantSlug, setNewTenantSlug] = useState('')
@@ -25,6 +66,7 @@ export function AdminScreen() {
   const [whisperModel, setWhisperModel] = useState('whisper-1')
   const [maxTokens, setMaxTokens] = useState(1024)
   const [temperature, setTemperature] = useState(0.7)
+  const [systemPrompt, setSystemPrompt] = useState('')
 
   const loadTenants = useCallback(async () => {
     const list = await fetchTenants()
@@ -38,24 +80,29 @@ export function AdminScreen() {
     setLoading(true)
     setError('')
     try {
-      const data = await fetchOpenAiCredentials(slug)
-      setConfig(data)
-      setModel(data.model)
-      setWhisperModel(data.whisperModel)
-      setMaxTokens(data.maxTokens)
-      setTemperature(data.temperature)
+      const [openAiData, promptData] = await Promise.all([
+        fetchOpenAiCredentials(slug),
+        fetchPromptConfig(slug),
+      ])
+      setConfig(openAiData)
+      setPromptConfig(promptData)
+      setModel(openAiData.model)
+      setWhisperModel(openAiData.whisperModel)
+      setMaxTokens(openAiData.maxTokens)
+      setTemperature(openAiData.temperature)
+      setSystemPrompt(promptData.systemPrompt)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar')
+      setError(handleAdminError(err, onLogout))
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [onLogout])
 
   useEffect(() => {
     loadTenants().catch((err) => {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar empresas')
+      setError(handleAdminError(err, onLogout))
     })
-  }, [loadTenants])
+  }, [loadTenants, onLogout])
 
   useEffect(() => {
     if (!selectedSlug) return
@@ -75,7 +122,7 @@ export function AdminScreen() {
       setNewTenantSlug('')
       setSuccess(`Empresa "${tenant.name}" criada.`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao criar empresa')
+      setError(handleAdminError(err, onLogout))
     } finally {
       setLoading(false)
     }
@@ -97,75 +144,150 @@ export function AdminScreen() {
       })
       setConfig(data)
       setApiKey('')
-      setSuccess(`Credenciais salvas para ${data.tenantName}.`)
+      setSuccess(`Credenciais OpenAI salvas para ${data.tenantName}.`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao salvar')
+      setError(handleAdminError(err, onLogout))
     } finally {
       setSaving(false)
     }
   }
 
+  const handleImportEnvKey = async () => {
+    if (!selectedSlug) return
+    setSaving(true)
+    setError('')
+    setSuccess('')
+    try {
+      const data = await importEnvOpenAiCredentials(selectedSlug)
+      setConfig(data)
+      setModel(data.model)
+      setWhisperModel(data.whisperModel)
+      setMaxTokens(data.maxTokens)
+      setTemperature(data.temperature)
+      setApiKey('')
+      setSuccess(`Chave do servidor cadastrada no banco para ${data.tenantName}.`)
+    } catch (err) {
+      setError(handleAdminError(err, onLogout))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleSavePrompt = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedSlug) return
+    setSavingPrompt(true)
+    setError('')
+    setSuccess('')
+    try {
+      const data = await savePromptConfig(selectedSlug, systemPrompt)
+      setPromptConfig(data)
+      setSystemPrompt(data.systemPrompt)
+      setSuccess(`Prompt de atendimento salvo para ${data.tenantName}.`)
+    } catch (err) {
+      setError(handleAdminError(err, onLogout))
+    } finally {
+      setSavingPrompt(false)
+    }
+  }
+
+  const handleResetPrompt = () => {
+    if (!promptConfig) return
+    setSystemPrompt(promptConfig.defaultPrompt)
+  }
+
+  const handleClearCustomPrompt = async () => {
+    if (!selectedSlug || !promptConfig) return
+    setSavingPrompt(true)
+    setError('')
+    setSuccess('')
+    try {
+      const data = await savePromptConfig(selectedSlug, '')
+      setPromptConfig(data)
+      setSystemPrompt(data.systemPrompt)
+      setSuccess(`Prompt restaurado para o padrão da Lia (${data.tenantName}).`)
+    } catch (err) {
+      setError(handleAdminError(err, onLogout))
+    } finally {
+      setSavingPrompt(false)
+    }
+  }
+
+  const promptIsDirty =
+    promptConfig !== null && systemPrompt.trim() !== promptConfig.systemPrompt.trim()
+  const promptUsesDefault =
+    promptConfig !== null &&
+    systemPrompt.trim() === promptConfig.defaultPrompt.trim()
+  const tenantLabel = config?.tenantName || selectedSlug
+  const openAiCanSave = Boolean(apiKey.trim()) || Boolean(config?.storedInDatabase)
+  const openAiSourceLabel =
+    config?.credentialsSource === 'database'
+      ? 'Salva no banco desta empresa'
+      : config?.credentialsSource === 'env'
+        ? 'Ativa via .env do servidor (fallback)'
+        : null
+
   return (
     <div className="admin-page">
-      <div className="admin-shell">
-        <header className="admin-header">
-          <div>
-            <p className="admin-eyebrow">Crescere LIA · Whitelabel</p>
-            <h1>Painel Admin</h1>
-            <p className="admin-sub">
-              Cada empresa tem sua própria chave OpenAI no banco — pronto para whitelabel.
+      <header className="admin-topbar">
+        <div className="admin-topbar-inner">
+          <a className="admin-topbar-back" href="/" aria-label="Voltar ao app">
+            ←
+          </a>
+          <div className="admin-topbar-brand">
+            <img src="/lia.jpeg" alt="" className="admin-topbar-avatar" />
+            <div className="admin-topbar-title">
+              <span className="admin-eyebrow">Painel Admin</span>
+              <strong>Crescere LIA</strong>
+            </div>
+          </div>
+          {onLogout && (
+            <button type="button" className="admin-btn admin-btn-ghost admin-topbar-logout" onClick={onLogout}>
+              Sair
+            </button>
+          )}
+        </div>
+      </header>
+
+      <div className="admin-hero">
+        <div className="admin-hero-inner">
+          <div className="admin-hero-copy">
+            <h1>Configurações da Lia</h1>
+            <p>
+              Personalize o tom de atendimento e a integração OpenAI para cada empresa do whitelabel.
             </p>
           </div>
-          <a className="admin-back" href="/">
-            ← Voltar ao app
-          </a>
-        </header>
+          <div className="admin-hero-orb" aria-hidden>
+            <img src="/lia.jpeg" alt="" />
+          </div>
+        </div>
+      </div>
 
+      <div className="admin-shell">
         {error && <div className="admin-alert admin-alert-error">{error}</div>}
         {success && <div className="admin-alert admin-alert-success">{success}</div>}
+        {loading && (
+          <div className="admin-loading" role="status">
+            <span className="admin-loading-dot" aria-hidden />
+            Carregando configurações…
+          </div>
+        )}
 
-        <section className="admin-card">
-          <h2>Nova empresa (whitelabel)</h2>
-          <p className="admin-hint">
-            O identificador (slug) será usado no header <code>X-Tenant-Slug</code> do front de cada cliente.
-          </p>
-          <form onSubmit={handleCreateTenant} className="admin-form">
-            <div className="admin-grid">
-              <label className="admin-field">
-                <span>Nome da empresa</span>
-                <input
-                  type="text"
-                  value={newTenantName}
-                  onChange={(e) => setNewTenantName(e.target.value)}
-                  placeholder="Ex.: Clínica Esperança"
-                  required
-                />
-              </label>
-              <label className="admin-field">
-                <span>Identificador (slug)</span>
-                <input
-                  type="text"
-                  value={newTenantSlug}
-                  onChange={(e) => setNewTenantSlug(e.target.value)}
-                  placeholder="ex: clinica-esperanca"
-                  required
-                />
-              </label>
-            </div>
-            <button type="submit" className="admin-btn admin-btn-secondary" disabled={loading}>
-              Cadastrar empresa
-            </button>
-          </form>
-        </section>
-
-        <section className="admin-card admin-status-card">
-          <div className="admin-status-row">
-            <div className="admin-field" style={{ flex: 1, marginBottom: 0 }}>
+        <div className="admin-board">
+        <section className="admin-card admin-card-featured admin-card-tenant">
+          <CardHead
+            icon="🏢"
+            title="Empresa ativa"
+            description="Selecione qual clínica ou cliente você está configurando."
+          />
+          <div className="admin-tenant-bar">
+            <label className="admin-field">
               <span>Empresa</span>
               <select
                 className="admin-select"
                 value={selectedSlug}
                 onChange={(e) => setSelectedSlug(e.target.value)}
+                disabled={loading}
               >
                 {tenants.map((t) => (
                   <option key={t.id} value={t.slug}>
@@ -173,40 +295,149 @@ export function AdminScreen() {
                   </option>
                 ))}
               </select>
+            </label>
+            <div className="admin-badge-row">
+              <span
+                className={`admin-badge ${config?.configured ? 'admin-badge-ok' : 'admin-badge-warn'}`}
+              >
+                {config?.configured ? 'OpenAI ativa' : 'OpenAI pendente'}
+              </span>
+              <span
+                className={`admin-badge ${promptConfig?.isCustom ? 'admin-badge-ok' : 'admin-badge-neutral'}`}
+              >
+                {promptConfig?.isCustom ? 'Prompt customizado' : 'Prompt padrão'}
+              </span>
             </div>
-            <span
-              className={`admin-badge ${config?.configured ? 'admin-badge-ok' : 'admin-badge-warn'}`}
-            >
-              {config?.configured ? 'OpenAI ativa' : 'Pendente'}
-            </span>
           </div>
-          {config?.apiKeyMasked && (
-            <p className="admin-masked-key">
-              Chave: <code>{config.apiKeyMasked}</code>
-            </p>
-          )}
         </section>
 
-        <section className="admin-card">
-          <h2>Credenciais OpenAI — {config?.tenantName || selectedSlug}</h2>
-          <form onSubmit={handleSave} className="admin-form">
+        <section className="admin-card admin-card-featured admin-card-prompt">
+          <CardHead
+            icon="💬"
+            title="Prompt de atendimento"
+            subtitle={tenantLabel}
+            description="Como a Lia fala no chat. Perfil do cuidador e jornada continuam automáticos."
+          />
+          <form onSubmit={handleSavePrompt} className="admin-form">
             <label className="admin-field">
-              <span>API Key</span>
+              <span>Instruções do sistema</span>
+              <div className="admin-textarea-wrap">
+                <textarea
+                  className="admin-textarea"
+                  value={systemPrompt}
+                  onChange={(e) => setSystemPrompt(e.target.value)}
+                  rows={14}
+                  spellCheck={false}
+                  disabled={loading || savingPrompt}
+                  placeholder="Descreva o papel, tom de voz e regras da Lia para esta empresa…"
+                />
+              </div>
+            </label>
+            <p className={`admin-meta${promptIsDirty ? ' admin-meta-dirty' : ''}`}>
+              {systemPrompt.length.toLocaleString('pt-BR')} caracteres
+              {promptIsDirty ? ' · alterações não salvas' : ''}
+            </p>
+            <div className="admin-form-actions admin-form-actions--sticky">
+              <button
+                type="submit"
+                className="admin-btn admin-btn-primary"
+                disabled={savingPrompt || loading || !promptIsDirty}
+              >
+                {savingPrompt ? 'Salvando…' : 'Salvar prompt'}
+              </button>
+              <button
+                type="button"
+                className="admin-btn admin-btn-secondary"
+                onClick={handleResetPrompt}
+                disabled={savingPrompt || loading || !promptConfig || promptUsesDefault}
+              >
+                Preencher padrão
+              </button>
+              <button
+                type="button"
+                className="admin-btn admin-btn-ghost"
+                onClick={handleClearCustomPrompt}
+                disabled={savingPrompt || loading || !promptConfig?.isCustom}
+              >
+                Usar prompt padrão
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section className="admin-card admin-card-openai">
+          <CardHead
+            icon="🔑"
+            title="OpenAI"
+            subtitle={tenantLabel}
+            description="Chave e modelos usados no chat, voz e transcrição desta empresa."
+          />
+          <form onSubmit={handleSave} className="admin-form">
+            {config?.apiKeyMasked && (
+              <div className="admin-key-status">
+                <p className="admin-masked-key">
+                  Chave ativa: <code>{config.apiKeyMasked}</code>
+                </p>
+                {openAiSourceLabel && (
+                  <p className="admin-key-source">{openAiSourceLabel}</p>
+                )}
+                {config.updatedAt && config.storedInDatabase && (
+                  <p className="admin-key-source">
+                    Atualizada em{' '}
+                    {new Date(config.updatedAt).toLocaleString('pt-BR', {
+                      dateStyle: 'short',
+                      timeStyle: 'short',
+                    })}
+                  </p>
+                )}
+              </div>
+            )}
+
+            <label className="admin-field">
+              <span>{config?.storedInDatabase ? 'Nova API Key (opcional)' : 'API Key'}</span>
               <input
                 type="password"
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 placeholder={
-                  config?.configured ? 'Deixe em branco para manter a chave atual' : 'sk-proj-...'
+                  config?.storedInDatabase
+                    ? 'Deixe em branco para manter a chave atual'
+                    : config?.credentialsSource === 'env'
+                      ? 'Cole aqui ou use o botão abaixo para cadastrar a do servidor'
+                      : 'sk-proj-...'
                 }
                 autoComplete="new-password"
+                disabled={loading || saving}
               />
             </label>
+
+            {config?.credentialsSource === 'env' && !config.storedInDatabase && (
+              <div className="admin-key-import">
+                <p className="admin-hint">
+                  A chave do <code>.env</code> funciona como fallback. Cadastre no banco para
+                  fixar por empresa no whitelabel.
+                </p>
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-secondary"
+                  onClick={handleImportEnvKey}
+                  disabled={loading || saving}
+                >
+                  {saving ? 'Salvando…' : 'Cadastrar chave do servidor no banco'}
+                </button>
+              </div>
+            )}
 
             <div className="admin-grid">
               <label className="admin-field">
                 <span>Modelo (chat)</span>
-                <input type="text" value={model} onChange={(e) => setModel(e.target.value)} required />
+                <input
+                  type="text"
+                  value={model}
+                  onChange={(e) => setModel(e.target.value)}
+                  required
+                  disabled={loading || saving}
+                />
               </label>
               <label className="admin-field">
                 <span>Modelo (Whisper)</span>
@@ -215,6 +446,7 @@ export function AdminScreen() {
                   value={whisperModel}
                   onChange={(e) => setWhisperModel(e.target.value)}
                   required
+                  disabled={loading || saving}
                 />
               </label>
               <label className="admin-field">
@@ -226,6 +458,7 @@ export function AdminScreen() {
                   value={maxTokens}
                   onChange={(e) => setMaxTokens(Number(e.target.value))}
                   required
+                  disabled={loading || saving}
                 />
               </label>
               <label className="admin-field">
@@ -238,6 +471,7 @@ export function AdminScreen() {
                   value={temperature}
                   onChange={(e) => setTemperature(Number(e.target.value))}
                   required
+                  disabled={loading || saving}
                 />
               </label>
             </div>
@@ -246,13 +480,56 @@ export function AdminScreen() {
               <button
                 type="submit"
                 className="admin-btn admin-btn-primary"
-                disabled={saving || loading || (!config?.configured && !apiKey.trim())}
+                disabled={saving || loading || !openAiCanSave}
               >
                 {saving ? 'Salvando…' : 'Salvar credenciais'}
               </button>
             </div>
           </form>
         </section>
+
+        <section className="admin-card admin-card-muted admin-card-new">
+          <CardHead
+            icon="✨"
+            title="Nova empresa"
+            description="Cadastre um cliente whitelabel. Use o slug no header X-Tenant-Slug."
+          />
+          <form onSubmit={handleCreateTenant} className="admin-form">
+            <p className="admin-hint">
+              Identificador usado no front: <code>X-Tenant-Slug</code>
+            </p>
+            <div className="admin-grid">
+              <label className="admin-field">
+                <span>Nome da empresa</span>
+                <input
+                  type="text"
+                  value={newTenantName}
+                  onChange={(e) => setNewTenantName(e.target.value)}
+                  placeholder="Ex.: Clínica Esperança"
+                  required
+                  disabled={loading}
+                />
+              </label>
+              <label className="admin-field">
+                <span>Identificador (slug)</span>
+                <input
+                  type="text"
+                  value={newTenantSlug}
+                  onChange={(e) => setNewTenantSlug(e.target.value)}
+                  placeholder="ex: clinica-esperanca"
+                  required
+                  disabled={loading}
+                />
+              </label>
+            </div>
+            <button type="submit" className="admin-btn admin-btn-secondary" disabled={loading}>
+              Cadastrar empresa
+            </button>
+          </form>
+        </section>
+        </div>
+
+        <p className="admin-footer-brand">Crescere</p>
       </div>
     </div>
   )
