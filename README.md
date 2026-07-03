@@ -62,12 +62,13 @@ Admin local: **http://localhost:8080/admin** (exige o back na porta 3000).
 
 ## Banco de dados (telemedicina / iClinica)
 
-A LIA usa o **mesmo MySQL** do projeto `telemedicina`:
+A LIA usa o **mesmo MySQL** do projeto `telemedicina` — idealmente **Amazon RDS** compartilhado (ver [deploy/RDS-MIGRATION.md](deploy/RDS-MIGRATION.md)).
 
 | Tabela | Uso |
 |--------|-----|
 | `companies` | Empresas (tenant) — campo `slug` identifica cada cliente |
 | `lia_openai_config` | Credenciais OpenAI por empresa (`company_id`) |
+| `lia_prompt_config` | Prompt de atendimento por empresa |
 
 ### Preparar o banco
 
@@ -115,6 +116,8 @@ O chat envia `X-Tenant-Slug` em cada requisição — a API usa a chave da empre
 ## Deploy na AWS
 
 Veja o guia completo: [deploy/DEPLOY.md](deploy/DEPLOY.md)
+
+**Banco compartilhado (RDS) para telemedicina + LIA:** [deploy/RDS-MIGRATION.md](deploy/RDS-MIGRATION.md)
 
 Resumo na EC2:
 
