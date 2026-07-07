@@ -6,6 +6,8 @@ import { prepareSpeechFromResponse } from '../services/chatSpeech';
 import { runAiJourney } from './journeyAiRunner';
 import { runAiIntro } from './introAiRunner';
 import { MOOD_CONFIG, resolveMoodKey } from '../data/moodConfig';
+import { showQuickReplies } from '../lib/features';
+import { OPEN_MOOD_PROMPT } from '../lib/openPrompts';
 
 export function createJourneyRunner(api: ChatApi) {
   const profile = api.getProfile();
@@ -22,6 +24,12 @@ export function createJourneyRunner(api: ChatApi) {
   api.showTyping(()=>{
     api.addAiMsg('Olá! Que coisa boa contar com a sua presença aqui! 💜\n\nSe você está aqui, é porque uma parte sua também pediu atenção. Este espaço foi criado para você.','Olá! Que coisa boa contar com a sua presença aqui! Se você está aqui, é porque uma parte sua também pediu atenção. Este espaço foi criado para você.');
   },1200);
+  if (!showQuickReplies()) {
+    setTimeout(() => api.showTyping(() => {
+      api.addAiMsg(OPEN_MOOD_PROMPT.html, OPEN_MOOD_PROMPT.audio);
+    }, 1800), 3000);
+    return;
+  }
   setTimeout(()=>api.showTyping(()=>{
     api.addPicker('Como você está se sentindo <strong>hoje</strong>?','Como você está se sentindo hoje?',
       [{emoji:'😔',label:'No limite'},{emoji:'🫥',label:'Cansado(a)'},{emoji:'🤔',label:'Confuso(a)'},{emoji:'🙂',label:'Estou bem'},{emoji:'❓',label:'Não sei dizer'}],

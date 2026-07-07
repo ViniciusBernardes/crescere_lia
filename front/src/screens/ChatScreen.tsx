@@ -1,7 +1,7 @@
 import { ChatInput } from '../components/chat/ChatInput'
 import { MessageList } from '../components/chat/MessageList'
 import { useLia } from '../context/LiaContext'
-import { showJourneys } from '../lib/features'
+import { showEmotionalMap, showJourneys } from '../lib/features'
 
 export function ChatScreen() {
   const { showScreen, progress, mapBadge, openPsych } = useLia()
@@ -32,12 +32,14 @@ export function ChatScreen() {
                   🗺️
                 </button>
               )}
-              <div className="hdr-btn-wrap">
-                <button type="button" className="hdr-btn" onClick={() => showScreen('map')} title="Mapa emocional">
-                  📊
-                </button>
-                {mapBadge && <span className="badge-new">!</span>}
-              </div>
+              {showEmotionalMap() && (
+                <div className="hdr-btn-wrap">
+                  <button type="button" className="hdr-btn" onClick={() => showScreen('map')} title="Mapa emocional">
+                    📊
+                  </button>
+                  {mapBadge && <span className="badge-new">!</span>}
+                </div>
+              )}
             </div>
           </div>
           {showJourneys() && (
