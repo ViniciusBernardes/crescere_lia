@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLia } from '../../context/LiaContext'
+import { showJourneys } from '../../lib/features'
 import type { ChatMessage } from '../../types/chat'
 import { HtmlContent, LiaAvatar, ListenButton } from './ChatParts'
 import { AudioMessagePlayer } from './AudioMessagePlayer'
@@ -118,6 +119,7 @@ function CtasBubble({ msg }: { msg: Extract<ChatMessage, { kind: 'ctas' }> }) {
 function SuggestBubble({ msg }: { msg: Extract<ChatMessage, { kind: 'suggest' }> }) {
   const { startJourney, showScreen, openPsych } = useLia()
   const j = msg.journey
+  if (!showJourneys()) return null
   return (
     <MessageRow>
       <LiaAvatar />

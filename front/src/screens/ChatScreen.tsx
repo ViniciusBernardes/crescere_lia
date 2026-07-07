@@ -1,6 +1,7 @@
 import { ChatInput } from '../components/chat/ChatInput'
 import { MessageList } from '../components/chat/MessageList'
 import { useLia } from '../context/LiaContext'
+import { showJourneys } from '../lib/features'
 
 export function ChatScreen() {
   const { showScreen, progress, mapBadge, openPsych } = useLia()
@@ -26,9 +27,11 @@ export function ChatScreen() {
               </div>
             </div>
             <div className="hdr-actions">
-              <button type="button" className="hdr-btn" onClick={() => showScreen('journey')} title="Jornadas">
-                🗺️
-              </button>
+              {showJourneys() && (
+                <button type="button" className="hdr-btn" onClick={() => showScreen('journey')} title="Jornadas">
+                  🗺️
+                </button>
+              )}
               <div className="hdr-btn-wrap">
                 <button type="button" className="hdr-btn" onClick={() => showScreen('map')} title="Mapa emocional">
                   📊
@@ -37,15 +40,17 @@ export function ChatScreen() {
               </div>
             </div>
           </div>
-          <div className="progress-wrap">
-            <div className="progress-meta">
-              <span>Sua jornada</span>
-              <span>{progress}%</span>
+          {showJourneys() && (
+            <div className="progress-wrap">
+              <div className="progress-meta">
+                <span>Sua jornada</span>
+                <span>{progress}%</span>
+              </div>
+              <div className="progress-bar">
+                <div className="progress-fill" style={{ width: `${progress}%` }} />
+              </div>
             </div>
-            <div className="progress-bar">
-              <div className="progress-fill" style={{ width: `${progress}%` }} />
-            </div>
-          </div>
+          )}
         </header>
 
         <MessageList />

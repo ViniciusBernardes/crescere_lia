@@ -10,6 +10,7 @@ import {
 import { initDb } from "./db/database.js";
 import { adminRouter } from "./routes/admin.js";
 import { chatRouter } from "./routes/chat.js";
+import { sessionsRouter } from "./routes/sessions.js";
 import { resolveTenant } from "./services/tenants.js";
 
 const app = express();
@@ -37,6 +38,7 @@ app.get("/api/health", async (_req, res) => {
 });
 
 app.use("/api/admin", adminRouter);
+app.use("/api", sessionsRouter);
 app.use("/api", chatRouter);
 
 async function main() {
