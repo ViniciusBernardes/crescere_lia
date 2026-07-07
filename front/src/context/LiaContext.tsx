@@ -9,6 +9,8 @@ import {
   type ReactNode,
 } from 'react'
 import { createJourneyRunner } from '../flows/journeyFlows'
+import { showJourneys } from '../lib/features'
+import { syncCaregiverProfile } from '../services/sessionSync'
 import { useSpeech, type SpeechPlayback } from '../hooks/useSpeech'
 import { isAiChatEnabled, transcribeAudio } from '../services/liaApi'
 import { canUseMicrophone, createMediaRecorder, getRecorderFormat, micErrorMessage } from '../utils/voiceRecorder'
@@ -178,9 +180,37 @@ export function LiaProvider({ children }: { children: ReactNode }) {
         if (audioQ) speak(audioQ)
       },
       addCtas: (buttons) => {
-        appendMessage({ id: uid(), kind: 'ctas', buttons, time: formatTime() })
+        const filtered = showJourneys()
+          ? buttons
+          : buttons.filter((btn) => !/jornada/i.test(`${btn.label} ${btn.sub ?? ''}`))
+        if (filtered.length === 0) return
+        appendMessage({ id: uid(), kind: 'ctas', buttons: filtered, time: formatTime() })
       },
       suggestBlock: (journey) => {
+        if (!showJourneys()) {
+          appendMessage({
+            id: uid(),
+            kind: 'ctas',
+            buttons: [
+              {
+                label: 'Ver meu mapa emocional',
+                icon: '📊',
+                style: 'secondary',
+                action: () => setScreen('map'),
+              },
+              {
+                label: 'Falar com psicólogo',
+                icon: '💜',
+                style: 'accent',
+                sub: 'Plantão disponível 24h',
+                action: () => setPsychOpen(true),
+              },
+            ],
+            time: formatTime(),
+          })
+          speak('Estou aqui com você. Você pode ver seu mapa emocional ou falar com um psicólogo do plantão.')
+          return
+        }
         appendMessage({ id: uid(), kind: 'suggest', journey, time: formatTime() })
         speak(
           'Com base em como você está, sugiro começar por essa jornada. E lembre-se que o plantão psicológico está sempre disponível.',
@@ -188,15 +218,21 @@ export function LiaProvider({ children }: { children: ReactNode }) {
       },
       updateMap: () => {
         setMapBadge(true)
-        setProfile({ ...profileRef.current })
+        const next = { ...profileRef.current }
+        setProfile(next)
+        void syncCaregiverProfile(next).catch(() => undefined)
       },
       setProgress: (pct) => setProgress(pct),
       showScreen: (legacyId) => {
         const mapped = screenMap[legacyId] ?? (legacyId as ScreenId)
         setScreen(mapped)
       },
-      openPsych: () => setPsychOpen(true),
+      openPsych: () => {
+        setPsychOpen(true)
+        void syncCaregiverProfile(profileRef.current, { needsPsych: true }).catch(() => undefined)
+      },
       startJourney: (n) => {
+        if (!showJourneys()) return
         runnerRef.current?.startJourney(n)
       },
       speak,
@@ -215,7 +251,10 @@ export function LiaProvider({ children }: { children: ReactNode }) {
     setTimeout(() => runnerRef.current?.startIntroFlow(), 400)
   }, [unlockAudio])
 
-  const openPsych = useCallback(() => setPsychOpen(true), [])
+  const openPsych = useCallback(() => {
+    setPsychOpen(true)
+    void syncCaregiverProfile(profileRef.current, { needsPsych: true }).catch(() => undefined)
+  }, [])
   const closePsych = useCallback(() => setPsychOpen(false), [])
 
   const sendMessage = useCallback((text: string) => {
@@ -224,6 +263,7 @@ export function LiaProvider({ children }: { children: ReactNode }) {
   }, [unlockAudio])
 
   const startJourney = useCallback((n: number) => {
+    if (!showJourneys()) return
     setScreen('chat')
     runnerRef.current?.startJourney(n)
   }, [])

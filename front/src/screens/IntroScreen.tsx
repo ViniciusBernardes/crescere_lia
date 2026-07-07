@@ -52,7 +52,7 @@ export function IntroScreen() {
 
           <div className="intro-actions">
             <button type="button" className="start-btn" onClick={goToChat}>
-              Quero começar minha jornada
+              Quero conversar com a Lia
               <span className="btn-arrow" aria-hidden>
                 →
               </span>

@@ -36,12 +36,20 @@ export interface LiaApiError {
 }
 
 const API_BASE = '/api'
-const TENANT_SLUG = import.meta.env.VITE_TENANT_SLUG || 'crescere'
+const DEFAULT_TENANT_SLUG = import.meta.env.VITE_TENANT_SLUG || 'crescere'
+
+export function getTenantSlug(): string {
+  if (typeof window !== 'undefined') {
+    const fromQuery = new URLSearchParams(window.location.search).get('tenant')?.trim().toLowerCase()
+    if (fromQuery) return fromQuery
+  }
+  return DEFAULT_TENANT_SLUG
+}
 
 function apiHeaders(extra?: HeadersInit): HeadersInit {
   return {
     'Content-Type': 'application/json',
-    'X-Tenant-Slug': TENANT_SLUG,
+    'X-Tenant-Slug': getTenantSlug(),
     ...extra,
   }
 }
@@ -139,7 +147,7 @@ export async function transcribeAudio(blob: Blob, filename = 'gravacao.webm'): P
 
   const res = await fetch(`${API_BASE}/transcribe`, {
     method: 'POST',
-    headers: { 'X-Tenant-Slug': TENANT_SLUG },
+    headers: { 'X-Tenant-Slug': getTenantSlug() },
     body: form,
   })
   const data = await parseJson<{ text: string }>(res)
