@@ -28,6 +28,30 @@ export interface HealthResponse {
   message: string
   openai: 'configured' | 'missing_key'
   model: string | null
+  iclinicaSync?: 'configured' | 'missing'
+}
+
+export interface LiaJourneyQuestion {
+  id: number
+  sort_order: number
+  type: 'open' | 'multiple_choice'
+  prompt: string
+  options: string[]
+}
+
+export interface LiaJourneyFromApi {
+  number: number
+  title: string
+  subtitle: string | null
+  icon: string | null
+  color: string | null
+  is_global: boolean
+  questions: LiaJourneyQuestion[]
+}
+
+export interface LiaJourneysResponse {
+  company_slug: string
+  journeys: LiaJourneyFromApi[]
 }
 
 export interface LiaApiError {
@@ -69,6 +93,11 @@ export function isAiChatEnabled(): boolean {
 export async function fetchHealth(): Promise<HealthResponse> {
   const res = await fetch(`${API_BASE}/health`)
   return parseJson<HealthResponse>(res)
+}
+
+export async function fetchJourneysCatalog(): Promise<LiaJourneysResponse> {
+  const res = await fetch(`${API_BASE}/journeys`, { headers: apiHeaders() })
+  return parseJson<LiaJourneysResponse>(res)
 }
 
 function chatHeaders(includeSpeech?: boolean): HeadersInit {

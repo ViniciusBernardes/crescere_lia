@@ -10,7 +10,9 @@ import {
 import { initDb } from "./db/database.js";
 import { adminRouter } from "./routes/admin.js";
 import { chatRouter } from "./routes/chat.js";
+import { journeysRouter } from "./routes/journeys.js";
 import { sessionsRouter } from "./routes/sessions.js";
+import { isIclinicaSyncConfigured } from "./services/iclinicaSync.js";
 import { resolveTenant } from "./services/tenants.js";
 
 const app = express();
@@ -29,6 +31,7 @@ app.get("/api/health", async (_req, res) => {
       openai: (await isOpenAiConfigured(tenant.slug)) ? "configured" : "missing_key",
       model: settings?.model ?? null,
       credentialsSource: (await getOpenAiCredentialsSource(tenant.slug)) ?? "none",
+      iclinicaSync: isIclinicaSyncConfigured() ? "configured" : "missing",
     });
   } catch (error) {
     const message =
@@ -39,6 +42,7 @@ app.get("/api/health", async (_req, res) => {
 
 app.use("/api/admin", adminRouter);
 app.use("/api", sessionsRouter);
+app.use("/api", journeysRouter);
 app.use("/api", chatRouter);
 
 async function main() {

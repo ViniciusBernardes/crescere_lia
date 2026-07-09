@@ -1,0 +1,107 @@
+export interface IclinicaSessionPayload {
+  company_slug: string;
+  session_token: string;
+  display_name?: string | null;
+  profile_json?: Record<string, unknown>;
+  stress_level?: number;
+  selfcare_level?: number;
+  emotion_today?: string | null;
+  journeys_completed_count?: number;
+  current_journey?: number | null;
+  current_journey_title?: string | null;
+  needs_psych?: boolean;
+  last_activity_at?: string;
+  patient_id?: number | null;
+}
+
+export interface IclinicaJourneyQuestion {
+  id: number;
+  sort_order: number;
+  type: "open" | "multiple_choice";
+  prompt: string;
+  options: string[];
+}
+
+export interface IclinicaJourney {
+  number: number;
+  title: string;
+  subtitle: string | null;
+  icon: string | null;
+  color: string | null;
+  is_global: boolean;
+  questions: IclinicaJourneyQuestion[];
+}
+
+export interface IclinicaJourneysResponse {
+  company_slug: string;
+  journeys: IclinicaJourney[];
+}
+
+function apiBaseUrl(): string {
+  return process.env.ICLINICA_API_URL?.trim().replace(/\/+$/, "") ?? "";
+}
+
+function syncSecret(): string {
+  return process.env.LIA_SYNC_SECRET?.trim() ?? "";
+}
+
+export function isIclinicaSyncConfigured(): boolean {
+  return apiBaseUrl() !== "" && syncSecret() !== "";
+}
+
+async function iclinicaRequest<T>(
+  path: string,
+  init: RequestInit = {},
+): Promise<T> {
+  const base = apiBaseUrl();
+  const secret = syncSecret();
+  if (!base || !secret) {
+    throw new Error("Integração iClinica não configurada (ICLINICA_API_URL / LIA_SYNC_SECRET).");
+  }
+
+  const headers = new Headers(init.headers);
+  headers.set("X-Lia-Sync-Secret", secret);
+  if (init.body && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  const res = await fetch(`${base}${path}`, { ...init, headers });
+  const text = await res.text();
+  let data: unknown = null;
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = { message: text };
+    }
+  }
+
+  if (!res.ok) {
+    const message =
+      data && typeof data === "object" && "message" in data
+        ? String((data as { message: unknown }).message)
+        : text || `HTTP ${res.status}`;
+    throw new Error(`iClinica: ${message}`);
+  }
+
+  return data as T;
+}
+
+export async function pushSessionToIclinica(
+  payload: IclinicaSessionPayload,
+): Promise<void> {
+  await iclinicaRequest("/api/v1/integrations/lia/sessions", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function fetchJourneysFromIclinica(
+  companySlug: string,
+): Promise<IclinicaJourneysResponse> {
+  const slug = companySlug.trim().toLowerCase();
+  const query = new URLSearchParams({ company_slug: slug });
+  return iclinicaRequest<IclinicaJourneysResponse>(
+    `/api/v1/integrations/lia/journeys?${query}`,
+  );
+}
