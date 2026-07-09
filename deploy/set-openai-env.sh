@@ -39,6 +39,8 @@ upsert_env OPENAI_TTS_MODEL "${OPENAI_TTS_MODEL:-tts-1}"
 upsert_env OPENAI_TTS_VOICE "${OPENAI_TTS_VOICE:-nova}"
 upsert_env DEFAULT_TENANT_SLUG "${DEFAULT_TENANT_SLUG:-crescere}"
 upsert_env DEFAULT_TENANT_NAME "${DEFAULT_TENANT_NAME:-Crescere}"
+upsert_env ICLINICA_API_URL "${ICLINICA_API_URL:-https://crescere.life}"
+upsert_env LIA_SYNC_SECRET "${LIA_SYNC_SECRET:-}"
 
 chmod +x deploy/*.sh
 BRANCH="${BRANCH:-Feat_02}" ./deploy/update.sh
