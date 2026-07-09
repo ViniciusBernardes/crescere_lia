@@ -1,5 +1,4 @@
-import type { ChatApi } from '../types/chat'
-import { JOURNEYS } from '../data/journeys'
+import type { ChatApi, JourneyItem } from '../types/chat'
 import { isAiChatEnabled, sendJourneyStep } from '../services/liaApi'
 import { prepareSpeechFromResponse } from '../services/chatSpeech'
 import { buildJourneySteps, type JourneyDeps, type JourneyStep } from './journeyAiSteps'
@@ -113,15 +112,16 @@ function runSteps(
   journeyNumber: number,
   steps: JourneyStep[],
   deps: JourneyDeps,
+  journeys: JourneyItem[],
   fromIndex = 0,
 ) {
   if (fromIndex >= steps.length) return
 
-  const journey = JOURNEYS.find((j) => j.n === journeyNumber)
+  const journey = journeys.find((j) => j.n === journeyNumber)
   const journeyTitle = journey?.title || `Jornada ${journeyNumber}`
   const step = steps[fromIndex]
 
-  const advance = () => runSteps(api, journeyNumber, steps, deps, fromIndex + 1)
+  const advance = () => runSteps(api, journeyNumber, steps, deps, journeys, fromIndex + 1)
 
   if (step.type === 'ai') {
     runAiStep(api, journeyNumber, journeyTitle, fromIndex, step, advance)
@@ -138,7 +138,12 @@ function runSteps(
   }
 }
 
-export function runAiJourney(api: ChatApi, journeyNumber: number, startJourney: (n: number) => void) {
+export function runAiJourney(
+  api: ChatApi,
+  journeyNumber: number,
+  startJourney: (n: number) => void,
+  journeys: JourneyItem[],
+) {
   if (!isAiChatEnabled()) return
 
   const deps: JourneyDeps = {
@@ -152,5 +157,5 @@ export function runAiJourney(api: ChatApi, journeyNumber: number, startJourney: 
   const steps = allSteps[journeyNumber]
   if (!steps?.length) return
 
-  runSteps(api, journeyNumber, steps, deps)
+  runSteps(api, journeyNumber, steps, deps, journeys)
 }

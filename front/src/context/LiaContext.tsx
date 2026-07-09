@@ -10,6 +10,7 @@ import {
 } from 'react'
 import { createJourneyRunner } from '../flows/journeyFlows'
 import { showEmotionalMap, showJourneys, showQuickReplies } from '../lib/features'
+import { useJourneys } from './JourneysContext'
 import { isMoodQuestion, OPEN_MOOD_PROMPT, OPEN_REPLY_HINT } from '../lib/openPrompts'
 import { syncCaregiverProfile } from '../services/sessionSync'
 import { useSpeech, type SpeechPlayback } from '../hooks/useSpeech'
@@ -65,6 +66,7 @@ const screenMap: Record<string, ScreenId> = {
 }
 
 export function LiaProvider({ children }: { children: ReactNode }) {
+  const { journeys } = useJourneys()
   const [screen, setScreen] = useState<ScreenId>('intro')
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [profile, setProfile] = useState<UserProfile>(createEmptyProfile)
@@ -276,8 +278,8 @@ export function LiaProvider({ children }: { children: ReactNode }) {
   )
 
   useEffect(() => {
-    runnerRef.current = createJourneyRunner(chatApi)
-  }, [chatApi])
+    runnerRef.current = createJourneyRunner(chatApi, journeys)
+  }, [chatApi, journeys])
 
   const goToChat = useCallback(() => {
     setScreen('chat')

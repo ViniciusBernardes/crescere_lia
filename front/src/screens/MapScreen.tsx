@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react'
+import { useJourneys } from '../context/JourneysContext'
 import { useLia } from '../context/LiaContext'
 import { showJourneys } from '../lib/features'
 
@@ -35,11 +36,11 @@ function roleDesc(r: string): string {
   return map[r] ?? r
 }
 
-function nextStep(profile: ReturnType<typeof useLia>['profile']): string {
+function nextStep(profile: ReturnType<typeof useLia>['profile'], totalJourneys: number): string {
   if (!profile.emotionToday) return 'Compartilhe como você está para receber orientações personalizadas.'
   const n = profile.journeysCompleted.length
   if (n === 0) return 'Inicie a Jornada 1 — Acolhimento e Chegada.'
-  if (n < 3) return `Continue sua jornada — ${12 - n} trilhas ainda a explorar.`
+  if (n < 3) return `Continue sua jornada — ${Math.max(0, totalJourneys - n)} trilha${totalJourneys - n === 1 ? '' : 's'} ainda a explorar.`
   return 'Você está progredindo bem! Explore as jornadas avançadas.'
 }
 
@@ -88,6 +89,7 @@ function MapCard({
 
 export function MapScreen() {
   const { profile, showScreen } = useLia()
+  const { total: journeyTotal } = useJourneys()
   const p = profile
 
   const metrics = useMemo(() => {
@@ -182,14 +184,14 @@ export function MapScreen() {
                 <MapCard
                   icon="✅"
                   title="Jornadas concluídas"
-                  body={`${p.journeysCompleted.length} de 12 trilhas`}
+                  body={`${p.journeysCompleted.length} de ${journeyTotal} trilha${journeyTotal === 1 ? '' : 's'}`}
                   tag="Continue seu progresso"
                 />
               )}
               <MapCard
                 icon="💡"
                 title="Próximo passo"
-                body={showJourneys() ? nextStep(p) : 'Continue conversando com a Lia ou fale com o plantão psicológico.'}
+                body={showJourneys() ? nextStep(p, journeyTotal) : 'Continue conversando com a Lia ou fale com o plantão psicológico.'}
                 tag={showJourneys() ? 'Ver todas as jornadas' : 'Plantão psicológico 24h'}
               />
             </div>

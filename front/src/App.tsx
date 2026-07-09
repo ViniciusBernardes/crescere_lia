@@ -1,5 +1,6 @@
 import { PhoneFrame } from './components/layout/PhoneFrame'
 import { PsychOverlay } from './components/overlays/PsychOverlay'
+import { JourneysProvider } from './context/JourneysContext'
 import { LiaProvider, useLia } from './context/LiaContext'
 import { showJourneys } from './lib/features'
 import { ChatScreen } from './screens/ChatScreen'
@@ -24,8 +25,10 @@ function AppShell() {
 
 export default function App() {
   return (
-    <LiaProvider>
-      <AppShell />
-    </LiaProvider>
+    <JourneysProvider>
+      <LiaProvider>
+        <AppShell />
+      </LiaProvider>
+    </JourneysProvider>
   )
 }

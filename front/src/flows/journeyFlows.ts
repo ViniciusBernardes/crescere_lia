@@ -1,6 +1,5 @@
 // @ts-nocheck
-import type { ChatApi } from '../types/chat';
-import { JOURNEYS } from '../data/journeys';
+import type { ChatApi, JourneyItem } from '../types/chat';
 import { isAiChatEnabled, sendChatMessage } from '../services/liaApi';
 import { prepareSpeechFromResponse } from '../services/chatSpeech';
 import { runAiJourney } from './journeyAiRunner';
@@ -9,14 +8,15 @@ import { MOOD_CONFIG, resolveMoodKey } from '../data/moodConfig';
 import { showQuickReplies } from '../lib/features';
 import { OPEN_MOOD_PROMPT } from '../lib/openPrompts';
 
-export function createJourneyRunner(api: ChatApi) {
+export function createJourneyRunner(api: ChatApi, journeys: JourneyItem[]) {
   const profile = api.getProfile();
+  const resolveJourney = (n) => journeys.find((j) => j.n === n) || journeys[0];
 
   const MOOD = MOOD_CONFIG;
 
   function startIntroFlow() {
   if (isAiChatEnabled()) {
-    runAiIntro(api);
+    runAiIntro(api, journeys);
     return;
   }
 
@@ -44,7 +44,7 @@ export function createJourneyRunner(api: ChatApi) {
   profile.responses.push({type:'mood',value:key}); api.updateMap(); api.setProgress(15);
   api.showTyping(()=>{
     api.addAiMsg(r.text, r.audio);
-    setTimeout(()=>api.showTyping(()=>api.suggestBlock(JOURNEYS.find(j=>j.n===r.journey)||JOURNEYS[0]),1600),800);
+    setTimeout(()=>api.showTyping(()=>api.suggestBlock(resolveJourney(r.journey)),1600),800);
   });
 }
 
@@ -54,7 +54,7 @@ export function createJourneyRunner(api: ChatApi) {
       setTimeout(
         () =>
           api.addCtas([
-            { icon: '🌊', label: 'Jornada 9 — Momentos de Crise', style: 'primary', action: () => startJourney(9) },
+            { icon: '🌊', label: `Jornada 9 — ${resolveJourney(9).title}`, style: 'primary', action: () => startJourney(9) },
             { icon: '💜', label: 'Falar com psicólogo agora', sub: 'Plantão 24h', style: 'accent', action: () => api.openPsych() },
           ]),
         700,
@@ -64,7 +64,7 @@ export function createJourneyRunner(api: ChatApi) {
       setTimeout(
         () =>
           api.addCtas([
-            { icon: '🌱', label: 'Jornada 5 — Cuidar de Si', style: 'primary', action: () => startJourney(5) },
+            { icon: '🌱', label: `Jornada 5 — ${resolveJourney(5).title}`, style: 'primary', action: () => startJourney(5) },
             { icon: '💜', label: 'Falar com psicólogo', style: 'accent', action: () => api.openPsych() },
           ]),
         700,
@@ -73,7 +73,7 @@ export function createJourneyRunner(api: ChatApi) {
       setTimeout(
         () =>
           api.addCtas([
-            { icon: '🧩', label: 'Jornada 2 — Compreendendo o TEA', style: 'primary', action: () => startJourney(2) },
+            { icon: '🧩', label: `Jornada 2 — ${resolveJourney(2).title}`, style: 'primary', action: () => startJourney(2) },
           ]),
         700,
       );
@@ -156,9 +156,9 @@ export function createJourneyRunner(api: ChatApi) {
   api.updateMap();
 
   if (isAiChatEnabled()) {
-    const journey = JOURNEYS.find((j) => j.n === n) || JOURNEYS[0];
+    const journey = resolveJourney(n);
     api.addUserMsg(`Jornada ${n} — ${journey.title} ${journey.icon}`);
-    runAiJourney(api, n, startJourney);
+    runAiJourney(api, n, startJourney, journeys);
     return;
   }
 

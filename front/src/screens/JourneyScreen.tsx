@@ -1,8 +1,9 @@
-import { JOURNEYS } from '../data/journeys'
+import { useJourneys } from '../context/JourneysContext'
 import { useLia } from '../context/LiaContext'
 
 export function JourneyScreen() {
   const { profile, showScreen, startJourney } = useLia()
+  const { journeys, loading, total } = useJourneys()
 
   return (
     <div className="screen slide-in" id="journeyScreen">
@@ -14,12 +15,16 @@ export function JourneyScreen() {
               Voltar
             </button>
             <h2>Jornadas</h2>
-            <p>12 trilhas de apoio ao cuidador — todas disponíveis</p>
+            <p>
+              {loading
+                ? 'Carregando trilhas…'
+                : `${total} trilha${total === 1 ? '' : 's'} de apoio ao cuidador`}
+            </p>
           </div>
         </header>
         <div className="jm-scroll">
           <div className="page-inner jm-grid">
-          {JOURNEYS.map((j) => {
+          {journeys.map((j) => {
             const done = profile.journeysCompleted.includes(j.n)
             return (
               <button

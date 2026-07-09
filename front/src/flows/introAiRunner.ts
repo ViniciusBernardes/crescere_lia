@@ -1,5 +1,4 @@
-import type { ChatApi } from '../types/chat'
-import { JOURNEYS } from '../data/journeys'
+import type { ChatApi, JourneyItem } from '../types/chat'
 import { showQuickReplies } from '../lib/features'
 import { OPEN_MOOD_PROMPT } from '../lib/openPrompts'
 import { MOOD_CONFIG, MOOD_PILLS, resolveMoodKey } from '../data/moodConfig'
@@ -34,7 +33,7 @@ function moodPickInstruction(label: string, moodKey: string): string {
   return `O cuidador escolheu como se sente hoje: "${label}" (${moodKey}). ${hints[moodKey] || hints['Não sei dizer']} Personalize com empatia. Não sugira jornada específica no texto — isso virá depois.`
 }
 
-export function runAiIntro(api: ChatApi) {
+export function runAiIntro(api: ChatApi, journeys: JourneyItem[]) {
   if (!isAiChatEnabled()) return
 
   api.setProgress(5)
@@ -103,7 +102,7 @@ export function runAiIntro(api: ChatApi) {
             api.addAiMsg(mood.text, mood.audio)
           }
 
-          const suggested = JOURNEYS.find((j) => j.n === mood.journey) || JOURNEYS[0]
+          const suggested = journeys.find((j) => j.n === mood.journey) || journeys[0]
           api.suggestBlock(suggested)
         })
       },
