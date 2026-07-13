@@ -163,6 +163,10 @@
   display: none;
 }
 
+.admin-hero-wordmark {
+  display: none;
+}
+
 .admin-board {
   display: flex;
   flex-direction: column;
@@ -815,8 +819,26 @@
     max-width: 32rem;
   }
 
-  .admin-hero-orb {
+  .admin-hero-wordmark {
     display: block;
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+    width: 220px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.92);
+    box-shadow: 0 8px 24px rgba(99, 71, 160, 0.16);
+  }
+
+  .admin-hero-wordmark img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .admin-hero-orb {
+    display: none;
     position: relative;
     z-index: 1;
     flex-shrink: 0;

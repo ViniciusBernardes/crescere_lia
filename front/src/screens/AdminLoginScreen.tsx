@@ -27,9 +27,9 @@ export function AdminLoginScreen({ onSuccess }: { onSuccess: () => void }) {
       <div className="admin-login-shell">
         <div className="admin-login-card">
           <div className="admin-login-brand">
-            <img src="/lia.jpeg" alt="" className="admin-login-avatar" />
+            <img src="/crescere-lia-wordmark.png" alt="Crescere LIA" className="admin-login-wordmark" />
             <span className="admin-eyebrow">Painel Admin</span>
-            <h1>Crescere LIA</h1>
+            <h1>Configurações</h1>
             <p>Entre com usuário e senha para configurar empresas, OpenAI e prompts.</p>
           </div>
 
