@@ -235,10 +235,10 @@ export function AdminScreen({ onLogout }: { onLogout?: () => void }) {
             ←
           </a>
           <div className="admin-topbar-brand">
-            <img src="/crescere-lia-wordmark.png" alt="Crescere LIA" className="admin-topbar-wordmark" />
+            <img src="/lia.jpeg" alt="" className="admin-topbar-avatar" />
             <div className="admin-topbar-title">
               <span className="admin-eyebrow">Painel Admin</span>
-              <strong>Configurações</strong>
+              <strong>Crescere LIA</strong>
             </div>
           </div>
           {onLogout && (
@@ -257,8 +257,8 @@ export function AdminScreen({ onLogout }: { onLogout?: () => void }) {
               Personalize o tom de atendimento e a integração OpenAI para cada empresa do whitelabel.
             </p>
           </div>
-          <div className="admin-hero-wordmark" aria-hidden>
-            <img src="/crescere-lia-wordmark.png" alt="" />
+          <div className="admin-hero-orb" aria-hidden>
+            <img src="/lia.jpeg" alt="" />
           </div>
         </div>
       </div>
@@ -529,7 +529,7 @@ export function AdminScreen({ onLogout }: { onLogout?: () => void }) {
         </section>
         </div>
 
-        <p className="admin-footer-brand">Crescere</p>
+        <img className="admin-footer-brand-logo" src="/crescere-logo.png" alt="Crescere" />
       </div>
     </div>
   )

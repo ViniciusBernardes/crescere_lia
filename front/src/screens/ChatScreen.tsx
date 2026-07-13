@@ -14,14 +14,16 @@ export function ChatScreen() {
             <button type="button" className="hdr-back" onClick={() => showScreen('intro')} aria-label="Voltar">
               ‹
             </button>
-            <div className="hdr-brand">
-              <img src="/crescere-lia-wordmark.png" alt="Crescere LIA" className="hdr-wordmark" />
-              <div className="hdr-info">
-                <div className="hdr-status">
-                  <span className="status-pulse" />
-                  <span className="hdr-status-short">Online agora</span>
-                  <span className="hdr-status-long"> · Apoio ao cuidador</span>
-                </div>
+            <div className="hdr-avatar hdr-avatar--chat">
+              <img src="/lia.jpeg" alt="Lia" />
+              <div className="online-dot" />
+            </div>
+            <div className="hdr-info">
+              <div className="hdr-name">Lia</div>
+              <div className="hdr-status">
+                <span className="status-pulse" />
+                <span className="hdr-status-short">Online agora</span>
+                <span className="hdr-status-long"> · Apoio ao cuidador</span>
               </div>
             </div>
             <div className="hdr-actions">

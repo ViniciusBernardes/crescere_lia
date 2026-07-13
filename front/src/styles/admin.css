@@ -1073,3 +1073,5 @@
   width: 100%;
   margin-top: var(--space-xs);
 }
+
+.admin-footer-brand-logo{display:block;width:110px;height:auto;margin:12px auto 0;opacity:0.9;}

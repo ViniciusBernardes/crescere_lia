@@ -14,12 +14,12 @@ export function IntroScreen() {
     <div className="screen slide-in" id="introScreen">
       <div className="intro-hero">
         <div className="intro-hero-glow" aria-hidden />
-        <div className="intro-wordmark">
-          <img src="/crescere-lia-wordmark.png" alt="Crescere LIA" loading="eager" />
+        <div className="intro-orb">
+          <img src="/lia.jpeg" alt="Lia" loading="eager" />
         </div>
         <p className="intro-hero-badge">Assistente virtual</p>
         <h1>Olá, eu sou a Lia</h1>
-        <p className="tagline">Apoio ao Cuidador</p>
+        <p className="tagline">Crescere · Apoio ao Cuidador</p>
         <p className="intro-hero-lead">
           Acolhimento, orientação e escuta para quem cuida de uma criança com TEA.
         </p>
@@ -58,7 +58,7 @@ export function IntroScreen() {
               </span>
             </button>
             <p className="intro-cta-hint">Leva menos de 2 minutos · no seu ritmo</p>
-            <img className="crescere-brand-logo" src="/crescere-lia-wordmark.png" alt="Crescere LIA" />
+            <img className="crescere-brand-logo" src="/crescere-logo.png" alt="Crescere" />
           </div>
         </div>
       </div>
