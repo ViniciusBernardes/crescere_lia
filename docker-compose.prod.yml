@@ -41,6 +41,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_USE_AI_CHAT: "true"
+        VITE_SHOW_JOURNEYS: "true"
     container_name: crescere-lia-front
     restart: unless-stopped
     depends_on:

@@ -2,6 +2,7 @@ import OpenAI from "openai";
 import { toFile } from "openai/uploads";
 import { resolveOpenAiSettings } from "../config.js";
 import { buildChatMessages, toAudioText } from "../prompts/lia.js";
+import { extractJourneyRecommendation } from "./journeyRecommendation.js";
 import { resolveSystemPrompt } from "./promptConfig.js";
 import { resolveTenant } from "./tenants.js";
 import { syncCaregiverSession } from "./sessionSync.js";
@@ -55,8 +56,8 @@ export async function createChatReply(
     temperature: settings.temperature,
   });
 
-  const reply = completion.choices[0]?.message?.content?.trim();
-  if (!reply) {
+  const rawReply = completion.choices[0]?.message?.content?.trim();
+  if (!rawReply) {
     throw new Error("Resposta vazia da OpenAI");
   }
 
@@ -64,9 +65,15 @@ export async function createChatReply(
     currentJourney: journey?.number ?? null,
   }).catch(() => undefined);
 
+  const inGuidedJourney = journey != null && journey.number > 0;
+  const { reply, recommendation } = inGuidedJourney
+    ? { reply: rawReply, recommendation: null }
+    : extractJourneyRecommendation(rawReply);
+
   return {
     reply,
     audioText: toAudioText(reply),
+    ...(recommendation ? { journeyRecommendation: recommendation } : {}),
   };
 }
 

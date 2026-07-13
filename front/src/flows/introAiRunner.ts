@@ -5,6 +5,7 @@ import { OPEN_MOOD_PROMPT } from '../lib/openPrompts'
 import { MOOD_CONFIG, MOOD_PILLS, resolveMoodKey } from '../data/moodConfig'
 import { isAiChatEnabled, sendJourneyStep } from '../services/liaApi'
 import { prepareSpeechFromResponse } from '../services/chatSpeech'
+import { applyJourneyRecommendation } from './journeyRecommendation'
 
 const INTRO_TITLE = 'Introdução — Primeiro contato'
 
@@ -31,7 +32,7 @@ function moodPickInstruction(label: string, moodKey: string): string {
       'Valide a dificuldade de nomear sentimentos. Isso também é informação importante. Convide a uma checagem gentil do momento.',
   }
 
-  return `O cuidador escolheu como se sente hoje: "${label}" (${moodKey}). ${hints[moodKey] || hints['Não sei dizer']} Personalize com empatia. Não sugira jornada específica no texto — isso virá depois.`
+  return `O cuidador escolheu como se sente hoje: "${label}" (${moodKey}). ${hints[moodKey] || hints['Não sei dizer']} Personalize com empatia. Se uma jornada do catálogo ajudaria, use o JSON técnico na última linha (conforme instrução do sistema).`
 }
 
 export function runAiIntro(api: ChatApi) {
@@ -82,8 +83,9 @@ export function runAiIntro(api: ChatApi) {
         api.setProgress(15)
 
         api.runWithTyping(async () => {
+          let aiResponse: Awaited<ReturnType<typeof sendJourneyStep>> | null = null
           try {
-            const response = await sendJourneyStep({
+            aiResponse = await sendJourneyStep({
               journeyNumber: 0,
               journeyTitle: INTRO_TITLE,
               stepIndex: 1,
@@ -94,17 +96,21 @@ export function runAiIntro(api: ChatApi) {
               includeSpeech: api.isAudioEnabled(),
             })
             api.addAiMsg(
-              response.reply,
-              response.audioText,
+              aiResponse.reply,
+              aiResponse.audioText,
               undefined,
-              prepareSpeechFromResponse(response),
+              prepareSpeechFromResponse(aiResponse),
             )
           } catch {
             api.addAiMsg(mood.text, mood.audio)
           }
 
           const suggested = getJourneyByNumber(mood.journey)
-          api.suggestBlock(suggested)
+          if (aiResponse?.journeyRecommendation?.number) {
+            applyJourneyRecommendation(api, aiResponse)
+          } else {
+            api.suggestBlock(suggested)
+          }
         })
       },
     )

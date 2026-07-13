@@ -7,8 +7,9 @@ import { runAiJourney } from './journeyAiRunner';
 import { startQuestionJourney } from './questionJourneyRunner';
 import { runAiIntro } from './introAiRunner';
 import { MOOD_CONFIG, resolveMoodKey } from '../data/moodConfig';
-import { showQuickReplies } from '../lib/features';
+import { showQuickReplies, showJourneys } from '../lib/features';
 import { OPEN_MOOD_PROMPT } from '../lib/openPrompts';
+import { applyJourneyRecommendation } from './journeyRecommendation';
 
 export function createJourneyRunner(api: ChatApi) {
   const profile = api.getProfile();
@@ -51,6 +52,7 @@ export function createJourneyRunner(api: ChatApi) {
 }
 
   function applyKeywordExtras(l: string) {
+    if (!showJourneys()) return;
     if (l.includes('crise') || l.includes('limite') || l.includes('desespero')) {
       profile.stressLevel = Math.min(10, profile.stressLevel + 3);
       setTimeout(
@@ -137,7 +139,10 @@ export function createJourneyRunner(api: ChatApi) {
             undefined,
             prepareSpeechFromResponse(response),
           );
-          applyKeywordExtras(l);
+          applyJourneyRecommendation(api, response);
+          if (!response.journeyRecommendation) {
+            applyKeywordExtras(l);
+          }
           api.updateMap();
         } catch {
           api.addAiMsg(

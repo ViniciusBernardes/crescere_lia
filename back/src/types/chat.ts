@@ -33,10 +33,16 @@ export interface JourneyContext {
   userChoice?: string;
 }
 
+export interface JourneyRecommendation {
+  number: number;
+  reason?: string;
+}
+
 export interface ChatResponseBody {
   reply: string;
   audioText: string;
   speechAudio?: string;
+  journeyRecommendation?: JourneyRecommendation;
 }
 
 export interface TranscribeResponseBody {
