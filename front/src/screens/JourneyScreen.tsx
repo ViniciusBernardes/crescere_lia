@@ -1,4 +1,4 @@
-import { JOURNEYS } from '../data/journeys'
+import { getJourneys } from '../data/journeys'
 import { useLia } from '../context/LiaContext'
 
 export function JourneyScreen() {
@@ -19,7 +19,7 @@ export function JourneyScreen() {
         </header>
         <div className="jm-scroll">
           <div className="page-inner jm-grid">
-          {JOURNEYS.map((j) => {
+          {getJourneys().map((j) => {
             const done = profile.journeysCompleted.includes(j.n)
             return (
               <button

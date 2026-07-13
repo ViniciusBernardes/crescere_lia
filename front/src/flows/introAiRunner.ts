@@ -1,5 +1,5 @@
 import type { ChatApi } from '../types/chat'
-import { JOURNEYS } from '../data/journeys'
+import { getJourneyByNumber } from '../data/journeys'
 import { showQuickReplies } from '../lib/features'
 import { OPEN_MOOD_PROMPT } from '../lib/openPrompts'
 import { MOOD_CONFIG, MOOD_PILLS, resolveMoodKey } from '../data/moodConfig'
@@ -103,7 +103,7 @@ export function runAiIntro(api: ChatApi) {
             api.addAiMsg(mood.text, mood.audio)
           }
 
-          const suggested = JOURNEYS.find((j) => j.n === mood.journey) || JOURNEYS[0]
+          const suggested = getJourneyByNumber(mood.journey)
           api.suggestBlock(suggested)
         })
       },

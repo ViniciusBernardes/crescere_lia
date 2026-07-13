@@ -1,4 +1,6 @@
+import type { JourneyItem } from '../types/chat'
 import type { UserProfile } from '../types/profile'
+import { resolveTenantSlug } from '../utils/tenant'
 
 export type ChatRole = 'user' | 'assistant'
 
@@ -28,30 +30,15 @@ export interface HealthResponse {
   message: string
   openai: 'configured' | 'missing_key'
   model: string | null
+  iclinicaIntegration?: boolean
   iclinicaSync?: 'configured' | 'missing'
 }
 
-export interface LiaJourneyQuestion {
-  id: number
-  sort_order: number
-  type: 'open' | 'multiple_choice'
-  prompt: string
-  options: string[]
-}
-
-export interface LiaJourneyFromApi {
-  number: number
-  title: string
-  subtitle: string | null
-  icon: string | null
-  color: string | null
-  is_global: boolean
-  questions: LiaJourneyQuestion[]
-}
-
-export interface LiaJourneysResponse {
-  company_slug: string
-  journeys: LiaJourneyFromApi[]
+export interface JourneysApiResponse {
+  tenant: string
+  source: 'iclinica' | 'fallback'
+  integration_enabled: boolean
+  journeys: JourneyItem[]
 }
 
 export interface LiaApiError {
@@ -60,20 +47,16 @@ export interface LiaApiError {
 }
 
 const API_BASE = '/api'
-const DEFAULT_TENANT_SLUG = import.meta.env.VITE_TENANT_SLUG || 'crescere'
 
+/** Alias usado por sessionSync e outros módulos legados. */
 export function getTenantSlug(): string {
-  if (typeof window !== 'undefined') {
-    const fromQuery = new URLSearchParams(window.location.search).get('tenant')?.trim().toLowerCase()
-    if (fromQuery) return fromQuery
-  }
-  return DEFAULT_TENANT_SLUG
+  return resolveTenantSlug()
 }
 
 function apiHeaders(extra?: HeadersInit): HeadersInit {
   return {
     'Content-Type': 'application/json',
-    'X-Tenant-Slug': getTenantSlug(),
+    'X-Tenant-Slug': resolveTenantSlug(),
     ...extra,
   }
 }
@@ -95,9 +78,11 @@ export async function fetchHealth(): Promise<HealthResponse> {
   return parseJson<HealthResponse>(res)
 }
 
-export async function fetchJourneysCatalog(): Promise<LiaJourneysResponse> {
-  const res = await fetch(`${API_BASE}/journeys`, { headers: apiHeaders() })
-  return parseJson<LiaJourneysResponse>(res)
+export async function fetchJourneys(): Promise<JourneysApiResponse> {
+  const res = await fetch(`${API_BASE}/journeys`, {
+    headers: { 'X-Tenant-Slug': resolveTenantSlug() },
+  })
+  return parseJson<JourneysApiResponse>(res)
 }
 
 function chatHeaders(includeSpeech?: boolean): HeadersInit {
@@ -176,7 +161,7 @@ export async function transcribeAudio(blob: Blob, filename = 'gravacao.webm'): P
 
   const res = await fetch(`${API_BASE}/transcribe`, {
     method: 'POST',
-    headers: { 'X-Tenant-Slug': getTenantSlug() },
+    headers: { 'X-Tenant-Slug': resolveTenantSlug() },
     body: form,
   })
   const data = await parseJson<{ text: string }>(res)

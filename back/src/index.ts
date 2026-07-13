@@ -10,8 +10,9 @@ import {
 import { initDb } from "./db/database.js";
 import { adminRouter } from "./routes/admin.js";
 import { chatRouter } from "./routes/chat.js";
-import { journeysRouter } from "./routes/journeys.js";
+import { iclinicaRouter } from "./routes/iclinica.js";
 import { sessionsRouter } from "./routes/sessions.js";
+import { isIclinicaIntegrationEnabled } from "./services/iclinica.js";
 import { isIclinicaSyncConfigured } from "./services/iclinicaSync.js";
 import { resolveTenant } from "./services/tenants.js";
 
@@ -31,6 +32,7 @@ app.get("/api/health", async (_req, res) => {
       openai: (await isOpenAiConfigured(tenant.slug)) ? "configured" : "missing_key",
       model: settings?.model ?? null,
       credentialsSource: (await getOpenAiCredentialsSource(tenant.slug)) ?? "none",
+      iclinicaIntegration: isIclinicaIntegrationEnabled(),
       iclinicaSync: isIclinicaSyncConfigured() ? "configured" : "missing",
     });
   } catch (error) {
@@ -41,8 +43,8 @@ app.get("/api/health", async (_req, res) => {
 });
 
 app.use("/api/admin", adminRouter);
+app.use("/api", iclinicaRouter);
 app.use("/api", sessionsRouter);
-app.use("/api", journeysRouter);
 app.use("/api", chatRouter);
 
 async function main() {

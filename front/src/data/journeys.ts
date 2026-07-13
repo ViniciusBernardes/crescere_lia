@@ -1,6 +1,6 @@
 import type { JourneyItem } from '../types/chat'
 
-export const JOURNEYS: JourneyItem[] = [
+const FALLBACK_JOURNEYS: JourneyItem[] = [
   { n: 1, icon: '🤗', title: 'Acolhimento e Chegada', sub: '"Você não está sozinho"', color: '#8B6BB1' },
   { n: 2, icon: '🧩', title: 'Compreendendo o TEA', sub: '"Informação que acolhe e aproxima"', color: '#9B75C7' },
   { n: 3, icon: '💭', title: 'Sentimentos diante do diagnóstico', sub: '"Tudo que você sente merece espaço"', color: '#7B5BA8' },
@@ -14,3 +14,52 @@ export const JOURNEYS: JourneyItem[] = [
   { n: 11, icon: '🌟', title: 'Potencialidades, Identidade e Futuro', sub: '"Para além do diagnóstico"', color: '#7B5BA8' },
   { n: 12, icon: '🏫', title: 'Escola, Sociedade e Inclusão', sub: '"Cuidar também é enfrentar o mundo"', color: '#6347A0' },
 ]
+
+let journeysCache: JourneyItem[] = [...FALLBACK_JOURNEYS]
+let journeysSource: 'iclinica' | 'fallback' = 'fallback'
+let loadPromise: Promise<void> | null = null
+
+/** @deprecated use getJourneys() — mantido para imports legados durante a migração */
+export const JOURNEYS: JourneyItem[] = journeysCache
+
+export function getJourneys(): JourneyItem[] {
+  return journeysCache
+}
+
+export function getJourneyByNumber(n: number): JourneyItem {
+  return journeysCache.find((j) => j.n === n) ?? journeysCache[0] ?? FALLBACK_JOURNEYS[0]
+}
+
+export function getJourneysSource(): 'iclinica' | 'fallback' {
+  return journeysSource
+}
+
+export function setJourneysFromApi(journeys: JourneyItem[], source: 'iclinica' | 'fallback') {
+  journeysCache = journeys.length > 0 ? journeys : [...FALLBACK_JOURNEYS]
+  journeysSource = source
+  JOURNEYS.length = 0
+  JOURNEYS.push(...journeysCache)
+}
+
+export async function ensureJourneysLoaded(
+  loader: () => Promise<{ journeys: JourneyItem[]; source: 'iclinica' | 'fallback' }>,
+): Promise<void> {
+  if (loadPromise) return loadPromise
+
+  loadPromise = loader()
+    .then(({ journeys, source }) => {
+      setJourneysFromApi(journeys, source)
+    })
+    .catch(() => {
+      setJourneysFromApi(FALLBACK_JOURNEYS, 'fallback')
+    })
+    .finally(() => {
+      loadPromise = null
+    })
+
+  return loadPromise
+}
+
+export function getFallbackJourneys(): JourneyItem[] {
+  return [...FALLBACK_JOURNEYS]
+}
