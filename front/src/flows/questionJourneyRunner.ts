@@ -1,7 +1,5 @@
 import type { ChatApi, JourneyQuestion } from '../types/chat'
 import { getJourneyByNumber } from '../data/journeys'
-import { isAiChatEnabled, sendJourneyStep } from '../services/liaApi'
-import { prepareSpeechFromResponse } from '../services/chatSpeech'
 
 export type QuestionJourneyController = {
   handleUserMessage: (text: string) => boolean
@@ -77,46 +75,6 @@ export function startQuestionJourney(
     })
   }
 
-  const acknowledgeOpenAnswer = (question: JourneyQuestion, answer: string) => {
-    if (isAiChatEnabled()) {
-      api.runWithTyping(async () => {
-        try {
-          const response = await sendJourneyStep({
-            journeyNumber,
-            journeyTitle,
-            stepIndex: question.sort_order,
-            instruction: `Pergunta da jornada: "${stripHtml(question.prompt)}". Resposta do cuidador: "${answer}". Acolha em 2 a 4 frases, sem julgar. Não abra novas perguntas longas.`,
-            userChoice: answer,
-            profile: api.getProfile(),
-            history: api.getChatHistory(),
-            includeSpeech: api.isAudioEnabled(),
-          })
-          api.addAiMsg(
-            response.reply,
-            response.audioText,
-            undefined,
-            prepareSpeechFromResponse(response),
-          )
-        } catch {
-          api.addAiMsg(
-            'Obrigada por compartilhar isso comigo. Sua resposta faz sentido no seu contexto. 💙',
-            'Obrigada por compartilhar isso comigo. Sua resposta faz sentido no seu contexto.',
-          )
-        }
-        setTimeout(() => runNext(), 500)
-      })
-      return
-    }
-
-    api.showTyping(() => {
-      api.addAiMsg(
-        'Obrigada por compartilhar isso comigo. Sua resposta faz sentido no seu contexto. 💙',
-        'Obrigada por compartilhar isso comigo. Sua resposta faz sentido no seu contexto.',
-      )
-      setTimeout(() => runNext(), 500)
-    })
-  }
-
   const recordAnswer = (question: JourneyQuestion, answer: string) => {
     const profile = api.getProfile()
     profile.responses.push({
@@ -127,7 +85,44 @@ export function startQuestionJourney(
     api.updateMap()
   }
 
-  const runNext = () => {
+  const presentOpen = (question: JourneyQuestion, html: string, audio: string) => {
+    currentQuestion = question
+    waitingOpen = true
+    api.showTyping(() => {
+      api.addAiMsg(html, audio)
+    })
+  }
+
+  const presentMultipleChoice = (
+    question: JourneyQuestion,
+    html: string,
+    audio: string,
+    advanceWithAck: boolean,
+  ) => {
+    const options = (question.options ?? []).filter(Boolean)
+    if (options.length < 2) {
+      runNext(advanceWithAck)
+      return
+    }
+
+    currentQuestion = question
+    waitingOpen = false
+    api.showTyping(() => {
+      api.addPicker(
+        html,
+        audio,
+        options.map((label) => ({ label })),
+        (_idx, label) => {
+          recordAnswer(question, label)
+          currentQuestion = null
+          api.showTyping(() => runNext(true), 700)
+        },
+        { forcePills: true },
+      )
+    }, advanceWithAck ? 600 : 900)
+  }
+
+  const runNext = (withAck = false) => {
     if (!active) return
 
     if (stepIndex >= questions.length) {
@@ -137,35 +132,23 @@ export function startQuestionJourney(
 
     const question = questions[stepIndex]
     stepIndex += 1
-    currentQuestion = question
 
-    if (question.type === 'multiple_choice') {
-      const options = (question.options ?? []).filter(Boolean)
-      if (options.length < 2) {
-        runNext()
-        return
+    if (withAck) {
+      const html = `Obrigada por compartilhar. 💙<br><br>${promptToHtml(question.prompt)}`
+      const audio = `Obrigada por compartilhar. ${stripHtml(question.prompt)}`
+      if (question.type === 'multiple_choice') {
+        presentMultipleChoice(question, html, audio, true)
+      } else {
+        presentOpen(question, html, audio)
       }
-
-      waitingOpen = false
-      api.showTyping(() => {
-        api.addPicker(
-          promptToHtml(question.prompt),
-          stripHtml(question.prompt),
-          options.map((label) => ({ label })),
-          (_idx, label) => {
-            recordAnswer(question, label)
-            currentQuestion = null
-            runNext()
-          },
-        )
-      })
       return
     }
 
-    waitingOpen = true
-    api.showTyping(() => {
-      api.addAiMsg(promptToHtml(question.prompt), stripHtml(question.prompt))
-    })
+    if (question.type === 'multiple_choice') {
+      presentMultipleChoice(question, promptToHtml(question.prompt), stripHtml(question.prompt), false)
+    } else {
+      presentOpen(question, promptToHtml(question.prompt), stripHtml(question.prompt))
+    }
   }
 
   const handleUserMessage = (text: string): boolean => {
@@ -176,19 +159,27 @@ export function startQuestionJourney(
 
     waitingOpen = false
     recordAnswer(currentQuestion, answer)
-    const answered = currentQuestion
     currentQuestion = null
-    acknowledgeOpenAnswer(answered, answer)
+    runNext(true)
     return true
   }
 
-  api.showTyping(() => {
-    api.addAiMsg(
-      `Vamos iniciar a <strong>${escapeHtml(journeyTitle)}</strong>.\n\nResponda no seu ritmo — não há respostas certas ou erradas. 💜`,
-      `Vamos iniciar a ${journeyTitle}. Responda no seu ritmo. Não há respostas certas ou erradas.`,
-    )
-    setTimeout(() => runNext(), 1000)
-  })
+  if (questions.length === 0) {
+    finish()
+    return { handleUserMessage, isActive: () => active, cancel }
+  }
+
+  // Intro + 1ª pergunta na mesma bolha (uma única conversa)
+  const first = questions[0]
+  stepIndex = 1
+  const introHtml = `Vamos iniciar a <strong>${escapeHtml(journeyTitle)}</strong>. Responda no seu ritmo — não há respostas certas ou erradas. 💜<br><br>${promptToHtml(first.prompt)}`
+  const introAudio = `Vamos iniciar a ${journeyTitle}. Responda no seu ritmo. ${stripHtml(first.prompt)}`
+
+  if (first.type === 'multiple_choice') {
+    presentMultipleChoice(first, introHtml, introAudio, false)
+  } else {
+    presentOpen(first, introHtml, introAudio)
+  }
 
   return {
     handleUserMessage,

@@ -52,6 +52,7 @@ export interface ChatApi {
     audioQ: string,
     pills: PillOption[],
     onPick: (idx: number, label: string) => void,
+    options?: { forcePills?: boolean },
   ) => void
   addCtas: (buttons: CtaButton[]) => void
   suggestBlock: (journey: JourneyItem) => void
