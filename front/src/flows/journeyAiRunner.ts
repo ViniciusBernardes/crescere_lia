@@ -2,7 +2,7 @@ import type { ChatApi } from '../types/chat'
 import { getJourneyByNumber } from '../data/journeys'
 import { isAiChatEnabled, sendJourneyStep } from '../services/liaApi'
 import { prepareSpeechFromResponse } from '../services/chatSpeech'
-import { buildJourneySteps, type JourneyDeps, type JourneyStep } from './journeyAiSteps'
+import { buildJourneySteps, type JourneyDeps } from './journeyAiSteps'
 
 export type AiJourneyController = {
   handleUserMessage: (text: string) => boolean
