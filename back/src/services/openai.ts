@@ -4,6 +4,7 @@ import { resolveOpenAiSettings } from "../config.js";
 import { buildChatMessages, toAudioText } from "../prompts/lia.js";
 import { resolveSystemPrompt } from "./promptConfig.js";
 import { resolveTenant } from "./tenants.js";
+import { syncCaregiverSession } from "./sessionSync.js";
 import type {
   ChatHistoryMessage,
   ChatResponseBody,
@@ -38,7 +39,7 @@ export async function createChatReply(
   const openai = await getClient(tenantSlug);
   const settings = (await resolveOpenAiSettings(tenantSlug))!;
   const tenant = await resolveTenant(tenantSlug);
-  const systemPrompt = await resolveSystemPrompt(tenant.id);
+  const systemPrompt = await resolveSystemPrompt(tenant.id, tenant.slug, profile);
   const messages = buildChatMessages(
     message,
     profile,
@@ -58,6 +59,10 @@ export async function createChatReply(
   if (!reply) {
     throw new Error("Resposta vazia da OpenAI");
   }
+
+  void syncCaregiverSession(tenant.slug, profile, {
+    currentJourney: journey?.number ?? null,
+  }).catch(() => undefined);
 
   return {
     reply,

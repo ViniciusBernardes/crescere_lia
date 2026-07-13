@@ -1,6 +1,11 @@
 import type { RowDataPacket } from "mysql2/promise";
 import { getPool } from "../db/database.js";
 import { getDefaultSystemPrompt } from "../prompts/lia.js";
+import type { UserProfileContext } from "../types/chat.js";
+import {
+  fetchIclinicaSystemPrompt,
+  isIclinicaIntegrationEnabled,
+} from "./iclinica.js";
 import { getTenantById } from "./tenants.js";
 
 export interface PromptConfigPublic {
@@ -69,7 +74,19 @@ export async function getCustomSystemPrompt(
   return prompt;
 }
 
-export async function resolveSystemPrompt(tenantId: string): Promise<string> {
+export async function resolveSystemPrompt(
+  tenantId: string,
+  tenantSlug?: string,
+  profile?: UserProfileContext,
+): Promise<string> {
+  if (tenantSlug && isIclinicaIntegrationEnabled()) {
+    try {
+      return await fetchIclinicaSystemPrompt(tenantSlug, profile);
+    } catch (error) {
+      console.warn("[prompt] iClinica indisponível, usando fallback local:", error);
+    }
+  }
+
   const custom = await getCustomSystemPrompt(tenantId);
   return custom || getDefaultSystemPrompt();
 }

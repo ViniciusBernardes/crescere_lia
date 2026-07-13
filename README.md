@@ -68,7 +68,39 @@ A LIA usa o **mesmo MySQL** do projeto `telemedicina` — idealmente **Amazon RD
 |--------|-----|
 | `companies` | Empresas (tenant) — campo `slug` identifica cada cliente |
 | `lia_openai_config` | Credenciais OpenAI por empresa (`company_id`) |
-| `lia_prompt_config` | Prompt de atendimento por empresa |
+| `lia_prompt_config` | Prompt de atendimento por empresa (override local) |
+| `lia_journeys` | Jornadas cadastradas no iClinica (via API de integração) |
+
+## Integração iClinica (jornadas + prompt MEDA-LIA)
+
+Com `ICLINICA_API_URL` e `LIA_SYNC_SECRET` no `back/.env`, a LIA:
+
+1. Carrega **jornadas** de `GET /api/v1/integrations/lia/journeys`
+2. Monta o **system prompt** via `GET /api/v1/integrations/lia/prompt`
+3. Sincroniza sessões em `POST /api/v1/integrations/lia/sessions` (dashboards do iClinica)
+
+Use o **mesmo** `LIA_SYNC_SECRET` do projeto `telemedicina`.
+
+```bash
+# back/.env (LIA)
+ICLINICA_API_URL=http://localhost:8080
+LIA_SYNC_SECRET=seu-segredo-compartilhado
+
+# telemedicina back/.env
+LIA_SYNC_SECRET=seu-segredo-compartilhado
+```
+
+O front lê o tenant do embed iClinica: `?tenant=company-1` (ou `VITE_TENANT_SLUG` em dev).
+
+Rotas locais da LIA:
+
+| Rota | Descrição |
+|------|-----------|
+| `GET /api/journeys` | Jornadas do tenant (iClinica ou fallback) |
+| `GET /api/lia-context` | Status da integração |
+| `GET /api/health` | Inclui `iclinicaIntegration: true/false` |
+
+Guia completo no telemedicina: `telemedicina/back/docs/LIA-INTEGRATION.md`
 
 ### Preparar o banco
 

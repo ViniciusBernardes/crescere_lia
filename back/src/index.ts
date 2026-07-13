@@ -10,7 +10,9 @@ import {
 import { initDb } from "./db/database.js";
 import { adminRouter } from "./routes/admin.js";
 import { chatRouter } from "./routes/chat.js";
+import { iclinicaRouter } from "./routes/iclinica.js";
 import { resolveTenant } from "./services/tenants.js";
+import { isIclinicaIntegrationEnabled } from "./services/iclinica.js";
 
 const app = express();
 
@@ -28,6 +30,7 @@ app.get("/api/health", async (_req, res) => {
       openai: (await isOpenAiConfigured(tenant.slug)) ? "configured" : "missing_key",
       model: settings?.model ?? null,
       credentialsSource: (await getOpenAiCredentialsSource(tenant.slug)) ?? "none",
+      iclinicaIntegration: isIclinicaIntegrationEnabled(),
     });
   } catch (error) {
     const message =
@@ -37,6 +40,7 @@ app.get("/api/health", async (_req, res) => {
 });
 
 app.use("/api/admin", adminRouter);
+app.use("/api", iclinicaRouter);
 app.use("/api", chatRouter);
 
 async function main() {

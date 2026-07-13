@@ -9,8 +9,9 @@ import {
   type ReactNode,
 } from 'react'
 import { createJourneyRunner } from '../flows/journeyFlows'
+import { ensureJourneysLoaded } from '../data/journeys'
 import { useSpeech, type SpeechPlayback } from '../hooks/useSpeech'
-import { isAiChatEnabled, transcribeAudio } from '../services/liaApi'
+import { isAiChatEnabled, fetchJourneys, transcribeAudio } from '../services/liaApi'
 import { canUseMicrophone, createMediaRecorder, getRecorderFormat, micErrorMessage } from '../utils/voiceRecorder'
 import { stripHtml } from '../utils/html'
 import type { SpeechRate } from '../utils/speechRate'
@@ -203,6 +204,13 @@ export function LiaProvider({ children }: { children: ReactNode }) {
     }),
     [appendMessage, speak],
   )
+
+  useEffect(() => {
+    void ensureJourneysLoaded(async () => {
+      const data = await fetchJourneys()
+      return { journeys: data.journeys, source: data.source }
+    })
+  }, [])
 
   useEffect(() => {
     runnerRef.current = createJourneyRunner(chatApi)

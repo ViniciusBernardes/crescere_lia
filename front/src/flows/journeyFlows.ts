@@ -1,6 +1,6 @@
 // @ts-nocheck
 import type { ChatApi } from '../types/chat';
-import { JOURNEYS } from '../data/journeys';
+import { getJourneyByNumber } from '../data/journeys';
 import { isAiChatEnabled, sendChatMessage } from '../services/liaApi';
 import { prepareSpeechFromResponse } from '../services/chatSpeech';
 import { runAiJourney } from './journeyAiRunner';
@@ -36,7 +36,7 @@ export function createJourneyRunner(api: ChatApi) {
   profile.responses.push({type:'mood',value:key}); api.updateMap(); api.setProgress(15);
   api.showTyping(()=>{
     api.addAiMsg(r.text, r.audio);
-    setTimeout(()=>api.showTyping(()=>api.suggestBlock(JOURNEYS.find(j=>j.n===r.journey)||JOURNEYS[0]),1600),800);
+    setTimeout(()=>api.showTyping(()=>api.suggestBlock(getJourneyByNumber(r.journey)),1600),800);
   });
 }
 
@@ -148,7 +148,7 @@ export function createJourneyRunner(api: ChatApi) {
   api.updateMap();
 
   if (isAiChatEnabled()) {
-    const journey = JOURNEYS.find((j) => j.n === n) || JOURNEYS[0];
+    const journey = getJourneyByNumber(n);
     api.addUserMsg(`Jornada ${n} — ${journey.title} ${journey.icon}`);
     runAiJourney(api, n, startJourney);
     return;

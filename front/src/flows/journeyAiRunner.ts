@@ -1,5 +1,5 @@
 import type { ChatApi } from '../types/chat'
-import { JOURNEYS } from '../data/journeys'
+import { getJourneyByNumber } from '../data/journeys'
 import { isAiChatEnabled, sendJourneyStep } from '../services/liaApi'
 import { prepareSpeechFromResponse } from '../services/chatSpeech'
 import { buildJourneySteps, type JourneyDeps, type JourneyStep } from './journeyAiSteps'
@@ -117,7 +117,7 @@ function runSteps(
 ) {
   if (fromIndex >= steps.length) return
 
-  const journey = JOURNEYS.find((j) => j.n === journeyNumber)
+  const journey = getJourneyByNumber(journeyNumber)
   const journeyTitle = journey?.title || `Jornada ${journeyNumber}`
   const step = steps[fromIndex]
 

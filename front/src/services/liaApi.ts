@@ -1,4 +1,6 @@
+import type { JourneyItem } from '../types/chat'
 import type { UserProfile } from '../types/profile'
+import { resolveTenantSlug } from '../utils/tenant'
 
 export type ChatRole = 'user' | 'assistant'
 
@@ -28,6 +30,14 @@ export interface HealthResponse {
   message: string
   openai: 'configured' | 'missing_key'
   model: string | null
+  iclinicaIntegration?: boolean
+}
+
+export interface JourneysApiResponse {
+  tenant: string
+  source: 'iclinica' | 'fallback'
+  integration_enabled: boolean
+  journeys: JourneyItem[]
 }
 
 export interface LiaApiError {
@@ -36,12 +46,15 @@ export interface LiaApiError {
 }
 
 const API_BASE = '/api'
-const TENANT_SLUG = import.meta.env.VITE_TENANT_SLUG || 'crescere'
+
+function tenantSlug(): string {
+  return resolveTenantSlug()
+}
 
 function apiHeaders(extra?: HeadersInit): HeadersInit {
   return {
     'Content-Type': 'application/json',
-    'X-Tenant-Slug': TENANT_SLUG,
+    'X-Tenant-Slug': tenantSlug(),
     ...extra,
   }
 }
@@ -61,6 +74,13 @@ export function isAiChatEnabled(): boolean {
 export async function fetchHealth(): Promise<HealthResponse> {
   const res = await fetch(`${API_BASE}/health`)
   return parseJson<HealthResponse>(res)
+}
+
+export async function fetchJourneys(): Promise<JourneysApiResponse> {
+  const res = await fetch(`${API_BASE}/journeys`, {
+    headers: { 'X-Tenant-Slug': tenantSlug() },
+  })
+  return parseJson<JourneysApiResponse>(res)
 }
 
 function chatHeaders(includeSpeech?: boolean): HeadersInit {
@@ -139,7 +159,7 @@ export async function transcribeAudio(blob: Blob, filename = 'gravacao.webm'): P
 
   const res = await fetch(`${API_BASE}/transcribe`, {
     method: 'POST',
-    headers: { 'X-Tenant-Slug': TENANT_SLUG },
+    headers: { 'X-Tenant-Slug': tenantSlug() },
     body: form,
   })
   const data = await parseJson<{ text: string }>(res)
