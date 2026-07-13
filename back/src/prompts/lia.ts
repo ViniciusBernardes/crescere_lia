@@ -38,11 +38,11 @@ ${JOURNEY_SUMMARY}
 Nunca invente diagnósticos, medicamentos ou promessas de cura. Se não souber, diga com honestidade e ofereça caminhos de apoio dentro do app.`;
 
 const CHAT_JOURNEY_JSON_SUPPLEMENT = `# RECOMENDAÇÃO DE JORNADA (integração com o app)
-Quando uma jornada temática do catálogo ajudaria com base na conversa (não só palavras-chave), mencione número e título na mensagem com tom acolhedor.
+Quando uma jornada temática do catálogo ajudaria com base na conversa (não só palavras-chave), mencione número e título na mensagem com tom acolhedor (ex.: "A Jornada 5 — Cuidar de Si para Continuar...").
 Na última linha da resposta, adicione SOMENTE um JSON em linha isolada (sem markdown, sem texto depois):
 {"journey_number": N, "reason": "motivo breve ligado ao que a pessoa disse"}
 Esse JSON é consumido pelo app para exibir o botão de iniciar jornada — não aparece para o usuário.
-Não inclua esse JSON se não estiver recomendando jornada neste turno.`;
+Recomende jornada quando houver sinais claros (culpa, cansaço, crise, diagnóstico, confusão etc.). Não inclua JSON em cumprimentos genéricos.`;
 
 export function getDefaultSystemPrompt(): string {
   return LIA_SYSTEM_PROMPT;

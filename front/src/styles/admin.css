@@ -163,6 +163,10 @@
   display: none;
 }
 
+.admin-hero-wordmark {
+  display: none;
+}
+
 .admin-board {
   display: flex;
   flex-direction: column;
@@ -815,8 +819,26 @@
     max-width: 32rem;
   }
 
-  .admin-hero-orb {
+  .admin-hero-wordmark {
     display: block;
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+    width: 220px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.92);
+    box-shadow: 0 8px 24px rgba(99, 71, 160, 0.16);
+  }
+
+  .admin-hero-wordmark img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .admin-hero-orb {
+    display: none;
     position: relative;
     z-index: 1;
     flex-shrink: 0;
@@ -1014,33 +1036,42 @@
 }
 
 .admin-login-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
   margin-bottom: var(--space-lg);
 }
 
-.admin-login-brand h1 {
-  font-family: 'DM Serif Display', serif;
-  font-size: 28px;
-  font-style: italic;
-  color: var(--text-dark);
-  margin: var(--space-xs) 0 var(--space-sm);
+.admin-login-brand .admin-eyebrow {
+  display: block;
+  margin-top: 2px;
+  margin-bottom: var(--space-sm);
 }
 
 .admin-login-brand p {
   font-size: 14px;
   line-height: 1.6;
   color: var(--text-mid);
-  margin: 0;
+  margin: var(--space-sm) 0 0;
 }
 
 .admin-login-avatar {
-  width: 72px;
-  height: 72px;
+  width: 88px;
+  height: 88px;
   border-radius: 50%;
   object-fit: cover;
+  display: block;
+  margin: 0 auto;
   border: 3px solid rgba(139, 107, 177, 0.25);
   box-shadow: 0 8px 24px rgba(99, 71, 160, 0.18);
-  margin-bottom: var(--space-sm);
+}
+
+.admin-login-brand-logo {
+  width: min(148px, 62%);
+  height: auto;
+  display: block;
+  margin: 0 auto;
 }
 
 .admin-login-form {
@@ -1051,3 +1082,5 @@
   width: 100%;
   margin-top: var(--space-xs);
 }
+
+.admin-footer-brand-logo{display:block;width:110px;height:auto;margin:12px auto 0;opacity:0.9;}

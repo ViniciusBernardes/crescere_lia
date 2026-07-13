@@ -78,5 +78,30 @@ export function extractJourneyRecommendation(rawReply: string): {
     }
   }
 
+  const fromText = extractJourneyNumberFromText(trimmed);
+  if (fromText) {
+    return { reply: trimmed, recommendation: fromText };
+  }
+
   return { reply: rawReply, recommendation: null };
+}
+
+function extractJourneyNumberFromText(text: string): JourneyRecommendation | null {
+  const patterns = [
+    /jornada\s*(\d{1,2})\s*[—\-–:]/i,
+    /jornada\s*(\d{1,2})\b/i,
+    /\bJ(\d{1,2})\s*[—\-–:]/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (!match) continue;
+
+    const number = Number(match[1]);
+    if (Number.isFinite(number) && number >= 1 && number <= 99) {
+      return { number, reason: "mencionada na conversa" };
+    }
+  }
+
+  return null;
 }

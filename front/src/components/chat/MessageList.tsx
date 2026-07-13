@@ -117,7 +117,7 @@ function CtasBubble({ msg }: { msg: Extract<ChatMessage, { kind: 'ctas' }> }) {
 }
 
 function SuggestBubble({ msg }: { msg: Extract<ChatMessage, { kind: 'suggest' }> }) {
-  const { startJourney, showScreen, openPsych } = useLia()
+  const { startJourney, openPsych } = useLia()
   const j = msg.journey
   if (!showJourneys()) return null
   return (
@@ -137,10 +137,6 @@ function SuggestBubble({ msg }: { msg: Extract<ChatMessage, { kind: 'suggest' }>
             <div className="jca">›</div>
           </button>
           <div className="cta-stack" style={{ marginTop: 8 }}>
-            <button type="button" className="ctabtn secondary" onClick={() => showScreen('journey')}>
-              <span className="ci">🗺️</span>
-              <div className="ct">Ver todas as jornadas</div>
-            </button>
             <button type="button" className="ctabtn accent" onClick={openPsych}>
               <span className="ci">💜</span>
               <div className="ct">

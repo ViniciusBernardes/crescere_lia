@@ -167,8 +167,9 @@ export function LiaProvider({ children }: { children: ReactNode }) {
           cb()
         }, delay)
       },
-      addPicker: (question, audioQ, pills, onPick) => {
-        if (!showQuickReplies()) {
+      addPicker: (question, audioQ, pills, onPick, options) => {
+        const usePills = showQuickReplies() || Boolean(options?.forcePills)
+        if (!usePills) {
           if (isMoodQuestion(question)) {
             appendMessage({
               id: uid(),

@@ -5,7 +5,7 @@ import { OPEN_MOOD_PROMPT } from '../lib/openPrompts'
 import { MOOD_CONFIG, MOOD_PILLS, resolveMoodKey } from '../data/moodConfig'
 import { isAiChatEnabled, sendJourneyStep } from '../services/liaApi'
 import { prepareSpeechFromResponse } from '../services/chatSpeech'
-import { applyJourneyRecommendation } from './journeyRecommendation'
+import { resolveSuggestedJourneyNumber } from './journeyRecommendation'
 
 const INTRO_TITLE = 'Introdução — Primeiro contato'
 
@@ -105,12 +105,9 @@ export function runAiIntro(api: ChatApi) {
             api.addAiMsg(mood.text, mood.audio)
           }
 
-          const suggested = getJourneyByNumber(mood.journey)
-          if (aiResponse?.journeyRecommendation?.number) {
-            applyJourneyRecommendation(api, aiResponse)
-          } else {
-            api.suggestBlock(suggested)
-          }
+          const suggestedNumber =
+            (aiResponse && resolveSuggestedJourneyNumber(aiResponse, label)) ?? mood.journey
+          setTimeout(() => api.suggestBlock(getJourneyByNumber(suggestedNumber)), 900)
         })
       },
     )

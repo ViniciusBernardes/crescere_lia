@@ -9,7 +9,10 @@ import { runAiIntro } from './introAiRunner';
 import { MOOD_CONFIG, resolveMoodKey } from '../data/moodConfig';
 import { showQuickReplies, showJourneys } from '../lib/features';
 import { OPEN_MOOD_PROMPT } from '../lib/openPrompts';
-import { applyJourneyRecommendation } from './journeyRecommendation';
+import {
+  applyJourneyRecommendation,
+  resolveSuggestedJourneyNumber,
+} from './journeyRecommendation';
 
 export function createJourneyRunner(api: ChatApi) {
   const profile = api.getProfile();
@@ -77,7 +80,16 @@ export function createJourneyRunner(api: ChatApi) {
       setTimeout(
         () =>
           api.addCtas([
-            { icon: '🧩', label: 'Jornada 2 — Compreendendo o TEA', style: 'primary', action: () => startJourney(2) },
+            { icon: '💭', label: 'Jornada 3 — Sentimentos diante do diagnóstico', style: 'primary', action: () => startJourney(3) },
+            { icon: '🧩', label: 'Jornada 2 — Compreendendo o TEA', style: 'secondary', action: () => startJourney(2) },
+          ]),
+        700,
+      );
+    } else if (l.includes('culpa') || l.includes('culpad')) {
+      setTimeout(
+        () =>
+          api.addCtas([
+            { icon: '🌱', label: 'Jornada 5 — Cuidar de Si', style: 'primary', action: () => startJourney(5) },
           ]),
         700,
       );
@@ -139,8 +151,9 @@ export function createJourneyRunner(api: ChatApi) {
             undefined,
             prepareSpeechFromResponse(response),
           );
-          applyJourneyRecommendation(api, response);
-          if (!response.journeyRecommendation) {
+          const suggested = resolveSuggestedJourneyNumber(response, text);
+          applyJourneyRecommendation(api, response, text);
+          if (!suggested) {
             applyKeywordExtras(l);
           }
           api.updateMap();

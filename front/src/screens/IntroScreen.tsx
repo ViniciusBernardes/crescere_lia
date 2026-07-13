@@ -58,7 +58,7 @@ export function IntroScreen() {
               </span>
             </button>
             <p className="intro-cta-hint">Leva menos de 2 minutos · no seu ritmo</p>
-            <p className="crescere-brand">Crescere</p>
+            <img className="crescere-brand-logo" src="/crescere-logo.png" alt="Crescere" />
           </div>
         </div>
       </div>

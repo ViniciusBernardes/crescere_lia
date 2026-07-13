@@ -529,7 +529,7 @@ export function AdminScreen({ onLogout }: { onLogout?: () => void }) {
         </section>
         </div>
 
-        <p className="admin-footer-brand">Crescere</p>
+        <img className="admin-footer-brand-logo" src="/crescere-logo.png" alt="Crescere" />
       </div>
     </div>
   )
