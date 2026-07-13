@@ -1,9 +1,10 @@
 // @ts-nocheck
 import type { ChatApi } from '../types/chat';
-import { getJourneyByNumber } from '../data/journeys';
+import { getJourneyByNumber, getJourneyQuestions } from '../data/journeys';
 import { isAiChatEnabled, sendChatMessage } from '../services/liaApi';
 import { prepareSpeechFromResponse } from '../services/chatSpeech';
 import { runAiJourney } from './journeyAiRunner';
+import { startQuestionJourney } from './questionJourneyRunner';
 import { runAiIntro } from './introAiRunner';
 import { MOOD_CONFIG, resolveMoodKey } from '../data/moodConfig';
 import { showQuickReplies } from '../lib/features';
@@ -11,6 +12,7 @@ import { OPEN_MOOD_PROMPT } from '../lib/openPrompts';
 
 export function createJourneyRunner(api: ChatApi) {
   const profile = api.getProfile();
+  let questionJourneyCtrl = null;
 
   const MOOD = MOOD_CONFIG;
 
@@ -111,6 +113,11 @@ export function createJourneyRunner(api: ChatApi) {
   function sendMessage(text: string) {
     if (!text.trim()) return;
     api.addUserMsg(text);
+
+    if (questionJourneyCtrl?.handleUserMessage(text)) {
+      return;
+    }
+
     profile.responses.push({ type: 'text', text, time: Date.now() });
     api.updateMap();
 
@@ -155,8 +162,19 @@ export function createJourneyRunner(api: ChatApi) {
   api.setProgress(Math.min(100, profile.journeysCompleted.length * 8 + 10));
   api.updateMap();
 
+  const journey = getJourneyByNumber(n);
+  const apiQuestions = getJourneyQuestions(n);
+
+  if (apiQuestions.length > 0) {
+    api.addUserMsg(`Jornada ${n} — ${journey.title} ${journey.icon}`);
+    questionJourneyCtrl?.cancel();
+    questionJourneyCtrl = startQuestionJourney(api, n, apiQuestions, () => {
+      questionJourneyCtrl = null;
+    });
+    return;
+  }
+
   if (isAiChatEnabled()) {
-    const journey = getJourneyByNumber(n);
     api.addUserMsg(`Jornada ${n} — ${journey.title} ${journey.icon}`);
     runAiJourney(api, n, startJourney);
     return;
