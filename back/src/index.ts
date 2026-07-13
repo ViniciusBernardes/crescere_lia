@@ -11,8 +11,10 @@ import { initDb } from "./db/database.js";
 import { adminRouter } from "./routes/admin.js";
 import { chatRouter } from "./routes/chat.js";
 import { iclinicaRouter } from "./routes/iclinica.js";
-import { resolveTenant } from "./services/tenants.js";
+import { sessionsRouter } from "./routes/sessions.js";
 import { isIclinicaIntegrationEnabled } from "./services/iclinica.js";
+import { isIclinicaSyncConfigured } from "./services/iclinicaSync.js";
+import { resolveTenant } from "./services/tenants.js";
 
 const app = express();
 
@@ -31,6 +33,7 @@ app.get("/api/health", async (_req, res) => {
       model: settings?.model ?? null,
       credentialsSource: (await getOpenAiCredentialsSource(tenant.slug)) ?? "none",
       iclinicaIntegration: isIclinicaIntegrationEnabled(),
+      iclinicaSync: isIclinicaSyncConfigured() ? "configured" : "missing",
     });
   } catch (error) {
     const message =
@@ -41,6 +44,7 @@ app.get("/api/health", async (_req, res) => {
 
 app.use("/api/admin", adminRouter);
 app.use("/api", iclinicaRouter);
+app.use("/api", sessionsRouter);
 app.use("/api", chatRouter);
 
 async function main() {

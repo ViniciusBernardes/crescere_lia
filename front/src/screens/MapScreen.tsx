@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { useLia } from '../context/LiaContext'
+import { showJourneys } from '../lib/features'
 
 function moodDesc(e: string): string {
   const map: Record<string, string> = {
@@ -128,7 +129,7 @@ export function MapScreen() {
               Seu mapa emocional aparece aqui conforme você interage com a Lia.
               <br />
               <br />
-              Comece uma jornada para gerar seus primeiros insights.
+              Comece conversando com a Lia para gerar seus primeiros insights.
             </p>
           </div>
         ) : (
@@ -139,7 +140,9 @@ export function MapScreen() {
                 <MapBar label="Nível de sobrecarga" pct={metrics.stress} color="#E87777" />
                 <MapBar label="Autocuidado percebido" pct={metrics.sc} color="#5CC878" />
                 <MapBar label="Consciência emocional" pct={metrics.awareness} color="#8B6BB1" />
-                <MapBar label="Engajamento nas jornadas" pct={metrics.engagement} color="#5BA8D4" />
+                {showJourneys() && (
+                  <MapBar label="Engajamento nas jornadas" pct={metrics.engagement} color="#5BA8D4" />
+                )}
               </div>
             </div>
             <div className="map-cards">
@@ -148,7 +151,7 @@ export function MapScreen() {
                   icon="😌"
                   title="Como você chegou hoje"
                   body={moodDesc(p.emotionToday)}
-                  tag={suggestFor(p.emotionToday)}
+                  tag={showJourneys() ? suggestFor(p.emotionToday) : 'Continue conversando com a Lia'}
                 />
               )}
               {p.emotionsFound.length > 0 && (
@@ -156,7 +159,7 @@ export function MapScreen() {
                   icon="💭"
                   title="Emoções identificadas"
                   body={p.emotionsFound.slice(0, 3).join(' · ')}
-                  tag="Continuar explorando na Jornada 3"
+                  tag={showJourneys() ? 'Continuar explorando na Jornada 3' : 'Emoções registradas'}
                 />
               )}
               {p.caregiverRole && (
@@ -164,7 +167,7 @@ export function MapScreen() {
                   icon="🧩"
                   title="Seu papel como cuidador"
                   body={roleDesc(p.caregiverRole)}
-                  tag="Aprofundar na Jornada 5"
+                  tag={showJourneys() ? 'Aprofundar na Jornada 5' : 'Papel do cuidador'}
                 />
               )}
               {p.challengeArea && (
@@ -172,10 +175,10 @@ export function MapScreen() {
                   icon="🎯"
                   title="Principal área de desafio"
                   body={p.challengeArea}
-                  tag="Estratégias na Jornada 6"
+                  tag={showJourneys() ? 'Estratégias na Jornada 6' : 'Área de desafio'}
                 />
               )}
-              {p.journeysCompleted.length > 0 && (
+              {showJourneys() && p.journeysCompleted.length > 0 && (
                 <MapCard
                   icon="✅"
                   title="Jornadas concluídas"
@@ -183,7 +186,12 @@ export function MapScreen() {
                   tag="Continue seu progresso"
                 />
               )}
-              <MapCard icon="💡" title="Próximo passo" body={nextStep(p)} tag="Ver todas as jornadas" />
+              <MapCard
+                icon="💡"
+                title="Próximo passo"
+                body={showJourneys() ? nextStep(p) : 'Continue conversando com a Lia ou fale com o plantão psicológico.'}
+                tag={showJourneys() ? 'Ver todas as jornadas' : 'Plantão psicológico 24h'}
+              />
             </div>
           </>
         )}

@@ -1,6 +1,7 @@
 import { ChatInput } from '../components/chat/ChatInput'
 import { MessageList } from '../components/chat/MessageList'
 import { useLia } from '../context/LiaContext'
+import { showEmotionalMap, showJourneys } from '../lib/features'
 
 export function ChatScreen() {
   const { showScreen, progress, mapBadge, openPsych } = useLia()
@@ -26,26 +27,32 @@ export function ChatScreen() {
               </div>
             </div>
             <div className="hdr-actions">
-              <button type="button" className="hdr-btn" onClick={() => showScreen('journey')} title="Jornadas">
-                🗺️
-              </button>
-              <div className="hdr-btn-wrap">
-                <button type="button" className="hdr-btn" onClick={() => showScreen('map')} title="Mapa emocional">
-                  📊
+              {showJourneys() && (
+                <button type="button" className="hdr-btn" onClick={() => showScreen('journey')} title="Jornadas">
+                  🗺️
                 </button>
-                {mapBadge && <span className="badge-new">!</span>}
+              )}
+              {showEmotionalMap() && (
+                <div className="hdr-btn-wrap">
+                  <button type="button" className="hdr-btn" onClick={() => showScreen('map')} title="Mapa emocional">
+                    📊
+                  </button>
+                  {mapBadge && <span className="badge-new">!</span>}
+                </div>
+              )}
+            </div>
+          </div>
+          {showJourneys() && (
+            <div className="progress-wrap">
+              <div className="progress-meta">
+                <span>Sua jornada</span>
+                <span>{progress}%</span>
+              </div>
+              <div className="progress-bar">
+                <div className="progress-fill" style={{ width: `${progress}%` }} />
               </div>
             </div>
-          </div>
-          <div className="progress-wrap">
-            <div className="progress-meta">
-              <span>Sua jornada</span>
-              <span>{progress}%</span>
-            </div>
-            <div className="progress-bar">
-              <div className="progress-fill" style={{ width: `${progress}%` }} />
-            </div>
-          </div>
+          )}
         </header>
 
         <MessageList />

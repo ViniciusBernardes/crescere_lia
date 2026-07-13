@@ -1,5 +1,7 @@
 import type { ChatApi } from '../types/chat'
 import { getJourneyByNumber } from '../data/journeys'
+import { showQuickReplies } from '../lib/features'
+import { OPEN_MOOD_PROMPT } from '../lib/openPrompts'
 import { MOOD_CONFIG, MOOD_PILLS, resolveMoodKey } from '../data/moodConfig'
 import { isAiChatEnabled, sendJourneyStep } from '../services/liaApi'
 import { prepareSpeechFromResponse } from '../services/chatSpeech'
@@ -56,6 +58,11 @@ export function runAiIntro(api: ChatApi) {
       )
     } catch {
       api.addAiMsg(WELCOME_FALLBACK.html, WELCOME_FALLBACK.audio)
+    }
+
+    if (!showQuickReplies()) {
+      api.addAiMsg(OPEN_MOOD_PROMPT.html, OPEN_MOOD_PROMPT.audio)
+      return
     }
 
     api.addPicker(

@@ -31,6 +31,7 @@ export interface HealthResponse {
   openai: 'configured' | 'missing_key'
   model: string | null
   iclinicaIntegration?: boolean
+  iclinicaSync?: 'configured' | 'missing'
 }
 
 export interface JourneysApiResponse {
@@ -47,14 +48,15 @@ export interface LiaApiError {
 
 const API_BASE = '/api'
 
-function tenantSlug(): string {
+/** Alias usado por sessionSync e outros módulos legados. */
+export function getTenantSlug(): string {
   return resolveTenantSlug()
 }
 
 function apiHeaders(extra?: HeadersInit): HeadersInit {
   return {
     'Content-Type': 'application/json',
-    'X-Tenant-Slug': tenantSlug(),
+    'X-Tenant-Slug': resolveTenantSlug(),
     ...extra,
   }
 }
@@ -78,7 +80,7 @@ export async function fetchHealth(): Promise<HealthResponse> {
 
 export async function fetchJourneys(): Promise<JourneysApiResponse> {
   const res = await fetch(`${API_BASE}/journeys`, {
-    headers: { 'X-Tenant-Slug': tenantSlug() },
+    headers: { 'X-Tenant-Slug': resolveTenantSlug() },
   })
   return parseJson<JourneysApiResponse>(res)
 }
@@ -159,7 +161,7 @@ export async function transcribeAudio(blob: Blob, filename = 'gravacao.webm'): P
 
   const res = await fetch(`${API_BASE}/transcribe`, {
     method: 'POST',
-    headers: { 'X-Tenant-Slug': tenantSlug() },
+    headers: { 'X-Tenant-Slug': resolveTenantSlug() },
     body: form,
   })
   const data = await parseJson<{ text: string }>(res)
