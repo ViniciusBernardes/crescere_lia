@@ -17,12 +17,21 @@ export interface CtaButton {
   action: () => void
 }
 
+export interface JourneyQuestion {
+  id?: number
+  sort_order: number
+  type: 'open' | 'multiple_choice'
+  prompt: string
+  options?: string[]
+}
+
 export interface JourneyItem {
   n: number
   icon: string
   title: string
   sub: string
   color: string
+  questions?: JourneyQuestion[]
 }
 
 export interface ChatHistoryEntry {

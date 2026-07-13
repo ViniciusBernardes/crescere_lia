@@ -1,4 +1,4 @@
-import type { JourneyItem } from '../types/chat'
+import type { JourneyItem, JourneyQuestion } from '../types/chat'
 
 const FALLBACK_JOURNEYS: JourneyItem[] = [
   { n: 1, icon: '🤗', title: 'Acolhimento e Chegada', sub: '"Você não está sozinho"', color: '#8B6BB1' },
@@ -28,6 +28,11 @@ export function getJourneys(): JourneyItem[] {
 
 export function getJourneyByNumber(n: number): JourneyItem {
   return journeysCache.find((j) => j.n === n) ?? journeysCache[0] ?? FALLBACK_JOURNEYS[0]
+}
+
+export function getJourneyQuestions(n: number): JourneyQuestion[] {
+  const journey = journeysCache.find((j) => j.n === n)
+  return [...(journey?.questions ?? [])].sort((a, b) => a.sort_order - b.sort_order)
 }
 
 export function getJourneysSource(): 'iclinica' | 'fallback' {
