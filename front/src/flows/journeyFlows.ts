@@ -3,7 +3,7 @@ import type { ChatApi } from '../types/chat';
 import { getJourneyByNumber, getJourneyQuestions } from '../data/journeys';
 import { isAiChatEnabled, sendChatMessage } from '../services/liaApi';
 import { prepareSpeechFromResponse } from '../services/chatSpeech';
-import { runAiJourney } from './journeyAiRunner';
+import { startAiJourney } from './journeyAiRunner';
 import { startQuestionJourney } from './questionJourneyRunner';
 import { runAiIntro } from './introAiRunner';
 import { MOOD_CONFIG, resolveMoodKey } from '../data/moodConfig';
@@ -17,6 +17,7 @@ import {
 export function createJourneyRunner(api: ChatApi) {
   const profile = api.getProfile();
   let questionJourneyCtrl = null;
+  let aiJourneyCtrl = null;
 
   const MOOD = MOOD_CONFIG;
 
@@ -132,6 +133,10 @@ export function createJourneyRunner(api: ChatApi) {
       return;
     }
 
+    if (aiJourneyCtrl?.handleUserMessage(text)) {
+      return;
+    }
+
     profile.responses.push({ type: 'text', text, time: Date.now() });
     api.updateMap();
 
@@ -183,9 +188,12 @@ export function createJourneyRunner(api: ChatApi) {
   const journey = getJourneyByNumber(n);
   const apiQuestions = getJourneyQuestions(n);
 
+  questionJourneyCtrl?.cancel();
+  questionJourneyCtrl = null;
+  aiJourneyCtrl?.cancel();
+  aiJourneyCtrl = null;
+
   if (apiQuestions.length > 0) {
-    api.addUserMsg(`Jornada ${n} — ${journey.title} ${journey.icon}`);
-    questionJourneyCtrl?.cancel();
     questionJourneyCtrl = startQuestionJourney(api, n, apiQuestions, () => {
       questionJourneyCtrl = null;
     });
@@ -193,8 +201,7 @@ export function createJourneyRunner(api: ChatApi) {
   }
 
   if (isAiChatEnabled()) {
-    api.addUserMsg(`Jornada ${n} — ${journey.title} ${journey.icon}`);
-    runAiJourney(api, n, startJourney);
+    aiJourneyCtrl = startAiJourney(api, n, startJourney);
     return;
   }
 
