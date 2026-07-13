@@ -1,4 +1,4 @@
-/** Jornadas guiadas são visíveis apenas no portal do psicólogo (telemedicina), não no app do cuidador. */
+/** Jornadas guiadas no app do cuidador (ligadas via VITE_SHOW_JOURNEYS). */
 export function showJourneys(): boolean {
   return import.meta.env.VITE_SHOW_JOURNEYS === 'true'
 }

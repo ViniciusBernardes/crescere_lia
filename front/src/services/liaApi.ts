@@ -9,10 +9,16 @@ export interface ChatHistoryMessage {
   content: string
 }
 
+export interface JourneyRecommendation {
+  number: number
+  reason?: string
+}
+
 export interface ChatResponse {
   reply: string
   audioText: string
   speechAudio?: string
+  journeyRecommendation?: JourneyRecommendation
 }
 
 export interface JourneyStepRequest {
