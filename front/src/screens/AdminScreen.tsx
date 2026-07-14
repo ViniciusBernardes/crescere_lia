@@ -1,12 +1,17 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
   createTenant,
+  fetchAppConfig,
   fetchOpenAiCredentials,
   fetchPromptConfig,
   fetchTenants,
+  IDLE_TIMEOUT_OPTIONS,
   importEnvOpenAiCredentials,
+  saveAppConfig,
   saveOpenAiCredentials,
   savePromptConfig,
+  type AppConfigPublic,
+  type IdleTimeoutMs,
   type OpenAiCredentialsPublic,
   type PromptConfigPublic,
   type Tenant,
@@ -52,12 +57,14 @@ export function AdminScreen({ onLogout }: { onLogout?: () => void }) {
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [savingPrompt, setSavingPrompt] = useState(false)
+  const [savingAppConfig, setSavingAppConfig] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [tenants, setTenants] = useState<Tenant[]>([])
   const [selectedSlug, setSelectedSlug] = useState('crescere')
   const [config, setConfig] = useState<OpenAiCredentialsPublic | null>(null)
   const [promptConfig, setPromptConfig] = useState<PromptConfigPublic | null>(null)
+  const [appConfig, setAppConfig] = useState<AppConfigPublic | null>(null)
 
   const [newTenantName, setNewTenantName] = useState('')
   const [newTenantSlug, setNewTenantSlug] = useState('')
@@ -67,6 +74,7 @@ export function AdminScreen({ onLogout }: { onLogout?: () => void }) {
   const [maxTokens, setMaxTokens] = useState(1024)
   const [temperature, setTemperature] = useState(0.7)
   const [systemPrompt, setSystemPrompt] = useState('')
+  const [idleTimeoutMs, setIdleTimeoutMs] = useState<IdleTimeoutMs>(30000)
 
   const loadTenants = useCallback(async () => {
     const list = await fetchTenants()
@@ -80,17 +88,20 @@ export function AdminScreen({ onLogout }: { onLogout?: () => void }) {
     setLoading(true)
     setError('')
     try {
-      const [openAiData, promptData] = await Promise.all([
+      const [openAiData, promptData, appConfigData] = await Promise.all([
         fetchOpenAiCredentials(slug),
         fetchPromptConfig(slug),
+        fetchAppConfig(slug),
       ])
       setConfig(openAiData)
       setPromptConfig(promptData)
+      setAppConfig(appConfigData)
       setModel(openAiData.model)
       setWhisperModel(openAiData.whisperModel)
       setMaxTokens(openAiData.maxTokens)
       setTemperature(openAiData.temperature)
       setSystemPrompt(promptData.systemPrompt)
+      setIdleTimeoutMs(appConfigData.idleTimeoutMs)
     } catch (err) {
       setError(handleAdminError(err, onLogout))
     } finally {
@@ -213,11 +224,33 @@ export function AdminScreen({ onLogout }: { onLogout?: () => void }) {
     }
   }
 
+  const handleSaveAppConfig = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedSlug) return
+    setSavingAppConfig(true)
+    setError('')
+    setSuccess('')
+    try {
+      const data = await saveAppConfig(selectedSlug, idleTimeoutMs)
+      setAppConfig(data)
+      setIdleTimeoutMs(data.idleTimeoutMs)
+      setSuccess(`Tempo de inatividade salvo para ${data.tenantName}.`)
+    } catch (err) {
+      setError(handleAdminError(err, onLogout))
+    } finally {
+      setSavingAppConfig(false)
+    }
+  }
+
   const promptIsDirty =
     promptConfig !== null && systemPrompt.trim() !== promptConfig.systemPrompt.trim()
   const promptUsesDefault =
     promptConfig !== null &&
     systemPrompt.trim() === promptConfig.defaultPrompt.trim()
+  const appConfigIsDirty =
+    appConfig !== null && idleTimeoutMs !== appConfig.idleTimeoutMs
+  const idleTimeoutLabel =
+    IDLE_TIMEOUT_OPTIONS.find((o) => o.value === idleTimeoutMs)?.label ?? '30 segundos'
   const tenantLabel = config?.tenantName || selectedSlug
   const openAiCanSave = Boolean(apiKey.trim()) || Boolean(config?.storedInDatabase)
   const openAiSourceLabel =
@@ -307,8 +340,50 @@ export function AdminScreen({ onLogout }: { onLogout?: () => void }) {
               >
                 {promptConfig?.isCustom ? 'Prompt customizado' : 'Prompt padrão'}
               </span>
+              <span className="admin-badge admin-badge-neutral">
+                Inatividade: {idleTimeoutLabel}
+              </span>
             </div>
           </div>
+        </section>
+
+        <section className="admin-card">
+          <CardHead
+            icon="⏱️"
+            title="Inatividade no chat"
+            subtitle={tenantLabel}
+            description="Depois deste tempo sem interação, a Lia envia um aviso e abre o pop-up para continuar ou encerrar."
+          />
+          <form onSubmit={handleSaveAppConfig} className="admin-form">
+            <label className="admin-field">
+              <span>Tempo até o aviso</span>
+              <select
+                className="admin-select"
+                value={idleTimeoutMs}
+                onChange={(e) => setIdleTimeoutMs(Number(e.target.value) as IdleTimeoutMs)}
+                disabled={loading || savingAppConfig}
+              >
+                {IDLE_TIMEOUT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <p className={`admin-meta${appConfigIsDirty ? ' admin-meta-dirty' : ''}`}>
+              Opções: 30 segundos, 1 minuto ou 2 minutos
+              {appConfigIsDirty ? ' · alterações não salvas' : ''}
+            </p>
+            <div className="admin-form-actions">
+              <button
+                type="submit"
+                className="admin-btn admin-btn-primary"
+                disabled={savingAppConfig || loading || !appConfigIsDirty}
+              >
+                {savingAppConfig ? 'Salvando…' : 'Salvar tempo'}
+              </button>
+            </div>
+          </form>
         </section>
 
         <section className="admin-card admin-card-featured admin-card-prompt">
@@ -316,7 +391,7 @@ export function AdminScreen({ onLogout }: { onLogout?: () => void }) {
             icon="💬"
             title="Prompt de atendimento"
             subtitle={tenantLabel}
-            description="Como a Lia fala no chat. Perfil do cuidador e jornada continuam automáticos."
+            description="Override local: se estiver salvo aqui, tem prioridade sobre o prompt do iClinica. Sem custom, usa o iClinica."
           />
           <form onSubmit={handleSavePrompt} className="admin-form">
             <label className="admin-field">

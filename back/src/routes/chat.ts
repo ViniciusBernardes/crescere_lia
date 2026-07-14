@@ -3,7 +3,8 @@ import OpenAI from "openai";
 import multer from "multer";
 import { isOpenAiConfigured } from "../config.js";
 import { createChatReply, synthesizeSpeech, transcribeAudio } from "../services/openai.js";
-import { resolveTenantSlug } from "../services/tenants.js";
+import { DEFAULT_IDLE_TIMEOUT_MS, getIdleTimeoutMs } from "../services/appConfig.js";
+import { getTenantBySlug, resolveTenantSlug } from "../services/tenants.js";
 import type { ChatHistoryMessage, ChatRequestBody, JourneyContext } from "../types/chat.js";
 
 const upload = multer({
@@ -82,6 +83,27 @@ function isValidJourney(journey: unknown): journey is JourneyContext {
 function wantsSpeech(req: import("express").Request): boolean {
   return req.header("x-tts-enabled") === "true";
 }
+
+chatRouter.get("/settings", async (req, res) => {
+  const tenantSlug = tenantSlugFromRequest(req);
+  try {
+    const tenant = await getTenantBySlug(tenantSlug);
+    if (!tenant) {
+      return tenantError(res, new Error(`Empresa não encontrada: ${tenantSlug}`));
+    }
+    const idleTimeoutMs = await getIdleTimeoutMs(tenant.id);
+    return res.json({
+      tenantSlug: tenant.slug,
+      idleTimeoutMs,
+    });
+  } catch (error) {
+    console.warn("[settings] Falha ao ler config, usando padrão:", error);
+    return res.json({
+      tenantSlug,
+      idleTimeoutMs: DEFAULT_IDLE_TIMEOUT_MS,
+    });
+  }
+});
 
 chatRouter.post("/chat", async (req, res) => {
   const tenantSlug = tenantSlugFromRequest(req);

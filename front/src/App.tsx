@@ -1,4 +1,5 @@
 import { PhoneFrame } from './components/layout/PhoneFrame'
+import { IdleOverlay } from './components/overlays/IdleOverlay'
 import { PsychOverlay } from './components/overlays/PsychOverlay'
 import { LiaProvider, useLia } from './context/LiaContext'
 import { showJourneys } from './lib/features'
@@ -18,6 +19,7 @@ function AppShell() {
       {screen === 'journey' && showJourneys() && <JourneyScreen />}
       {screen === 'map' && <MapScreen />}
       <PsychOverlay />
+      <IdleOverlay />
     </PhoneFrame>
   )
 }

@@ -44,6 +44,22 @@ export interface PromptConfigPublic {
   updatedAt: string | null
 }
 
+export type IdleTimeoutMs = 30000 | 60000 | 120000
+
+export interface AppConfigPublic {
+  tenantId: string
+  tenantName: string
+  tenantSlug: string
+  idleTimeoutMs: IdleTimeoutMs
+  updatedAt: string | null
+}
+
+export const IDLE_TIMEOUT_OPTIONS: { value: IdleTimeoutMs; label: string }[] = [
+  { value: 30000, label: '30 segundos' },
+  { value: 60000, label: '1 minuto' },
+  { value: 120000, label: '2 minutos' },
+]
+
 const API_BASE = '/api/admin'
 
 async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
@@ -133,5 +149,19 @@ export async function savePromptConfig(
   return adminFetch<PromptConfigPublic>(`/tenants/${encodeURIComponent(slug)}/prompt`, {
     method: 'PUT',
     body: JSON.stringify({ systemPrompt }),
+  })
+}
+
+export async function fetchAppConfig(slug: string): Promise<AppConfigPublic> {
+  return adminFetch<AppConfigPublic>(`/tenants/${encodeURIComponent(slug)}/app-config`)
+}
+
+export async function saveAppConfig(
+  slug: string,
+  idleTimeoutMs: IdleTimeoutMs,
+): Promise<AppConfigPublic> {
+  return adminFetch<AppConfigPublic>(`/tenants/${encodeURIComponent(slug)}/app-config`, {
+    method: 'PUT',
+    body: JSON.stringify({ idleTimeoutMs }),
   })
 }

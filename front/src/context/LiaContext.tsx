@@ -14,7 +14,7 @@ import { showEmotionalMap, showJourneys, showQuickReplies } from '../lib/feature
 import { isMoodQuestion, OPEN_MOOD_PROMPT, OPEN_REPLY_HINT } from '../lib/openPrompts'
 import { syncCaregiverProfile } from '../services/sessionSync'
 import { useSpeech, type SpeechPlayback } from '../hooks/useSpeech'
-import { isAiChatEnabled, fetchJourneys, transcribeAudio } from '../services/liaApi'
+import { isAiChatEnabled, fetchChatSettings, fetchJourneys, transcribeAudio } from '../services/liaApi'
 import { canUseMicrophone, createMediaRecorder, getRecorderFormat, micErrorMessage } from '../utils/voiceRecorder'
 import { stripHtml } from '../utils/html'
 import type { SpeechRate } from '../utils/speechRate'
@@ -26,6 +26,12 @@ interface PickerHandler {
   onPick: (idx: number, label: string) => void
 }
 
+const DEFAULT_IDLE_MS = 30_000
+const IDLE_SOFT_HTML =
+  '🌿 Tudo bem se você precisar de um momento. Estarei aqui quando quiser continuar nossa conversa.'
+const IDLE_SOFT_AUDIO =
+  'Tudo bem se você precisar de um momento. Estarei aqui quando quiser continuar nossa conversa.'
+
 interface LiaContextValue {
   screen: ScreenId
   messages: ChatMessage[]
@@ -35,6 +41,7 @@ interface LiaContextValue {
   speechPlayback: SpeechPlayback
   speechPlayerEnabled: boolean
   psychOpen: boolean
+  idlePromptOpen: boolean
   mapBadge: boolean
   isRecording: boolean
   isTranscribing: boolean
@@ -42,6 +49,8 @@ interface LiaContextValue {
   showScreen: (id: ScreenId) => void
   openPsych: () => void
   closePsych: () => void
+  continueFromIdle: () => void
+  endFromIdle: () => void
   sendMessage: (text: string) => void
   toggleMic: () => void
   pickEmotion: (pickerId: string, idx: number, label: string) => void
@@ -71,6 +80,8 @@ export function LiaProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<UserProfile>(createEmptyProfile)
   const [progress, setProgress] = useState(0)
   const [psychOpen, setPsychOpen] = useState(false)
+  const [idlePromptOpen, setIdlePromptOpen] = useState(false)
+  const [idleTimeoutMs, setIdleTimeoutMs] = useState(DEFAULT_IDLE_MS)
   const [mapBadge, setMapBadge] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
   const [isTranscribing, setIsTranscribing] = useState(false)
@@ -85,9 +96,14 @@ export function LiaProvider({ children }: { children: ReactNode }) {
   const messagesRef = useRef(messages)
   const typingSessionRef = useRef(0)
   const lastMicErrorRef = useRef<string | null>(null)
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const idlePromptOpenRef = useRef(false)
+  const idleTimeoutMsRef = useRef(DEFAULT_IDLE_MS)
 
   profileRef.current = profile
   messagesRef.current = messages
+  idlePromptOpenRef.current = idlePromptOpen
+  idleTimeoutMsRef.current = idleTimeoutMs
 
   const { speak, listen, toggleSpeech, seekSpeech, unlockAudio, primeAudio, speechLoading, speechPlayback, isSpeechReady, getSpeechDuration, speechRate, cycleSpeechRate } =
     useSpeech(isAiChatEnabled())
@@ -117,7 +133,82 @@ export function LiaProvider({ children }: { children: ReactNode }) {
 
   const showScreen = useCallback((id: ScreenId) => {
     setScreen(id)
+    if (id !== 'chat') {
+      setIdlePromptOpen(false)
+    }
   }, [])
+
+  const clearIdleTimer = useCallback(() => {
+    if (idleTimerRef.current) {
+      clearTimeout(idleTimerRef.current)
+      idleTimerRef.current = null
+    }
+  }, [])
+
+  const scheduleIdleTimer = useCallback(() => {
+    clearIdleTimer()
+    if (idlePromptOpenRef.current) return
+
+    idleTimerRef.current = setTimeout(() => {
+      idleTimerRef.current = null
+      if (idlePromptOpenRef.current) return
+
+      appendMessage({
+        id: uid(),
+        kind: 'ai',
+        html: IDLE_SOFT_HTML,
+        audioText: IDLE_SOFT_AUDIO,
+        time: formatTime(),
+      })
+      speak(IDLE_SOFT_AUDIO)
+      setIdlePromptOpen(true)
+    }, idleTimeoutMsRef.current)
+  }, [appendMessage, clearIdleTimer, speak])
+
+  const bumpIdleActivity = useCallback(() => {
+    if (idlePromptOpenRef.current) return
+    scheduleIdleTimer()
+  }, [scheduleIdleTimer])
+
+  useEffect(() => {
+    void fetchChatSettings()
+      .then((settings) => {
+        const next =
+          settings.idleTimeoutMs === 30_000 ||
+          settings.idleTimeoutMs === 60_000 ||
+          settings.idleTimeoutMs === 120_000
+            ? settings.idleTimeoutMs
+            : DEFAULT_IDLE_MS
+        setIdleTimeoutMs(next)
+      })
+      .catch(() => undefined)
+  }, [])
+
+  useEffect(() => {
+    if (screen !== 'chat' || idlePromptOpen || psychOpen || isRecording || isTranscribing) {
+      clearIdleTimer()
+      return
+    }
+
+    const hasTyping = messages.some((m) => m.kind === 'typing')
+    if (hasTyping) {
+      clearIdleTimer()
+      return
+    }
+
+    scheduleIdleTimer()
+    return clearIdleTimer
+  }, [
+    screen,
+    idlePromptOpen,
+    psychOpen,
+    isRecording,
+    isTranscribing,
+    idleTimeoutMs,
+    messages,
+    clearIdleTimer,
+    scheduleIdleTimer,
+  ])
 
   const chatApi = useMemo<ChatApi>(
     () => ({
@@ -289,6 +380,7 @@ export function LiaProvider({ children }: { children: ReactNode }) {
   }, [chatApi])
 
   const goToChat = useCallback(() => {
+    setIdlePromptOpen(false)
     setScreen('chat')
     setMessages([])
     void unlockAudio()
@@ -301,26 +393,40 @@ export function LiaProvider({ children }: { children: ReactNode }) {
   }, [])
   const closePsych = useCallback(() => setPsychOpen(false), [])
 
+  const continueFromIdle = useCallback(() => {
+    setIdlePromptOpen(false)
+  }, [])
+
+  const endFromIdle = useCallback(() => {
+    setIdlePromptOpen(false)
+    clearIdleTimer()
+    setScreen('intro')
+  }, [clearIdleTimer])
+
   const sendMessage = useCallback((text: string) => {
     void unlockAudio()
+    bumpIdleActivity()
     runnerRef.current?.sendMessage(text)
-  }, [unlockAudio])
+  }, [bumpIdleActivity, unlockAudio])
 
   const startJourney = useCallback((n: number) => {
     if (!showJourneys()) return
+    setIdlePromptOpen(false)
     setScreen('chat')
+    bumpIdleActivity()
     runnerRef.current?.startJourney(n)
-  }, [])
+  }, [bumpIdleActivity])
 
   const pickEmotion = useCallback(
     (pickerId: string, idx: number, label: string) => {
       const handler = pickerHandlers.current.get(pickerId)
       if (!handler) return
       pickerHandlers.current.delete(pickerId)
+      bumpIdleActivity()
       appendMessage({ id: uid(), kind: 'user', text: label, time: formatTime() })
       handler.onPick(idx, label)
     },
-    [appendMessage],
+    [appendMessage, bumpIdleActivity],
   )
 
   const toggleMic = useCallback(async () => {
@@ -414,6 +520,7 @@ export function LiaProvider({ children }: { children: ReactNode }) {
 
         recorder.start(250)
         setIsRecording(true)
+        bumpIdleActivity()
       } catch (error) {
         addMicError(micErrorMessage(error))
       }
@@ -421,7 +528,7 @@ export function LiaProvider({ children }: { children: ReactNode }) {
     }
 
     mediaRecorderRef.current?.stop()
-  }, [addMicError, chatApi, isRecording, isTranscribing])
+  }, [addMicError, bumpIdleActivity, chatApi, isRecording, isTranscribing])
 
   const value: LiaContextValue = {
     screen,
@@ -432,6 +539,7 @@ export function LiaProvider({ children }: { children: ReactNode }) {
     speechPlayback,
     speechPlayerEnabled,
     psychOpen,
+    idlePromptOpen,
     mapBadge,
     isRecording,
     isTranscribing,
@@ -439,6 +547,8 @@ export function LiaProvider({ children }: { children: ReactNode }) {
     showScreen,
     openPsych,
     closePsych,
+    continueFromIdle,
+    endFromIdle,
     sendMessage,
     toggleMic,
     pickEmotion,

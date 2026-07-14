@@ -2,7 +2,14 @@ import type { ChatApi } from '../types/chat'
 import { getJourneyByNumber } from '../data/journeys'
 import { isAiChatEnabled, sendJourneyStep } from '../services/liaApi'
 import { prepareSpeechFromResponse } from '../services/chatSpeech'
-import { buildJourneySteps, type JourneyDeps, type JourneyStep } from './journeyAiSteps'
+import { buildJourneySteps, type JourneyDeps } from './journeyAiSteps'
+import { schedulePostJourneyFollowUp } from './postJourneyFollowUp'
+
+export type AiJourneyController = {
+  handleUserMessage: (text: string) => boolean
+  isActive: () => boolean
+  cancel: () => void
+}
 
 function fillInstruction(template: string, choice: string) {
   return template.replace(/\{choice\}/g, choice)
@@ -29,117 +36,22 @@ async function requestAiStep(
   })
 }
 
-function runAiStep(
+export function startAiJourney(
   api: ChatApi,
   journeyNumber: number,
-  journeyTitle: string,
-  stepIndex: number,
-  step: Extract<JourneyStep, { type: 'ai' }>,
-  onDone: () => void,
-) {
-  api.runWithTyping(async () => {
-    try {
-      const response = await requestAiStep(
-        api,
-        journeyNumber,
-        journeyTitle,
-        stepIndex,
-        step.instruction,
-      )
-      api.addAiMsg(
-        response.reply,
-        response.audioText,
-        step.extras,
-        prepareSpeechFromResponse(response),
-      )
-    } catch {
-      if (step.fallbackHtml) {
-        api.addAiMsg(step.fallbackHtml, step.fallbackAudio || step.fallbackHtml, step.extras)
-      } else {
-        api.addAiMsg(
-          'Desculpe, tive uma dificuldade agora. Vamos continuar — você pode tentar de novo em instantes. 💙',
-          'Desculpe, tive uma dificuldade agora. Vamos continuar.',
-        )
-      }
+  startJourney: (n: number) => void,
+): AiJourneyController {
+  if (!isAiChatEnabled()) {
+    return {
+      handleUserMessage: () => false,
+      isActive: () => false,
+      cancel: () => undefined,
     }
-    onDone()
-  })
-}
-
-function runPickerStep(
-  api: ChatApi,
-  journeyNumber: number,
-  journeyTitle: string,
-  stepIndex: number,
-  step: Extract<JourneyStep, { type: 'picker' }>,
-  onDone: () => void,
-) {
-  api.addPicker(step.question, step.audioQ, step.pills, (idx, label) => {
-    const profile = api.getProfile()
-    step.onPick?.(profile, idx, label)
-    api.updateMap()
-
-    api.runWithTyping(async () => {
-      try {
-        const instruction = fillInstruction(step.pickInstruction, label)
-        const response = await requestAiStep(
-          api,
-          journeyNumber,
-          journeyTitle,
-          stepIndex,
-          instruction,
-          label,
-        )
-        api.addAiMsg(
-          response.reply,
-          response.audioText,
-          step.extras,
-          prepareSpeechFromResponse(response),
-        )
-      } catch {
-        api.addAiMsg(
-          'Obrigada por compartilhar isso comigo. Sua resposta faz sentido no seu contexto. 💙',
-          'Obrigada por compartilhar isso comigo. Sua resposta faz sentido no seu contexto.',
-          step.extras,
-        )
-      }
-      onDone()
-    })
-  })
-}
-
-function runSteps(
-  api: ChatApi,
-  journeyNumber: number,
-  steps: JourneyStep[],
-  deps: JourneyDeps,
-  fromIndex = 0,
-) {
-  if (fromIndex >= steps.length) return
-
-  const journey = getJourneyByNumber(journeyNumber)
-  const journeyTitle = journey?.title || `Jornada ${journeyNumber}`
-  const step = steps[fromIndex]
-
-  const advance = () => runSteps(api, journeyNumber, steps, deps, fromIndex + 1)
-
-  if (step.type === 'ai') {
-    runAiStep(api, journeyNumber, journeyTitle, fromIndex, step, advance)
-    return
   }
 
-  if (step.type === 'picker') {
-    runPickerStep(api, journeyNumber, journeyTitle, fromIndex, step, advance)
-    return
-  }
-
-  if (step.type === 'ctas') {
-    api.addCtas(step.buildCtas(deps))
-  }
-}
-
-export function runAiJourney(api: ChatApi, journeyNumber: number, startJourney: (n: number) => void) {
-  if (!isAiChatEnabled()) return
+  let active = true
+  let waitingContinue = false
+  let pendingAdvance: (() => void) | null = null
 
   const deps: JourneyDeps = {
     startJourney,
@@ -148,9 +60,144 @@ export function runAiJourney(api: ChatApi, journeyNumber: number, startJourney: 
     setProgress: (pct) => api.setProgress(pct),
   }
 
-  const allSteps = buildJourneySteps(deps)
-  const steps = allSteps[journeyNumber]
-  if (!steps?.length) return
+  const steps = buildJourneySteps(deps)[journeyNumber] ?? []
+  const journey = getJourneyByNumber(journeyNumber)
+  const journeyTitle = journey?.title || `Jornada ${journeyNumber}`
 
-  runSteps(api, journeyNumber, steps, deps)
+  const cancel = () => {
+    active = false
+    waitingContinue = false
+    pendingAdvance = null
+  }
+
+  const waitForUserThen = (next: () => void) => {
+    if (!active) return
+    waitingContinue = true
+    pendingAdvance = next
+  }
+
+  const runFrom = (fromIndex: number) => {
+    if (!active) return
+    if (fromIndex >= steps.length) {
+      active = false
+      return
+    }
+
+    const step = steps[fromIndex]
+    const advance = () => runFrom(fromIndex + 1)
+
+    if (step.type === 'ai') {
+      api.runWithTyping(async () => {
+        if (!active) return
+        try {
+          const response = await requestAiStep(
+            api,
+            journeyNumber,
+            journeyTitle,
+            fromIndex,
+            step.instruction,
+          )
+          api.addAiMsg(
+            response.reply,
+            response.audioText,
+            step.extras,
+            prepareSpeechFromResponse(response),
+          )
+        } catch {
+          if (step.fallbackHtml) {
+            api.addAiMsg(step.fallbackHtml, step.fallbackAudio || step.fallbackHtml, step.extras)
+          } else {
+            api.addAiMsg(
+              'Desculpe, tive uma dificuldade agora. Quando quiser, me responde com qualquer mensagem para seguirmos. 💙',
+              'Desculpe, tive uma dificuldade agora. Quando quiser, me responde para seguirmos.',
+            )
+          }
+        }
+        waitForUserThen(advance)
+      })
+      return
+    }
+
+    if (step.type === 'picker') {
+      api.showTyping(() => {
+        if (!active) return
+        api.addPicker(
+          step.question,
+          step.audioQ,
+          step.pills,
+          (idx, label) => {
+            if (!active) return
+            const profile = api.getProfile()
+            step.onPick?.(profile, idx, label)
+            api.updateMap()
+
+            api.runWithTyping(async () => {
+              if (!active) return
+              try {
+                const instruction = fillInstruction(step.pickInstruction, label)
+                const response = await requestAiStep(
+                  api,
+                  journeyNumber,
+                  journeyTitle,
+                  fromIndex,
+                  instruction,
+                  label,
+                )
+                api.addAiMsg(
+                  response.reply,
+                  response.audioText,
+                  step.extras,
+                  prepareSpeechFromResponse(response),
+                )
+              } catch {
+                api.addAiMsg(
+                  'Obrigada por compartilhar isso comigo. Sua resposta faz sentido no seu contexto. 💙',
+                  'Obrigada por compartilhar isso comigo. Sua resposta faz sentido no seu contexto.',
+                  step.extras,
+                )
+              }
+              waitForUserThen(advance)
+            })
+          },
+          { forcePills: true },
+        )
+      })
+      return
+    }
+
+    if (step.type === 'ctas') {
+      api.addCtas(step.buildCtas(deps))
+      active = false
+      schedulePostJourneyFollowUp(api)
+    }
+  }
+
+  const handleUserMessage = (text: string): boolean => {
+    if (!active || !waitingContinue) return false
+    const answer = text.trim()
+    if (!answer) return true
+
+    waitingContinue = false
+    const next = pendingAdvance
+    pendingAdvance = null
+    next?.()
+    return true
+  }
+
+  if (steps.length === 0) {
+    return { handleUserMessage, isActive: () => false, cancel }
+  }
+
+  runFrom(0)
+
+  return {
+    handleUserMessage,
+    isActive: () => active,
+    cancel,
+  }
+}
+
+/** @deprecated use startAiJourney */
+export function runAiJourney(api: ChatApi, journeyNumber: number, startJourney: (n: number) => void) {
+  startAiJourney(api, journeyNumber, startJourney)
 }
