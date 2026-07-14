@@ -13,6 +13,10 @@ import {
   applyJourneyRecommendation,
   resolveSuggestedJourneyNumber,
 } from './journeyRecommendation';
+import {
+  cancelPostJourneyFollowUp,
+  schedulePostJourneyFollowUp,
+} from './postJourneyFollowUp';
 
 export function createJourneyRunner(api: ChatApi) {
   const profile = api.getProfile();
@@ -179,6 +183,11 @@ export function createJourneyRunner(api: ChatApi) {
   }
 
 // ═══════════════════════ START JOURNEY ═══════════════════════
+  function endJourneyCtas(buttons) {
+    api.addCtas(buttons);
+    schedulePostJourneyFollowUp(api);
+  }
+
   function startJourney(n: number) {
   api.showScreen('chatScreen');
   if (!profile.journeysCompleted.includes(n)) profile.journeysCompleted.push(n);
@@ -188,6 +197,7 @@ export function createJourneyRunner(api: ChatApi) {
   const journey = getJourneyByNumber(n);
   const apiQuestions = getJourneyQuestions(n);
 
+  cancelPostJourneyFollowUp();
   questionJourneyCtrl?.cancel();
   questionJourneyCtrl = null;
   aiJourneyCtrl?.cancel();
@@ -283,7 +293,7 @@ export function createJourneyRunner(api: ChatApi) {
   `<div class="reflection"><div class="r-title">💭 Para reflexão</div><div class="r-q">• O que você costuma abrir mão quando precisa dar conta de tudo?<br>• O que em você está pedindo atenção há mais tempo?<br>• Como seu corpo tem sinalizado cansaço?</div></div>`);
   setTimeout(()=>api.showTyping(()=>{
     api.addAiMsg('Quando estiver pronto(a), podemos seguir para a <strong>Microjornada 1.3 — Normalizando sentimentos difíceis</strong>.\n\nVocê não precisa chegar pronto. Você só precisa chegar como está. 🌸','Quando estiver pronto, podemos seguir para a próxima etapa. Você não precisa chegar pronto. Você só precisa chegar como está.');
-    setTimeout(()=>api.addCtas([
+    setTimeout(()=>endJourneyCtas([
       {icon:'▶️',label:'Continuar — Microjornada 1.3',style:'primary',action: () => j1_sentimentos()},
       {icon:'🗺️',label:'Ver outras jornadas',style:'secondary',action: () => api.showScreen('journeyScreen')},
       {icon:'💜',label:'Falar com psicólogo',style:'accent',action: () => api.openPsych()}
@@ -307,7 +317,7 @@ export function createJourneyRunner(api: ChatApi) {
               `<div class="reflection"><div class="r-title">💭 Um exercício simples</div><div class="r-q">Se esse sentimento pudesse falar, o que ele estaria tentando te dizer?<br><br>"Eu preciso de descanso."<br>"Eu estou sozinho(a)."<br>"Estou com medo."<br><br>Apenas escute. Escutar já é cuidado.</div></div>`);
               setTimeout(()=>api.showTyping(()=>{
                 api.addAiMsg('Você não está errado(a) por sentir o que sente.\n\nVocê está humano(a) em um contexto exigente. 🌸\n\n<strong>Jornada 1 concluída!</strong> Seu mapa foi atualizado.','Você não está errado por sentir o que sente. Você está humano em um contexto exigente. Jornada 1 concluída!');
-                setTimeout(()=>api.addCtas([
+                setTimeout(()=>endJourneyCtas([
                   {icon:'▶️',label:'Continuar — Jornada 2',style:'primary',action: () => j2()},
                   {icon:'📊',label:'Ver meu mapa emocional',style:'secondary',action: () => api.showScreen('mapScreen')},
                   {icon:'💜',label:'Falar com psicólogo',style:'accent',action: () => api.openPsych()}
@@ -368,7 +378,7 @@ export function createJourneyRunner(api: ChatApi) {
           api.addAiMsg(resps[idx]||resps[0], resps[idx]||resps[0]);
           setTimeout(()=>api.showTyping(()=>{
             api.addAiMsg('Conhecimento é uma forma de empoderamento. Ele reduz o medo e amplia as possibilidades de cuidado. 🌱\n\n<strong>Jornada 2 concluída!</strong> Seu mapa foi atualizado.','Conhecimento é uma forma de empoderamento. Jornada 2 concluída!');
-            setTimeout(()=>api.addCtas([
+            setTimeout(()=>endJourneyCtas([
               {icon:'▶️',label:'Continuar — Jornada 3',style:'primary',action: () => j3()},
               {icon:'📊',label:'Ver meu mapa',style:'secondary',action: () => api.showScreen('mapScreen')},
               {icon:'💜',label:'Falar com psicólogo',style:'accent',action: () => api.openPsych()}
@@ -402,7 +412,7 @@ export function createJourneyRunner(api: ChatApi) {
                 api.addAiMsg('A <strong>culpa</strong> é um dos sentimentos mais comuns entre cuidadores. E um dos mais pesados.\n\nMuitos se perguntam: "Fiz algo errado?" "Poderia ter prevenido?"\n\nA resposta é não. O autismo não é causado por ações dos pais.','A culpa é um dos sentimentos mais comuns entre cuidadores. Muitos se perguntam se fizeram algo errado. A resposta é não. O autismo não é causado por ações dos pais.');
                 setTimeout(()=>api.showTyping(()=>{
                   api.addAiMsg('<strong>Jornada 3 concluída!</strong> Você deu um passo corajoso ao explorar esses sentimentos. 💜\n\nSe este conteúdo despertou emoções difíceis, você pode seguir para a Jornada 5 — Cuidar de Si, ou acionar o plantão psicológico.','Jornada 3 concluída! Você deu um passo corajoso ao explorar esses sentimentos.');
-                  setTimeout(()=>api.addCtas([
+                  setTimeout(()=>endJourneyCtas([
                     {icon:'▶️',label:'Continuar — Jornada 4',style:'primary',action: () => j4()},
                     {icon:'🌱',label:'Jornada 5 — Cuidar de Si',style:'secondary',action: () => j5()},
                     {icon:'💜',label:'Falar com psicólogo',style:'accent',action: () => api.openPsych()}
@@ -466,7 +476,7 @@ export function createJourneyRunner(api: ChatApi) {
         api.addAiMsg(['Ótimo! Manter práticas de autocuidado faz uma diferença real no longo prazo.','Tentar já é muito. Vamos construir pequenos passos para tornar isso mais possível.','Quando o autocuidado zera, o desgaste se acelera. Vamos trabalhar nisso juntos, sem cobrança.','Às vezes é preciso voltar ao básico. O que você gostava de fazer antes do cuidado tomar todo o espaço?'][idx]||'', '');
         setTimeout(()=>api.showTyping(()=>{
           api.addAiMsg('<strong>Jornada 4 concluída!</strong> Você fez uma avaliação corajosa e honesta de como está. 💜\n\nIsso já é autocuidado.','Jornada 4 concluída! Você fez uma avaliação corajosa de como está. Isso já é autocuidado.');
-          setTimeout(()=>api.addCtas([
+          setTimeout(()=>endJourneyCtas([
             {icon:'▶️',label:'Continuar — Jornada 5',style:'primary',action: () => j5()},
             {icon:'📊',label:'Ver meu mapa',style:'secondary',action: () => api.showScreen('mapScreen')},
             {icon:'💜',label:'Falar com psicólogo',style:'accent',action: () => api.openPsych()}
@@ -517,7 +527,7 @@ export function createJourneyRunner(api: ChatApi) {
     setTimeout(()=>api.showTyping(()=>{
       api.addAiMsg('Provavelmente você seria mais gentil com ele do que é com você mesmo(a).\n\n<em>Você merece essa mesma gentileza.</em>\n\n<strong>Jornada 5 concluída!</strong> 🌱','Provavelmente você seria mais gentil com ele do que é com você mesmo. Você merece essa mesma gentileza. Jornada 5 concluída!',
       `<div class="reflection"><div class="r-title">💭 Para guardar</div><div class="r-q">Qual é o menor gesto de cuidado que você poderia se dar hoje? Não amanhã. Hoje.<br><br>Nem que seja fechar os olhos por 3 minutos e respirar.</div></div>`);
-      setTimeout(()=>api.addCtas([
+      setTimeout(()=>endJourneyCtas([
         {icon:'▶️',label:'Continuar — Jornada 6',style:'primary',action: () => j6()},
         {icon:'📊',label:'Ver meu mapa',style:'secondary',action: () => api.showScreen('mapScreen')},
         {icon:'💜',label:'Falar com psicólogo',style:'accent',action: () => api.openPsych()}
@@ -551,7 +561,7 @@ export function createJourneyRunner(api: ChatApi) {
               api.addAiMsg(content[idx][0], content[idx][0].replace(/<[^>]+>/g,''), content[idx][1]);
               setTimeout(()=>api.showTyping(()=>{
                 api.addAiMsg('<strong>Jornada 6 concluída!</strong> 🛠️\n\nEstratégias práticas são mais eficazes quando vêm de uma postura de compreensão, não de controle.','Jornada 6 concluída! Estratégias práticas são mais eficazes quando vêm de uma postura de compreensão.');
-                setTimeout(()=>api.addCtas([
+                setTimeout(()=>endJourneyCtas([
                   {icon:'▶️',label:'Continuar — Jornada 7',style:'primary',action: () => j7()},
                   {icon:'💜',label:'Falar com psicólogo',style:'accent',action: () => api.openPsych()}
                 ]),400);
@@ -588,7 +598,7 @@ export function createJourneyRunner(api: ChatApi) {
               `<div class="info-card"><div class="ic-title">💬 Como pedir ajuda</div><ul><li>Seja específico: "Preciso de ajuda com X"</li><li>Aceite ajuda sem se sentir em dívida</li><li>Você não precisa explicar tudo para ser ajudado</li><li>Pedir ajuda é ato de coragem, não de fraqueza</li></ul></div>`);
               setTimeout(()=>api.showTyping(()=>{
                 api.addAiMsg('<strong>Jornada 7 concluída!</strong> 🤝\n\nSe este conteúdo despertou algo difícil, o plantão psicológico está disponível.','Jornada 7 concluída!');
-                setTimeout(()=>api.addCtas([
+                setTimeout(()=>endJourneyCtas([
                   {icon:'▶️',label:'Continuar — Jornada 8',style:'primary',action: () => j8()},
                   {icon:'💜',label:'Falar com psicólogo',style:'accent',action: () => api.openPsych()}
                 ]),400);
@@ -615,7 +625,7 @@ export function createJourneyRunner(api: ChatApi) {
         `<div class="hquote">Você não precisa saber tudo. Precisa saber onde buscar ajuda — e que tem direito a ela.</div>`);
         setTimeout(()=>api.showTyping(()=>{
           api.addAiMsg('<strong>Jornada 8 concluída!</strong> 📋\n\nInformação empoderada é cuidado de qualidade.','Jornada 8 concluída! Informação empoderada é cuidado de qualidade.');
-          setTimeout(()=>api.addCtas([
+          setTimeout(()=>endJourneyCtas([
             {icon:'▶️',label:'Continuar — Jornada 9',style:'primary',action: () => j9()},
             {icon:'💜',label:'Falar com psicólogo',style:'accent',action: () => api.openPsych()}
           ]),400);
@@ -652,7 +662,7 @@ export function createJourneyRunner(api: ChatApi) {
               setTimeout(()=>api.showTyping(()=>{
                 api.addAiMsg('Depois da crise: <strong>acolhimento, não cobrança.</strong>\n\nNão é hora de avaliar o que deu errado.\nÉ hora de cuidar.','Depois da crise, acolhimento, não cobrança. Não é hora de avaliar o que deu errado. É hora de cuidar.',
                 `<div class="hquote">Ter uma crise não te define. Como você se levanta depois dela, sim.</div>`);
-                setTimeout(()=>api.addCtas([
+                setTimeout(()=>endJourneyCtas([
                   {icon:'💜',label:'Falar com psicólogo AGORA',sub:'Plantão disponível 24h',style:'accent',action: () => api.openPsych()},
                   {icon:'🌱',label:'Jornada 5 — Cuidar de Si',style:'primary',action: () => j5()},
                   {icon:'📊',label:'Ver meu mapa',style:'secondary',action: () => api.showScreen('mapScreen')}
@@ -680,7 +690,7 @@ export function createJourneyRunner(api: ChatApi) {
         `<div class="info-card"><div class="ic-title">📊 O que NÃO acelera o desenvolvimento</div><ul><li>Pressão e cobrança excessiva</li><li>Comparação com outras crianças</li><li>Excesso de intervenções simultâneas</li><li>Ambiente de medo ou imprevisibilidade</li></ul></div>`);
         setTimeout(()=>api.showTyping(()=>{
           api.addAiMsg('<strong>Jornada 10 concluída!</strong> ⚡\n\nEntender o cérebro com mais ciência e menos julgamento transforma o cuidado.','Jornada 10 concluída! Entender o cérebro com mais ciência e menos julgamento transforma o cuidado.');
-          setTimeout(()=>api.addCtas([
+          setTimeout(()=>endJourneyCtas([
             {icon:'▶️',label:'Continuar — Jornada 11',style:'primary',action: () => j11()},
             {icon:'💜',label:'Falar com psicólogo',style:'accent',action: () => api.openPsych()}
           ]),400);
@@ -705,7 +715,7 @@ export function createJourneyRunner(api: ChatApi) {
         `<div class="hquote">Seu filho não precisa ser "curado". Ele precisa ser visto, apoiado e amado exatamente como é.</div>`);
         setTimeout(()=>api.showTyping(()=>{
           api.addAiMsg('<strong>Jornada 11 concluída!</strong> 🌟\n\nVocê está construindo uma visão mais completa — e isso faz toda a diferença.','Jornada 11 concluída! Você está construindo uma visão mais completa, e isso faz toda a diferença.');
-          setTimeout(()=>api.addCtas([
+          setTimeout(()=>endJourneyCtas([
             {icon:'▶️',label:'Continuar — Jornada 12',style:'primary',action: () => j12()},
             {icon:'💜',label:'Falar com psicólogo',style:'accent',action: () => api.openPsych()}
           ]),400);
@@ -741,7 +751,7 @@ export function createJourneyRunner(api: ChatApi) {
               setTimeout(()=>api.showTyping(()=>{
                 api.addAiMsg('🎉 <strong>Parabéns! Você concluiu todas as 12 jornadas!</strong>\n\nEssa é uma conquista real. Você dedicou tempo e cuidado a entender sua própria jornada como cuidador.\n\nContinue aqui quando precisar — a Lia está sempre disponível. 💜','Parabéns! Você concluiu todas as 12 jornadas! Essa é uma conquista real. Você dedicou tempo e cuidado a entender sua própria jornada como cuidador. Continue aqui quando precisar. A Lia está sempre disponível.',
                 `<div class="info-card"><div class="ic-title">🌸 Lembre sempre</div><ul><li>Você não está sozinho(a)</li><li>Você está fazendo o melhor que pode</li><li>Cuidar de si é cuidar da criança</li><li>Esta plataforma existe para você</li></ul></div>`);
-                setTimeout(()=>api.addCtas([
+                setTimeout(()=>endJourneyCtas([
                   {icon:'📊',label:'Ver meu mapa completo',style:'primary',action: () => api.showScreen('mapScreen')},
                   {icon:'🔄',label:'Revisitar jornadas',style:'secondary',action: () => api.showScreen('journeyScreen')},
                   {icon:'💜',label:'Falar com psicólogo',style:'accent',action: () => api.openPsych()}

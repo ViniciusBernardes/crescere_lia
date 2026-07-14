@@ -1,5 +1,6 @@
 import type { ChatApi, JourneyQuestion } from '../types/chat'
 import { getJourneyByNumber } from '../data/journeys'
+import { schedulePostJourneyFollowUp } from './postJourneyFollowUp'
 
 export type QuestionJourneyController = {
   handleUserMessage: (text: string) => boolean
@@ -71,6 +72,7 @@ export function startQuestionJourney(
           action: () => api.openPsych(),
         },
       ])
+      schedulePostJourneyFollowUp(api)
       onComplete()
     })
   }
