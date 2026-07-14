@@ -91,7 +91,7 @@ export interface ChatSettings {
 
 export async function fetchChatSettings(): Promise<ChatSettings> {
   const res = await fetch(`${API_BASE}/settings`, {
-    headers: { 'X-Tenant-Slug': TENANT_SLUG },
+    headers: { 'X-Tenant-Slug': resolveTenantSlug() },
   })
   return parseJson<ChatSettings>(res)
 }
