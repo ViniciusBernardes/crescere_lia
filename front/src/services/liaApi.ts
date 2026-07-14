@@ -84,6 +84,18 @@ export async function fetchHealth(): Promise<HealthResponse> {
   return parseJson<HealthResponse>(res)
 }
 
+export interface ChatSettings {
+  tenantSlug: string
+  idleTimeoutMs: number
+}
+
+export async function fetchChatSettings(): Promise<ChatSettings> {
+  const res = await fetch(`${API_BASE}/settings`, {
+    headers: { 'X-Tenant-Slug': TENANT_SLUG },
+  })
+  return parseJson<ChatSettings>(res)
+}
+
 export async function fetchJourneys(): Promise<JourneysApiResponse> {
   const res = await fetch(`${API_BASE}/journeys`, {
     headers: { 'X-Tenant-Slug': resolveTenantSlug() },

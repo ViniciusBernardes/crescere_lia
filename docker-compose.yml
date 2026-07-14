@@ -33,6 +33,7 @@ services:
       - ./front/src:/app/src
       - ./front/index.html:/app/index.html
       - ./front/public:/app/public
+      - ./front/vite.config.ts:/app/vite.config.ts
     env_file:
       - ./front/.env
     environment:

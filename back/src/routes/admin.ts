@@ -22,6 +22,11 @@ import {
   savePromptConfig,
 } from "../services/promptConfig.js";
 import {
+  getAppConfigPublic,
+  isAllowedIdleTimeoutMs,
+  saveAppConfig,
+} from "../services/appConfig.js";
+import {
   createTenant,
   getTenantBySlug,
   listTenants,
@@ -237,6 +242,51 @@ adminRouter.put("/tenants/:slug/prompt", async (req, res) => {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Não foi possível salvar o prompt.";
+    res.status(400).json({ error: "save_failed", message });
+  }
+});
+
+adminRouter.get("/tenants/:slug/app-config", async (req, res) => {
+  const tenant = await getTenantBySlug(req.params.slug);
+  if (!tenant) {
+    return res.status(404).json({
+      error: "tenant_not_found",
+      message: "Empresa não encontrada.",
+    });
+  }
+  res.json(await getAppConfigPublic(tenant.id));
+});
+
+adminRouter.put("/tenants/:slug/app-config", async (req, res) => {
+  const tenant = await getTenantBySlug(req.params.slug);
+  if (!tenant) {
+    return res.status(404).json({
+      error: "tenant_not_found",
+      message: "Empresa não encontrada.",
+    });
+  }
+
+  const body = req.body as Record<string, unknown>;
+  const idleTimeoutMs =
+    typeof body.idleTimeoutMs === "number"
+      ? body.idleTimeoutMs
+      : Number(body.idleTimeoutMs);
+
+  if (!isAllowedIdleTimeoutMs(idleTimeoutMs)) {
+    return res.status(400).json({
+      error: "invalid_idle_timeout",
+      message: "Escolha 30 segundos, 1 minuto ou 2 minutos.",
+    });
+  }
+
+  try {
+    const result = await saveAppConfig(tenant.id, idleTimeoutMs);
+    res.json(result);
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível salvar a configuração.";
     res.status(400).json({ error: "save_failed", message });
   }
 });

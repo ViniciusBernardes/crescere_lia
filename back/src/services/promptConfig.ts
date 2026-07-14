@@ -79,6 +79,12 @@ export async function resolveSystemPrompt(
   tenantSlug?: string,
   profile?: UserProfileContext,
 ): Promise<string> {
+  // Prompt customizado no /admin da Lia tem prioridade sobre o iClinica.
+  const custom = await getCustomSystemPrompt(tenantId);
+  if (custom) {
+    return custom;
+  }
+
   if (tenantSlug && isIclinicaIntegrationEnabled()) {
     try {
       return await fetchIclinicaSystemPrompt(tenantSlug, profile);
@@ -87,8 +93,7 @@ export async function resolveSystemPrompt(
     }
   }
 
-  const custom = await getCustomSystemPrompt(tenantId);
-  return custom || getDefaultSystemPrompt();
+  return getDefaultSystemPrompt();
 }
 
 export async function getPromptConfigPublic(
