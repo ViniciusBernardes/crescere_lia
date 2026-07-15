@@ -1277,6 +1277,106 @@ html,body{height:100%;height:100dvh;width:100%;overflow:hidden;font-family:'Nuni
   #chatScreen .bwrap { max-width: min(560px, 48%); }
 }
 
+/* ─── Video Call Screen ─── */
+.video-call-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #0d0a14;
+  position: relative;
+}
+.vc-connecting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 16px;
+  color: white;
+  font-size: 14px;
+}
+.vc-spinner {
+  width: 40px; height: 40px;
+  border: 3px solid rgba(255,255,255,0.2);
+  border-top-color: #7B5BA8;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.vc-remote {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.vc-remote-video {
+  width: 100%; height: 100%;
+  object-fit: contain;
+}
+.vc-local {
+  position: absolute;
+  bottom: 80px; right: 12px;
+  width: 100px; height: 140px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid rgba(255,255,255,0.3);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+.vc-local-video {
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+.vc-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px;
+  background: rgba(0,0,0,0.8);
+}
+.vc-ctrl-btn {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.15);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.vc-ctrl-btn:hover { background: rgba(255,255,255,0.25); }
+.vc-ctrl-btn.vc-off { background: rgba(255,80,80,0.3); }
+.vc-ctrl-btn.vc-end { background: #e53935; }
+.vc-ctrl-btn.vc-end:hover { background: #c62828; }
+.vc-ended {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 12px;
+  color: white;
+  font-size: 14px;
+  text-align: center;
+  padding: 24px;
+}
+.vc-ended-icon { font-size: 48px; margin-bottom: 8px; }
+.vc-back-btn {
+  margin-top: 16px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #7B5BA8, #5E3A98);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 /* ─── Psych Chat Screen ─── */
 .psych-chat-screen {
   display: flex;

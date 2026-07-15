@@ -140,3 +140,18 @@ export async function sendPsychChatMessage(
     { method: "POST", body: JSON.stringify({ attendance_id: attendanceId, body }) },
   );
 }
+
+export interface VideoTokenResponse {
+  token: string;
+  ws_url: string;
+  room_name: string;
+}
+
+export async function fetchVideoTokenFromIclinica(
+  attendanceId: number,
+): Promise<VideoTokenResponse> {
+  const query = new URLSearchParams({ attendance_id: String(attendanceId) });
+  return iclinicaRequest<VideoTokenResponse>(
+    `/api/v1/integrations/lia/video/token?${query}`,
+  );
+}

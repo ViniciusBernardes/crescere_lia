@@ -253,6 +253,41 @@ chatRouter.get("/chat/psych/messages", async (req, res) => {
   }
 });
 
+chatRouter.get("/chat/psych/video-token", async (req, res) => {
+  if (!isIclinicaSyncConfigured()) {
+    return res.status(503).json({ error: "integration_not_configured" });
+  }
+  const tenantSlug = tenantSlugFromRequest(req);
+  try {
+    const tenant = await getTenantBySlug(tenantSlug);
+    if (!tenant) return res.status(404).json({ error: "tenant_not_found" });
+
+    const pool = getPool();
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT pa.id
+       FROM psychologist_attendances pa
+       JOIN lia_caregiver_sessions lcs ON lcs.id = pa.lia_caregiver_session_id
+       WHERE lcs.company_id = ?
+         AND pa.status = 'in_progress'
+         AND pa.channel = 'video'
+         AND pa.livekit_room_name IS NOT NULL
+       ORDER BY pa.created_at DESC
+       LIMIT 1`,
+      [tenant.id],
+    );
+    if (!rows[0]) {
+      return res.status(404).json({ error: "no_active_video" });
+    }
+
+    const { fetchVideoTokenFromIclinica } = await import("../services/iclinicaSync.js");
+    const tokenData = await fetchVideoTokenFromIclinica(rows[0].id);
+    return res.json(tokenData);
+  } catch (error) {
+    console.error("[psych-video] token error:", error);
+    return res.status(502).json({ error: "upstream_error" });
+  }
+});
+
 chatRouter.post("/chat/psych/send", async (req, res) => {
   if (!isIclinicaSyncConfigured()) {
     return res.status(503).json({ error: "integration_not_configured" });

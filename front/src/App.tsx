@@ -8,6 +8,7 @@ import { IntroScreen } from './screens/IntroScreen'
 import { JourneyScreen } from './screens/JourneyScreen'
 import { MapScreen } from './screens/MapScreen'
 import { PsychChatScreen } from './screens/PsychChatScreen'
+import { VideoCallScreen } from './screens/VideoCallScreen'
 import './styles/lia.css'
 
 function AppShell() {
@@ -20,6 +21,7 @@ function AppShell() {
       {screen === 'journey' && showJourneys() && <JourneyScreen />}
       {screen === 'map' && <MapScreen />}
       {screen === 'psychChat' && <PsychChatScreen />}
+      {screen === 'videoCall' && <VideoCallScreen />}
       <PsychOverlay />
       <IdleOverlay />
     </PhoneFrame>

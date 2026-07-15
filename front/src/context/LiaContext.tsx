@@ -50,6 +50,7 @@ interface LiaContextValue {
   openPsych: () => void
   closePsych: () => void
   openPsychChat: () => void
+  openVideoCall: () => void
   continueFromIdle: () => void
   endFromIdle: () => void
   sendMessage: (text: string) => void
@@ -397,6 +398,10 @@ export function LiaProvider({ children }: { children: ReactNode }) {
     setPsychOpen(false)
     setScreen('psychChat')
   }, [])
+  const openVideoCall = useCallback(() => {
+    setPsychOpen(false)
+    setScreen('videoCall')
+  }, [])
 
   const continueFromIdle = useCallback(() => {
     setIdlePromptOpen(false)
@@ -553,6 +558,7 @@ export function LiaProvider({ children }: { children: ReactNode }) {
     openPsych,
     closePsych,
     openPsychChat,
+    openVideoCall,
     continueFromIdle,
     endFromIdle,
     sendMessage,
