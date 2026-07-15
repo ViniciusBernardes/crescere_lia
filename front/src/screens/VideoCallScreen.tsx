@@ -144,7 +144,8 @@ export function VideoCallScreen() {
       roomRef.current = null
       room?.disconnect()
     }
-  }, [attachExistingRemoteTracks, attachLocalCamera, attachRemoteTrack])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   async function fetchVideoToken(): Promise<VideoTokenData | null> {
     for (let attempt = 0; attempt < 5; attempt++) {
