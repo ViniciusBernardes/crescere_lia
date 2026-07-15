@@ -1,6 +1,7 @@
 import { Router } from "express";
 import OpenAI from "openai";
 import multer from "multer";
+import type { RowDataPacket } from "mysql2/promise";
 import { isOpenAiConfigured } from "../config.js";
 import { createChatReply, synthesizeSpeech, transcribeAudio } from "../services/openai.js";
 import { DEFAULT_IDLE_TIMEOUT_MS, getIdleTimeoutMs } from "../services/appConfig.js";
@@ -214,7 +215,7 @@ chatRouter.get("/chat/psych/status", async (req, res) => {
     if (!tenant) return res.json({ attendance_id: null, status: "no_tenant" });
 
     const pool = getPool();
-    const [rows] = await pool.execute(
+    const [rows] = await pool.execute<RowDataPacket[]>(
       `SELECT pa.id, pa.status
        FROM psychologist_attendances pa
        JOIN lia_caregiver_sessions lcs ON lcs.id = pa.lia_caregiver_session_id
