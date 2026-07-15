@@ -1,7 +1,7 @@
 import { useLia } from '../../context/LiaContext'
 
 export function PsychOverlay() {
-  const { psychOpen, closePsych } = useLia()
+  const { psychOpen, closePsych, openPsychChat } = useLia()
   if (!psychOpen) return null
 
   return (
@@ -37,7 +37,7 @@ export function PsychOverlay() {
             <span className="pf-text">Disponível 24h, 7 dias por semana</span>
           </div>
         </div>
-        <button type="button" className="ps-cta" onClick={closePsych}>
+        <button type="button" className="ps-cta" onClick={openPsychChat}>
           Iniciar atendimento agora
         </button>
         <button type="button" className="ps-cancel" onClick={closePsych}>

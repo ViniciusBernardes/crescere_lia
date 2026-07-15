@@ -1,6 +1,6 @@
 import type { UserProfile } from './profile'
 
-export type ScreenId = 'intro' | 'chat' | 'journey' | 'map'
+export type ScreenId = 'intro' | 'chat' | 'journey' | 'map' | 'psychChat'
 
 export interface PillOption {
   emoji?: string
