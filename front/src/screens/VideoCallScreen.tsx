@@ -147,15 +147,26 @@ export function VideoCallScreen() {
   }, [attachExistingRemoteTracks, attachLocalCamera, attachRemoteTrack])
 
   async function fetchVideoToken(): Promise<VideoTokenData | null> {
-    try {
-      const res = await fetch(`${API_BASE}/chat/psych/video-token`, {
-        headers: { 'X-Tenant-Slug': resolveTenantSlug() },
-      })
-      if (!res.ok) return null
-      return await res.json()
-    } catch {
-      return null
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        const res = await fetch(`${API_BASE}/chat/psych/video-token`, {
+          headers: { 'X-Tenant-Slug': resolveTenantSlug() },
+        })
+        if (res.ok) return await res.json()
+        if (res.status === 404 && attempt < 4) {
+          await new Promise((r) => setTimeout(r, 2000))
+          continue
+        }
+        return null
+      } catch {
+        if (attempt < 4) {
+          await new Promise((r) => setTimeout(r, 2000))
+          continue
+        }
+        return null
+      }
     }
+    return null
   }
 
   const toggleMic = useCallback(async () => {
