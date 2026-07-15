@@ -216,7 +216,7 @@ chatRouter.get("/chat/psych/status", async (req, res) => {
 
     const pool = getPool();
     const [rows] = await pool.execute<RowDataPacket[]>(
-      `SELECT pa.id, pa.status
+      `SELECT pa.id, pa.status, pa.channel
        FROM psychologist_attendances pa
        JOIN lia_caregiver_sessions lcs ON lcs.id = pa.lia_caregiver_session_id
        WHERE lcs.company_id = ?
@@ -226,9 +226,9 @@ chatRouter.get("/chat/psych/status", async (req, res) => {
       [tenant.id],
     );
     if (rows[0]) {
-      return res.json({ attendance_id: rows[0].id, status: rows[0].status });
+      return res.json({ attendance_id: rows[0].id, status: rows[0].status, channel: rows[0].channel || 'chat' });
     }
-    return res.json({ attendance_id: null, status: "waiting" });
+    return res.json({ attendance_id: null, status: "waiting", channel: null });
   } catch (error) {
     console.error("[psych-chat] status error:", error);
     return res.json({ attendance_id: null, status: "error" });

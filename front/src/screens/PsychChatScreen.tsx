@@ -11,7 +11,7 @@ interface Message {
 const API_BASE = '/api'
 
 export function PsychChatScreen() {
-  const { showScreen } = useLia()
+  const { showScreen, openVideoCall } = useLia()
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [status, setStatus] = useState<'waiting' | 'active' | 'ended'>('waiting')
@@ -19,11 +19,14 @@ export function PsychChatScreen() {
   const cursorRef = useRef(0)
   const scrollRef = useRef<HTMLDivElement>(null)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const statusPollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     checkAttendance()
+    statusPollRef.current = setInterval(checkAttendance, 3000)
     return () => {
       if (pollRef.current) clearInterval(pollRef.current)
+      if (statusPollRef.current) clearInterval(statusPollRef.current)
     }
   }, [])
 
@@ -50,8 +53,16 @@ export function PsychChatScreen() {
       if (res.ok) {
         const data = await res.json()
         if (data.attendance_id) {
+          if (data.channel === 'video') {
+            if (statusPollRef.current) clearInterval(statusPollRef.current)
+            openVideoCall()
+            return
+          }
           setAttendanceId(data.attendance_id)
           setStatus(data.status === 'in_progress' ? 'active' : 'waiting')
+          if (data.status === 'in_progress' && statusPollRef.current) {
+            clearInterval(statusPollRef.current)
+          }
         }
       }
     } catch {
