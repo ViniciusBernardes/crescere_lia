@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Room, RoomEvent, Track, RemoteTrackPublication, LocalTrackPublication } from 'livekit-client'
+import { Room, RoomEvent, Track } from 'livekit-client'
 import { useLia } from '../context/LiaContext'
 
 const API_BASE = '/api'
