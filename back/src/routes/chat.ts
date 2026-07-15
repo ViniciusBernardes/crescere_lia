@@ -5,6 +5,7 @@ import { isOpenAiConfigured } from "../config.js";
 import { createChatReply, synthesizeSpeech, transcribeAudio } from "../services/openai.js";
 import { DEFAULT_IDLE_TIMEOUT_MS, getIdleTimeoutMs } from "../services/appConfig.js";
 import { getTenantBySlug, resolveTenantSlug } from "../services/tenants.js";
+import { getPool } from "../db/database.js";
 import {
   fetchPsychChatMessages,
   sendPsychChatMessage,
@@ -212,9 +213,8 @@ chatRouter.get("/chat/psych/status", async (req, res) => {
     const tenant = await getTenantBySlug(tenantSlug);
     if (!tenant) return res.json({ attendance_id: null, status: "no_tenant" });
 
-    const { getPool } = await import("../services/db.js");
     const pool = getPool();
-    const [rows] = await pool.execute<import("mysql2/promise").RowDataPacket[]>(
+    const [rows] = await pool.execute(
       `SELECT pa.id, pa.status
        FROM psychologist_attendances pa
        JOIN lia_caregiver_sessions lcs ON lcs.id = pa.lia_caregiver_session_id
