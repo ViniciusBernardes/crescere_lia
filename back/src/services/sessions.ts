@@ -10,6 +10,7 @@ export interface SyncSessionPayload {
   sessionToken: string;
   displayName?: string;
   profile: Record<string, unknown>;
+  /** When omitted, existing needs_psych is preserved. */
   needsPsych?: boolean;
 }
 
@@ -57,7 +58,7 @@ function buildSessionFields(payload: SyncSessionPayload) {
     emotionToday:
       typeof profile.emotionToday === "string" ? profile.emotionToday.slice(0, 120) : null,
     displayName: payload.displayName?.trim().slice(0, 120) || null,
-    needsPsych: Boolean(payload.needsPsych),
+    needsPsych: typeof payload.needsPsych === "boolean" ? payload.needsPsych : undefined,
     meta,
   };
 }
@@ -71,13 +72,22 @@ async function syncCaregiverSessionViaDb(
   const pool = getPool();
 
   const [existing] = await pool.execute<RowDataPacket[]>(
-    `SELECT id FROM lia_caregiver_sessions
+    `SELECT id, needs_psych FROM lia_caregiver_sessions
      WHERE company_id = ? AND session_token = ?
      LIMIT 1`,
     [companyId, sessionToken],
   );
 
   if (existing[0]) {
+    const needsPsych =
+      typeof fields.needsPsych === "boolean"
+        ? fields.needsPsych
+          ? 1
+          : 0
+        : existing[0].needs_psych
+          ? 1
+          : 0;
+
     await pool.execute(
       `UPDATE lia_caregiver_sessions SET
         display_name = COALESCE(?, display_name),
@@ -101,7 +111,7 @@ async function syncCaregiverSessionViaDb(
         fields.meta.journeys_completed_count,
         fields.meta.current_journey,
         fields.meta.current_journey_title,
-        fields.needsPsych ? 1 : 0,
+        needsPsych,
         existing[0].id,
       ],
     );
@@ -142,7 +152,7 @@ export async function syncCaregiverSession(
   const fields = buildSessionFields(payload);
 
   if (isIclinicaSyncConfigured()) {
-    await pushSessionToIclinica({
+    const body: Record<string, unknown> = {
       company_slug: tenant.slug,
       session_token: token,
       display_name: fields.displayName,
@@ -153,9 +163,12 @@ export async function syncCaregiverSession(
       journeys_completed_count: fields.meta.journeys_completed_count,
       current_journey: fields.meta.current_journey,
       current_journey_title: fields.meta.current_journey_title,
-      needs_psych: fields.needsPsych,
       last_activity_at: new Date().toISOString(),
-    });
+    };
+    if (typeof fields.needsPsych === "boolean") {
+      body.needs_psych = fields.needsPsych;
+    }
+    await pushSessionToIclinica(body as Parameters<typeof pushSessionToIclinica>[0]);
     return;
   }
 

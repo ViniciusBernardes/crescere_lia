@@ -397,6 +397,7 @@ export function LiaProvider({ children }: { children: ReactNode }) {
   const openPsychChat = useCallback(() => {
     setPsychOpen(false)
     setScreen('psychChat')
+    void syncCaregiverProfile(profileRef.current, { needsPsych: true }).catch(() => undefined)
   }, [])
   const openVideoCall = useCallback(() => {
     setPsychOpen(false)

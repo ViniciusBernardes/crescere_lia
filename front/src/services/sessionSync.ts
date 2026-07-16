@@ -35,17 +35,23 @@ export async function syncCaregiverProfile(
   const tenant = resolveTenantFromQuery() || getTenantSlug()
   const sessionToken = getSessionToken()
 
+  const body: Record<string, unknown> = {
+    sessionToken,
+    displayName: options?.displayName,
+    profile,
+  }
+
+  // Only send needsPsych when explicitly set — otherwise preserve the plantão flag server-side.
+  if (typeof options?.needsPsych === 'boolean') {
+    body.needsPsych = options.needsPsych
+  }
+
   await fetch('/api/sessions/sync', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'X-Tenant-Slug': tenant,
     },
-    body: JSON.stringify({
-      sessionToken,
-      displayName: options?.displayName,
-      needsPsych: options?.needsPsych ?? false,
-      profile,
-    }),
+    body: JSON.stringify(body),
   })
 }
