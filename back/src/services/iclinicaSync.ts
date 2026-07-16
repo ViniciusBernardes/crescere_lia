@@ -105,3 +105,53 @@ export async function fetchJourneysFromIclinica(
     `/api/v1/integrations/lia/journeys?${query}`,
   );
 }
+
+export interface PsychChatMessage {
+  id: number;
+  sender_type: "psychologist" | "caregiver";
+  body: string;
+  created_at: string;
+}
+
+export interface PsychChatMessagesResponse {
+  messages: PsychChatMessage[];
+  attendance_status: string;
+}
+
+export async function fetchPsychChatMessages(
+  attendanceId: number,
+  afterId = 0,
+): Promise<PsychChatMessagesResponse> {
+  const query = new URLSearchParams({
+    attendance_id: String(attendanceId),
+    after: String(afterId),
+  });
+  return iclinicaRequest<PsychChatMessagesResponse>(
+    `/api/v1/integrations/lia/chat/messages?${query}`,
+  );
+}
+
+export async function sendPsychChatMessage(
+  attendanceId: number,
+  body: string,
+): Promise<PsychChatMessage> {
+  return iclinicaRequest<PsychChatMessage>(
+    `/api/v1/integrations/lia/chat/send`,
+    { method: "POST", body: JSON.stringify({ attendance_id: attendanceId, body }) },
+  );
+}
+
+export interface VideoTokenResponse {
+  token: string;
+  ws_url: string;
+  room_name: string;
+}
+
+export async function fetchVideoTokenFromIclinica(
+  attendanceId: number,
+): Promise<VideoTokenResponse> {
+  const query = new URLSearchParams({ attendance_id: String(attendanceId) });
+  return iclinicaRequest<VideoTokenResponse>(
+    `/api/v1/integrations/lia/video/token?${query}`,
+  );
+}

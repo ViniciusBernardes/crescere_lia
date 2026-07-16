@@ -49,6 +49,8 @@ interface LiaContextValue {
   showScreen: (id: ScreenId) => void
   openPsych: () => void
   closePsych: () => void
+  openPsychChat: () => void
+  openVideoCall: () => void
   continueFromIdle: () => void
   endFromIdle: () => void
   sendMessage: (text: string) => void
@@ -392,6 +394,14 @@ export function LiaProvider({ children }: { children: ReactNode }) {
     void syncCaregiverProfile(profileRef.current, { needsPsych: true }).catch(() => undefined)
   }, [])
   const closePsych = useCallback(() => setPsychOpen(false), [])
+  const openPsychChat = useCallback(() => {
+    setPsychOpen(false)
+    setScreen('psychChat')
+  }, [])
+  const openVideoCall = useCallback(() => {
+    setPsychOpen(false)
+    setScreen('videoCall')
+  }, [])
 
   const continueFromIdle = useCallback(() => {
     setIdlePromptOpen(false)
@@ -547,6 +557,8 @@ export function LiaProvider({ children }: { children: ReactNode }) {
     showScreen,
     openPsych,
     closePsych,
+    openPsychChat,
+    openVideoCall,
     continueFromIdle,
     endFromIdle,
     sendMessage,

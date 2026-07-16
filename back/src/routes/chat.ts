@@ -1,10 +1,17 @@
 import { Router } from "express";
 import OpenAI from "openai";
 import multer from "multer";
+import type { RowDataPacket } from "mysql2/promise";
 import { isOpenAiConfigured } from "../config.js";
 import { createChatReply, synthesizeSpeech, transcribeAudio } from "../services/openai.js";
 import { DEFAULT_IDLE_TIMEOUT_MS, getIdleTimeoutMs } from "../services/appConfig.js";
 import { getTenantBySlug, resolveTenantSlug } from "../services/tenants.js";
+import { getPool } from "../db/database.js";
+import {
+  fetchPsychChatMessages,
+  sendPsychChatMessage,
+  isIclinicaSyncConfigured,
+} from "../services/iclinicaSync.js";
 import type { ChatHistoryMessage, ChatRequestBody, JourneyContext } from "../types/chat.js";
 
 const upload = multer({
@@ -194,6 +201,108 @@ chatRouter.post("/tts", async (req, res) => {
   } catch (error) {
     console.error("[tts]", error);
     return openAiErrorResponse(res, error);
+  }
+});
+
+// ─── Psych Chat Proxy ─────────────────────────────────────────────
+chatRouter.get("/chat/psych/status", async (req, res) => {
+  if (!isIclinicaSyncConfigured()) {
+    return res.json({ attendance_id: null, status: "unavailable" });
+  }
+  const tenantSlug = tenantSlugFromRequest(req);
+  try {
+    const tenant = await getTenantBySlug(tenantSlug);
+    if (!tenant) return res.json({ attendance_id: null, status: "no_tenant" });
+
+    const pool = getPool();
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT pa.id, pa.status, pa.channel
+       FROM psychologist_attendances pa
+       JOIN lia_caregiver_sessions lcs ON lcs.id = pa.lia_caregiver_session_id
+       WHERE lcs.company_id = ?
+         AND pa.status = 'in_progress'
+       ORDER BY pa.created_at DESC
+       LIMIT 1`,
+      [tenant.id],
+    );
+    if (rows[0]) {
+      return res.json({ attendance_id: rows[0].id, status: rows[0].status, channel: rows[0].channel || 'chat' });
+    }
+    return res.json({ attendance_id: null, status: "waiting", channel: null });
+  } catch (error) {
+    console.error("[psych-chat] status error:", error);
+    return res.json({ attendance_id: null, status: "error" });
+  }
+});
+
+chatRouter.get("/chat/psych/messages", async (req, res) => {
+  if (!isIclinicaSyncConfigured()) {
+    return res.status(503).json({ error: "integration_not_configured" });
+  }
+  const attendanceId = Number(req.query.attendance_id);
+  const afterId = Number(req.query.after) || 0;
+  if (!attendanceId) {
+    return res.status(400).json({ error: "missing_attendance_id" });
+  }
+  try {
+    const data = await fetchPsychChatMessages(attendanceId, afterId);
+    return res.json(data);
+  } catch (error) {
+    console.error("[psych-chat] fetch messages error:", error);
+    return res.status(502).json({ error: "upstream_error" });
+  }
+});
+
+chatRouter.get("/chat/psych/video-token", async (req, res) => {
+  if (!isIclinicaSyncConfigured()) {
+    return res.status(503).json({ error: "integration_not_configured" });
+  }
+  const tenantSlug = tenantSlugFromRequest(req);
+  try {
+    const tenant = await getTenantBySlug(tenantSlug);
+    if (!tenant) return res.status(404).json({ error: "tenant_not_found" });
+
+    const pool = getPool();
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT pa.id
+       FROM psychologist_attendances pa
+       JOIN lia_caregiver_sessions lcs ON lcs.id = pa.lia_caregiver_session_id
+       WHERE lcs.company_id = ?
+         AND pa.status = 'in_progress'
+         AND pa.channel = 'video'
+         AND pa.livekit_room_name IS NOT NULL
+       ORDER BY pa.created_at DESC
+       LIMIT 1`,
+      [tenant.id],
+    );
+    if (!rows[0]) {
+      return res.status(404).json({ error: "no_active_video" });
+    }
+
+    const { fetchVideoTokenFromIclinica } = await import("../services/iclinicaSync.js");
+    const tokenData = await fetchVideoTokenFromIclinica(rows[0].id);
+    return res.json(tokenData);
+  } catch (error) {
+    console.error("[psych-video] token error:", error);
+    return res.status(502).json({ error: "upstream_error" });
+  }
+});
+
+chatRouter.post("/chat/psych/send", async (req, res) => {
+  if (!isIclinicaSyncConfigured()) {
+    return res.status(503).json({ error: "integration_not_configured" });
+  }
+  const attendanceId = Number(req.body?.attendance_id);
+  const body = typeof req.body?.body === "string" ? req.body.body.trim() : "";
+  if (!attendanceId || !body) {
+    return res.status(400).json({ error: "missing_fields" });
+  }
+  try {
+    const msg = await sendPsychChatMessage(attendanceId, body);
+    return res.json(msg);
+  } catch (error) {
+    console.error("[psych-chat] send error:", error);
+    return res.status(502).json({ error: "upstream_error" });
   }
 });
 
