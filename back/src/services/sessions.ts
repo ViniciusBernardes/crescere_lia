@@ -152,7 +152,7 @@ export async function syncCaregiverSession(
   const fields = buildSessionFields(payload);
 
   if (isIclinicaSyncConfigured()) {
-    const body: Record<string, unknown> = {
+    const body: Parameters<typeof pushSessionToIclinica>[0] = {
       company_slug: tenant.slug,
       session_token: token,
       display_name: fields.displayName,
@@ -168,7 +168,7 @@ export async function syncCaregiverSession(
     if (typeof fields.needsPsych === "boolean") {
       body.needs_psych = fields.needsPsych;
     }
-    await pushSessionToIclinica(body as Parameters<typeof pushSessionToIclinica>[0]);
+    await pushSessionToIclinica(body);
     return;
   }
 
