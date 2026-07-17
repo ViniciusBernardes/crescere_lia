@@ -5,6 +5,7 @@ import { LiaProvider, useLia } from './context/LiaContext'
 import { showJourneys } from './lib/features'
 import { ChatScreen } from './screens/ChatScreen'
 import { IntroScreen } from './screens/IntroScreen'
+import { LoginScreen } from './screens/LoginScreen'
 import { JourneyScreen } from './screens/JourneyScreen'
 import { MapScreen } from './screens/MapScreen'
 import { PsychChatScreen } from './screens/PsychChatScreen'
@@ -16,6 +17,7 @@ function AppShell() {
 
   return (
     <PhoneFrame>
+      {screen === 'login' && <LoginScreen />}
       {screen === 'intro' && <IntroScreen />}
       {screen === 'chat' && <ChatScreen />}
       {screen === 'journey' && showJourneys() && <JourneyScreen />}

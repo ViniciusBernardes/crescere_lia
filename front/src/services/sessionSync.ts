@@ -1,4 +1,5 @@
 import type { UserProfile } from '../types/profile'
+import { getCaregiverIdentity } from './caregiverIdentity'
 import { getTenantSlug } from './liaApi'
 
 const STORAGE_KEY = 'lia_session_token'
@@ -34,10 +35,12 @@ export async function syncCaregiverProfile(
 ): Promise<void> {
   const tenant = resolveTenantFromQuery() || getTenantSlug()
   const sessionToken = getSessionToken()
+  const identity = getCaregiverIdentity()
+  const displayName = options?.displayName?.trim() || identity?.displayName || undefined
 
   const body: Record<string, unknown> = {
     sessionToken,
-    displayName: options?.displayName,
+    displayName,
     profile,
   }
 

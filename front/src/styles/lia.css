@@ -42,6 +42,250 @@ html,body{height:100%;height:100dvh;width:100%;overflow:hidden;font-family:'Nuni
 }
 #introScreen::-webkit-scrollbar{width:0}
 .intro-hero{padding:44px var(--page-pad) 32px;display:flex;flex-direction:column;align-items:center;text-align:center;position:relative;overflow:hidden;}
+
+/* ── LOGIN (caregiver, UI-first) ── */
+#loginScreen{
+  background:linear-gradient(170deg,#6347A0 0%,#8B6BB1 45%,#b89fd4 100%);
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
+  min-height:0;
+}
+#loginScreen::-webkit-scrollbar{width:0}
+.login-hero{
+  padding:max(28px, env(safe-area-inset-top, 0px)) var(--page-pad) 24px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+  flex-shrink:0;
+}
+.login-hero-glow{
+  position:absolute;
+  width:260px;
+  height:260px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,0.12) 0%,transparent 70%);
+  top:6%;
+  left:50%;
+  transform:translateX(-50%);
+  pointer-events:none;
+}
+.login-orb{
+  width:76px;
+  height:76px;
+  border-radius:50%;
+  border:3px solid rgba(255,255,255,0.55);
+  overflow:hidden;
+  background:var(--lilac-pale);
+  margin-bottom:12px;
+  position:relative;
+  z-index:1;
+  box-shadow:0 8px 32px rgba(0,0,0,0.2),0 0 0 8px rgba(255,255,255,0.1);
+  animation:floatIn 0.8s cubic-bezier(0.32,0.72,0,1) both 0.1s;
+}
+.login-orb img{width:100%;height:100%;object-fit:cover;}
+.login-hero-badge{
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:rgba(255,255,255,0.85);
+  background:rgba(255,255,255,0.14);
+  border:1px solid rgba(255,255,255,0.22);
+  padding:5px 12px;
+  border-radius:20px;
+  margin-bottom:10px;
+  position:relative;
+  z-index:1;
+  animation:fadeUp 0.6s ease both 0.25s;
+}
+.login-hero h1{
+  font-family:'Nunito',sans-serif;
+  font-weight:800;
+  font-size:clamp(24px, 6.5vw, 30px);
+  color:white;
+  font-style:normal;
+  letter-spacing:-0.02em;
+  line-height:1.15;
+  position:relative;
+  z-index:1;
+  animation:fadeUp 0.6s ease both 0.32s;
+}
+.login-tagline{
+  font-size:11px;
+  color:rgba(255,255,255,0.72);
+  font-weight:700;
+  letter-spacing:2.2px;
+  text-transform:uppercase;
+  margin-top:6px;
+  position:relative;
+  z-index:1;
+  animation:fadeUp 0.6s ease both 0.4s;
+}
+.login-hero-lead{
+  display:none;
+  font-size:14px;
+  line-height:1.55;
+  color:rgba(255,255,255,0.88);
+  max-width:34ch;
+  margin-top:14px;
+  position:relative;
+  z-index:1;
+  animation:fadeUp 0.6s ease both 0.48s;
+}
+.login-body{
+  background:var(--cream);
+  border-radius:28px 28px 0 0;
+  padding:22px var(--page-pad) calc(20px + env(safe-area-inset-bottom,0px));
+  margin-top:-8px;
+  position:relative;
+  z-index:2;
+  box-shadow:0 -8px 32px rgba(30,21,48,0.08);
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+}
+.login-body::before{
+  content:'';
+  position:absolute;
+  top:10px;
+  left:50%;
+  transform:translateX(-50%);
+  width:40px;
+  height:4px;
+  border-radius:4px;
+  background:rgba(139,107,177,0.22);
+}
+.login-body-inner{
+  width:100%;
+  max-width:420px;
+  margin:0 auto;
+  display:flex;
+  flex-direction:column;
+  flex:1;
+  padding-top:10px;
+  padding-bottom:48px;
+  min-height:0;
+}
+.login-welcome{margin-bottom:16px;}
+.login-eyebrow{
+  font-size:11px;
+  font-weight:800;
+  color:var(--lilac);
+  text-transform:uppercase;
+  letter-spacing:2.2px;
+  margin-bottom:8px;
+}
+.login-lead{
+  font-size:13.5px;
+  line-height:1.5;
+  color:var(--text-mid);
+  padding:12px 14px;
+  border-radius:14px;
+  background:rgba(139,107,177,0.07);
+  border:1px solid rgba(139,107,177,0.12);
+}
+.login-form{display:flex;flex-direction:column;gap:12px;}
+.login-alert{
+  font-size:13px;
+  font-weight:700;
+  color:#b42318;
+  background:#fef3f2;
+  border:1px solid #fecdca;
+  border-radius:12px;
+  padding:10px 12px;
+}
+.login-field{display:flex;flex-direction:column;gap:6px;}
+.login-field span{
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:0.8px;
+  text-transform:uppercase;
+  color:var(--text-light);
+}
+.login-field input{
+  width:100%;
+  border:1.5px solid rgba(139,107,177,0.22);
+  background:#fff;
+  border-radius:14px;
+  padding:13px 14px;
+  font-family:'Nunito',sans-serif;
+  font-size:16px;
+  font-weight:600;
+  color:var(--text-dark);
+  outline:none;
+  transition:border-color 0.15s ease, box-shadow 0.15s ease;
+  min-height:48px;
+}
+.login-field input::placeholder{color:var(--text-xlight);font-weight:600;}
+.login-field input:focus{
+  border-color:var(--lilac);
+  box-shadow:0 0 0 3px rgba(139,107,177,0.16);
+}
+.login-field input:disabled{opacity:0.7;cursor:not-allowed;background:var(--lilac-xpale);}
+.login-submit{
+  width:100%;
+  margin-top:6px;
+  padding:16px 24px;
+  min-height:52px;
+  background:linear-gradient(135deg,#7B5BA8 0%,#6347A0 100%);
+  color:white;
+  border:none;
+  border-radius:var(--btn-radius);
+  font-family:'Nunito',sans-serif;
+  font-size:15px;
+  font-weight:800;
+  cursor:pointer;
+  letter-spacing:0.2px;
+  box-shadow:var(--btn-shadow);
+  transition:transform 0.2s ease,box-shadow 0.2s ease,filter 0.2s ease;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+}
+.login-submit:active{transform:scale(0.98);}
+.login-submit:disabled{opacity:0.75;cursor:not-allowed;transform:none;}
+.login-footer{
+  margin-top:auto;
+  padding-top:18px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:14px;
+}
+.login-skip{
+  background:none;
+  border:none;
+  color:var(--lilac-dark);
+  font-family:'Nunito',sans-serif;
+  font-size:13px;
+  font-weight:800;
+  cursor:pointer;
+  text-decoration:underline;
+  text-underline-offset:3px;
+  opacity:0.85;
+  padding:8px 12px;
+}
+.login-skip:hover{opacity:1;}
+.login-skip:disabled{opacity:0.5;cursor:not-allowed;}
+.login-brand{
+  position:absolute;
+  right:max(14px, env(safe-area-inset-right, 0px));
+  bottom:max(12px, env(safe-area-inset-bottom, 0px));
+  width:68px;
+  height:auto;
+  margin:0;
+  display:block;
+  opacity:0.82;
+  pointer-events:none;
+}
+
 .intro-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 80% 15%,rgba(255,255,255,0.15) 0%,transparent 50%),radial-gradient(circle at 10% 80%,rgba(255,255,255,0.08) 0%,transparent 40%);pointer-events:none;}
 .intro-hero-glow{position:absolute;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,0.12) 0%,transparent 70%);top:8%;left:50%;transform:translateX(-50%);pointer-events:none;}
 .intro-orb{width:104px;height:104px;border-radius:50%;border:3px solid rgba(255,255,255,0.55);overflow:hidden;background:var(--lilac-pale);margin-bottom:14px;position:relative;z-index:1;box-shadow:0 8px 40px rgba(0,0,0,0.22),0 0 0 10px rgba(255,255,255,0.1);animation:floatIn 0.8s cubic-bezier(0.32,0.72,0,1) both 0.15s;}
@@ -49,7 +293,18 @@ html,body{height:100%;height:100dvh;width:100%;overflow:hidden;font-family:'Nuni
 .intro-orb img{width:100%;height:100%;object-fit:cover;}
 .crescere-brand-logo{display:block;width:min(140px,55%);height:auto;margin:18px auto 0;opacity:0.95;}
 .intro-hero-badge{font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.85);background:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.22);padding:5px 12px;border-radius:20px;margin-bottom:12px;position:relative;z-index:1;animation:fadeUp 0.6s ease both 0.35s;}
-.intro-hero h1{font-family:'DM Serif Display',serif;font-size:30px;color:white;font-style:italic;line-height:1.15;position:relative;z-index:1;animation:fadeUp 0.6s ease both 0.4s;}
+.intro-hero h1{
+  font-family:'Nunito',sans-serif;
+  font-weight:800;
+  font-size:30px;
+  color:white;
+  font-style:normal;
+  letter-spacing:-0.02em;
+  line-height:1.15;
+  position:relative;
+  z-index:1;
+  animation:fadeUp 0.6s ease both 0.4s;
+}
 .intro-hero .tagline{font-size:11px;color:rgba(255,255,255,0.72);font-weight:700;letter-spacing:2.2px;text-transform:uppercase;margin-top:6px;position:relative;z-index:1;animation:fadeUp 0.6s ease both 0.48s;}
 .intro-hero-lead{display:none;font-size:14px;line-height:1.65;color:rgba(255,255,255,0.88);max-width:320px;margin-top:14px;position:relative;z-index:1;animation:fadeUp 0.6s ease both 0.55s;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
@@ -965,7 +1220,13 @@ html,body{height:100%;height:100dvh;width:100%;overflow:hidden;font-family:'Nuni
     margin-bottom: 10px;
   }
 
-  .intro-hero h1 { font-size: 24px; }
+  .intro-hero h1 {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-style: normal;
+    letter-spacing: -0.02em;
+    font-size: 24px;
+  }
   .intro-hero-badge { margin-bottom: 8px; }
 
   .intro-body {
@@ -980,6 +1241,24 @@ html,body{height:100%;height:100dvh;width:100%;overflow:hidden;font-family:'Nuni
   .feat { padding: 12px 14px; gap: 12px; }
   .feat-icon { width: 40px; height: 40px; font-size: 18px; }
   .start-btn { padding: 15px 20px; font-size: 14.5px; }
+
+  /* Login */
+  .login-hero {
+    padding: max(20px, env(safe-area-inset-top)) var(--page-pad) 18px;
+  }
+  .login-orb {
+    width: 68px;
+    height: 68px;
+    margin-bottom: 10px;
+  }
+  .login-hero h1 { font-size: 24px; }
+  .login-body {
+    padding: 20px var(--page-pad) calc(18px + env(safe-area-inset-bottom, 0px));
+  }
+  .login-welcome { margin-bottom: 14px; }
+  .login-lead { font-size: 13px; padding: 10px 12px; }
+  .login-form { gap: 11px; }
+  .login-submit { padding: 15px 20px; font-size: 14.5px; }
 
   /* Chat header */
   .chat-header {
@@ -1079,11 +1358,35 @@ html,body{height:100%;height:100dvh;width:100%;overflow:hidden;font-family:'Nuni
   .intro-hero { padding-top: max(20px, env(safe-area-inset-top)); }
   .intro-hero h1 { font-size: 22px; }
   .intro-body { padding: 20px var(--page-pad) calc(24px + env(safe-area-inset-bottom, 0px)); }
+  .login-hero { padding-top: max(16px, env(safe-area-inset-top)); }
+  .login-hero h1 { font-size: 22px; }
+  .login-orb { width: 64px; height: 64px; }
+  .login-body { padding: 18px var(--page-pad) calc(16px + env(safe-area-inset-bottom, 0px)); }
+  .login-field input { font-size: 16px; }
   .bwrap { max-width: 86%; }
   .mrow.user .bwrap { max-width: 84%; }
   .hdr-status { font-size: 9px; }
   .progress-meta { font-size: 9px; }
   .ctabtn { font-size: 12px; padding: 10px 12px; }
+}
+
+/* Telas baixas (mobile landscape / browsers com teclado) */
+@media (max-height: 720px) and (max-width: 767px) {
+  .login-hero {
+    padding-top: max(12px, env(safe-area-inset-top));
+    padding-bottom: 12px;
+  }
+  .login-orb {
+    width: 52px;
+    height: 52px;
+    margin-bottom: 8px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.18), 0 0 0 5px rgba(255,255,255,0.1);
+  }
+  .login-hero-badge { margin-bottom: 6px; }
+  .login-hero h1 { font-size: 20px; }
+  .login-tagline { font-size: 10px; }
+  .login-body { padding-top: 16px; }
+  .login-footer { padding-top: 12px; gap: 10px; }
 }
 
 /* Tablet e desktop */
@@ -1124,6 +1427,10 @@ html,body{height:100%;height:100dvh;width:100%;overflow:hidden;font-family:'Nuni
     margin-bottom: 18px;
   }
   .intro-hero h1 {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-style: normal;
+    letter-spacing: -0.02em;
     font-size: clamp(34px, 3.2vw, 46px);
     max-width: 14ch;
     text-align: left;
@@ -1206,6 +1513,100 @@ html,body{height:100%;height:100dvh;width:100%;overflow:hidden;font-family:'Nuni
     width: min(120px, 40%);
   }
 
+  /* ── LOGIN ── */
+  #loginScreen {
+    flex-direction: row;
+    overflow: hidden;
+    min-height: 100%;
+    background: linear-gradient(135deg, #5a3d96 0%, #7d5cad 42%, #9b75c7 100%);
+  }
+  .login-hero {
+    flex: 0 0 min(42%, 480px);
+    justify-content: center;
+    align-items: flex-start;
+    text-align: left;
+    min-height: 100%;
+    padding: clamp(40px, 6vh, 72px) clamp(28px, 4vw, 56px);
+  }
+  .login-hero-glow {
+    width: 420px;
+    height: 420px;
+    top: 20%;
+    left: -10%;
+    transform: none;
+  }
+  .login-orb {
+    width: clamp(96px, 10vw, 128px);
+    height: clamp(96px, 10vw, 128px);
+    margin-bottom: 18px;
+  }
+  .login-hero h1 {
+    font-size: clamp(32px, 3vw, 44px);
+    text-align: left;
+    max-width: 12ch;
+  }
+  .login-tagline {
+    text-align: left;
+    margin-top: 8px;
+  }
+  .login-hero-lead {
+    display: block;
+    text-align: left;
+  }
+  .login-body {
+    flex: 1;
+    border-radius: 28px 0 0 28px;
+    margin-top: 0;
+    padding: clamp(36px, 5vh, 56px) clamp(28px, 4vw, 64px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+    box-shadow: -12px 0 40px rgba(30, 21, 48, 0.06);
+  }
+  .login-body::before { display: none; }
+  .login-body-inner {
+    width: 100%;
+    max-width: 420px;
+    min-height: auto;
+    flex: 0 1 auto;
+    padding-top: 0;
+    gap: 4px;
+  }
+  .login-welcome {
+    margin-bottom: 22px;
+  }
+  .login-lead {
+    font-size: 14.5px;
+    line-height: 1.55;
+  }
+  .login-form { gap: 14px; }
+  .login-field input {
+    font-size: 15px;
+    padding: 14px 16px;
+  }
+  .login-submit {
+    margin-top: 8px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  }
+  .login-submit:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.05);
+  }
+  .login-submit:hover .btn-arrow { transform: translateX(3px); }
+  .login-footer {
+    margin-top: 22px;
+    padding-top: 4px;
+    align-items: flex-start;
+  }
+  .login-skip { padding-left: 0; }
+  .login-body-inner { padding-bottom: 56px; }
+  .login-brand {
+    width: 76px;
+    right: clamp(20px, 3vw, 36px);
+    bottom: clamp(16px, 2.5vh, 28px);
+  }
+
   /* ── CHAT full width ── */
   #chatScreen .screen-content,
   #journeyScreen .screen-content,
@@ -1266,6 +1667,8 @@ html,body{height:100%;height:100dvh;width:100%;overflow:hidden;font-family:'Nuni
   }
   .intro-hero { flex: 0 0 min(38%, 480px); }
   .intro-body-inner { max-width: 600px; }
+  .login-hero { flex: 0 0 min(38%, 440px); }
+  .login-body-inner { max-width: 440px; }
   .jm-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
   .map-cards { grid-template-columns: repeat(3, 1fr); }
 }

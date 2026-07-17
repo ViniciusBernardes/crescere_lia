@@ -13,6 +13,7 @@ import { ensureJourneysLoaded } from '../data/journeys'
 import { showEmotionalMap, showJourneys, showQuickReplies } from '../lib/features'
 import { isMoodQuestion, OPEN_MOOD_PROMPT, OPEN_REPLY_HINT } from '../lib/openPrompts'
 import { syncCaregiverProfile } from '../services/sessionSync'
+import { hasCaregiverIdentity } from '../services/caregiverIdentity'
 import { useSpeech, type SpeechPlayback } from '../hooks/useSpeech'
 import { isAiChatEnabled, fetchChatSettings, fetchJourneys, transcribeAudio } from '../services/liaApi'
 import { canUseMicrophone, createMediaRecorder, getRecorderFormat, micErrorMessage } from '../utils/voiceRecorder'
@@ -70,6 +71,7 @@ interface LiaContextValue {
 const LiaContext = createContext<LiaContextValue | null>(null)
 
 const screenMap: Record<string, ScreenId> = {
+  loginScreen: 'login',
   introScreen: 'intro',
   chatScreen: 'chat',
   journeyScreen: 'journey',
@@ -77,7 +79,7 @@ const screenMap: Record<string, ScreenId> = {
 }
 
 export function LiaProvider({ children }: { children: ReactNode }) {
-  const [screen, setScreen] = useState<ScreenId>('intro')
+  const [screen, setScreen] = useState<ScreenId>(() => (hasCaregiverIdentity() ? 'intro' : 'login'))
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [profile, setProfile] = useState<UserProfile>(createEmptyProfile)
   const [progress, setProgress] = useState(0)
@@ -386,6 +388,7 @@ export function LiaProvider({ children }: { children: ReactNode }) {
     setScreen('chat')
     setMessages([])
     void unlockAudio()
+    void syncCaregiverProfile(profileRef.current).catch(() => undefined)
     setTimeout(() => runnerRef.current?.startIntroFlow(), 400)
   }, [unlockAudio])
 
