@@ -14,7 +14,8 @@ sessionsRouter.post("/sessions/sync", async (req, res) => {
       body.profile && typeof body.profile === "object" && !Array.isArray(body.profile)
         ? (body.profile as Record<string, unknown>)
         : {};
-    const needsPsych = Boolean(body.needsPsych);
+    const needsPsych =
+      typeof body.needsPsych === "boolean" ? body.needsPsych : undefined;
 
     if (!sessionToken.trim()) {
       return res.status(400).json({ error: "invalid_session", message: "sessionToken é obrigatório." });

@@ -6,7 +6,7 @@ function stableSessionToken(tenantSlug: string): string {
   return `lia-${tenantSlug}-local`;
 }
 
-function needsPsych(profile?: UserProfileContext): boolean {
+function needsPsychEscalation(profile?: UserProfileContext): boolean {
   if (!profile) return false;
   return (profile.stressLevel ?? 0) >= 8;
 }
@@ -29,7 +29,7 @@ export async function syncCaregiverSession(
     : null;
 
   try {
-    await syncIclinicaSession(tenantSlug, {
+    const payload: Record<string, unknown> = {
       session_token: options?.sessionToken ?? stableSessionToken(tenantSlug),
       display_name: options?.displayName ?? null,
       profile_json: profile,
@@ -39,9 +39,15 @@ export async function syncCaregiverSession(
       journeys_completed_count: profile.journeysCompleted?.length ?? 0,
       current_journey: currentNumber,
       current_journey_title: currentJourney?.title ?? null,
-      needs_psych: needsPsych(profile),
       last_activity_at: new Date().toISOString(),
-    });
+    };
+
+    // Only escalate to plantão on high stress — never clear an explicit request.
+    if (needsPsychEscalation(profile)) {
+      payload.needs_psych = true;
+    }
+
+    await syncIclinicaSession(tenantSlug, payload);
   } catch (error) {
     console.warn("[sessionSync] Falha ao sincronizar com iClinica:", error);
   }
