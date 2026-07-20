@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useLia } from '../context/LiaContext'
 import { loginCaregiver } from '../services/caregiverAuth'
 import { setCaregiverIdentity } from '../services/caregiverIdentity'
+import { syncCaregiverProfile } from '../services/sessionSync'
+import { createEmptyProfile } from '../types/profile'
 
 export function LoginScreen() {
   const { showScreen } = useLia()
@@ -32,6 +34,8 @@ export function LoginScreen() {
         displayName: patient.name,
         patientId: patient.id,
       })
+      // Vincula a sessão anônima ao colaborador antes do plantão/jornadas.
+      await syncCaregiverProfile(createEmptyProfile(), { displayName: patient.name }).catch(() => undefined)
       showScreen('intro')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível entrar.')

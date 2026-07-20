@@ -127,10 +127,14 @@ async function syncCaregiverSessionViaDb(
         existing[0].id,
       ],
     );
+
+    if (patientId) {
+      await backfillPatientOnAttendances(Number(existing[0].id), Number(patientId));
+    }
     return;
   }
 
-  await pool.execute<ResultSetHeader>(
+  const [insertResult] = await pool.execute<ResultSetHeader>(
     `INSERT INTO lia_caregiver_sessions (
       company_id, session_token, display_name, profile_json,
       stress_level, selfcare_level, emotion_today,
@@ -151,6 +155,32 @@ async function syncCaregiverSessionViaDb(
       fields.needsPsych ? 1 : 0,
       typeof fields.patientId === "number" ? fields.patientId : null,
     ],
+  );
+
+  const insertedPatientId =
+    typeof fields.patientId === "number" ? fields.patientId : null;
+  if (insertedPatientId && insertResult.insertId) {
+    await backfillPatientOnAttendances(Number(insertResult.insertId), insertedPatientId);
+  }
+}
+
+async function backfillPatientOnAttendances(
+  liaSessionId: number,
+  patientId: number,
+): Promise<void> {
+  const pool = getPool();
+  await pool.execute(
+    `UPDATE psychologist_attendances
+     SET patient_id = ?
+     WHERE lia_caregiver_session_id = ? AND patient_id IS NULL`,
+    [patientId, liaSessionId],
+  );
+  await pool.execute(
+    `UPDATE clinical_evolutions ce
+     INNER JOIN psychologist_attendances pa ON pa.id = ce.psychologist_attendance_id
+     SET ce.patient_id = ?
+     WHERE pa.lia_caregiver_session_id = ? AND ce.patient_id IS NULL`,
+    [patientId, liaSessionId],
   );
 }
 
