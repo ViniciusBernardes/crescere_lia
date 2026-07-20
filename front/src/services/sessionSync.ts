@@ -49,6 +49,10 @@ export async function syncCaregiverProfile(
     body.needsPsych = options.needsPsych
   }
 
+  if (typeof identity?.patientId === 'number') {
+    body.patientId = identity.patientId
+  }
+
   await fetch('/api/sessions/sync', {
     method: 'POST',
     headers: {

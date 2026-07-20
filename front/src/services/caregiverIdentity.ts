@@ -3,6 +3,7 @@ const STORAGE_KEY = 'lia_caregiver_identity'
 export type CaregiverIdentity = {
   email: string
   displayName: string
+  patientId?: number
 }
 
 function readRaw(): CaregiverIdentity | null {
@@ -12,8 +13,12 @@ function readRaw(): CaregiverIdentity | null {
     const parsed = JSON.parse(raw) as Partial<CaregiverIdentity>
     const email = typeof parsed.email === 'string' ? parsed.email.trim() : ''
     const displayName = typeof parsed.displayName === 'string' ? parsed.displayName.trim() : ''
+    const patientId =
+      typeof parsed.patientId === 'number' && Number.isFinite(parsed.patientId)
+        ? parsed.patientId
+        : undefined
     if (!email || !displayName) return null
-    return { email, displayName }
+    return { email, displayName, patientId }
   } catch {
     return null
   }
@@ -31,8 +36,12 @@ export function setCaregiverIdentity(identity: CaregiverIdentity): void {
   const email = identity.email.trim().toLowerCase()
   const displayName = identity.displayName.trim()
   if (!email || !displayName) return
+  const payload: CaregiverIdentity = { email, displayName }
+  if (typeof identity.patientId === 'number') {
+    payload.patientId = identity.patientId
+  }
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ email, displayName }))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
   } catch {
     // ignore quota / private mode
   }

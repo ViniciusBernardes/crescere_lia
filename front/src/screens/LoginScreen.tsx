@@ -1,24 +1,16 @@
 import { useState } from 'react'
 import { useLia } from '../context/LiaContext'
-import {
-  displayNameFromEmail,
-  setCaregiverIdentity,
-} from '../services/caregiverIdentity'
+import { loginCaregiver } from '../services/caregiverAuth'
+import { setCaregiverIdentity } from '../services/caregiverIdentity'
 
 export function LoginScreen() {
   const { showScreen } = useLia()
-  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const finish = (displayName: string, nextEmail: string) => {
-    setCaregiverIdentity({ email: nextEmail, displayName })
-    showScreen('intro')
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
 
@@ -33,16 +25,19 @@ export function LoginScreen() {
     }
 
     setLoading(true)
-    // UI-first: senha ainda não é validada no servidor.
-    const displayName = name.trim() || displayNameFromEmail(trimmedEmail)
-    window.setTimeout(() => {
-      finish(displayName, trimmedEmail)
+    try {
+      const patient = await loginCaregiver(trimmedEmail, password)
+      setCaregiverIdentity({
+        email: patient.email || trimmedEmail,
+        displayName: patient.name,
+        patientId: patient.id,
+      })
+      showScreen('intro')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível entrar.')
+    } finally {
       setLoading(false)
-    }, 280)
-  }
-
-  const handleSkip = () => {
-    showScreen('intro')
+    }
   }
 
   return (
@@ -55,9 +50,6 @@ export function LoginScreen() {
         <p className="login-hero-badge">Acesso do cuidador</p>
         <h1>Bem-vindo(a)</h1>
         <p className="login-tagline">Crescere · Apoio ao Cuidador</p>
-        <p className="login-hero-lead">
-          Entre com seu e-mail para acessar o apoio da Lia no seu ritmo.
-        </p>
       </div>
 
       <div className="login-body">
@@ -65,25 +57,12 @@ export function LoginScreen() {
           <header className="login-welcome">
             <p className="login-eyebrow">Entrar</p>
             <p className="login-lead">
-              Use seu e-mail para continuar. Em breve este acesso será o mesmo dos colaboradores
-              cadastrados no painel.
+              Use o e-mail e a senha cadastrados pelo administrador no painel (colaboradores).
             </p>
           </header>
 
-          <form className="login-form" onSubmit={handleSubmit}>
+          <form className="login-form" onSubmit={(e) => void handleSubmit(e)}>
             {error ? <div className="login-alert" role="alert">{error}</div> : null}
-
-            <label className="login-field">
-              <span>Nome</span>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                autoComplete="name"
-                disabled={loading}
-                placeholder="Como prefere ser chamado(a)"
-              />
-            </label>
 
             <label className="login-field">
               <span>E-mail</span>
@@ -122,13 +101,8 @@ export function LoginScreen() {
             </button>
           </form>
 
-          <div className="login-footer">
-            <button type="button" className="login-skip" onClick={handleSkip} disabled={loading}>
-              Continuar sem conta
-            </button>
-          </div>
+          <img className="crescere-brand-logo login-brand" src="/crescere-logo.png" alt="Crescere" />
         </div>
-        <img className="login-brand" src="/crescere-logo.png" alt="Crescere" />
       </div>
     </div>
   )

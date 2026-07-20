@@ -81,7 +81,9 @@ async function iclinicaRequest<T>(
       data && typeof data === "object" && "message" in data
         ? String((data as { message: unknown }).message)
         : text || `HTTP ${res.status}`;
-    throw new Error(`iClinica: ${message}`);
+    const error = new Error(`iClinica: ${message}`) as Error & { status?: number };
+    error.status = res.status;
+    throw error;
   }
 
   return data as T;
@@ -154,4 +156,32 @@ export async function fetchVideoTokenFromIclinica(
   return iclinicaRequest<VideoTokenResponse>(
     `/api/v1/integrations/lia/video/token?${query}`,
   );
+}
+
+export type IclinicaPatientAuthResponse = {
+  patient: {
+    id: number;
+    name: string;
+    email: string | null;
+  };
+};
+
+export async function loginPatientInIclinica(payload: {
+  company_slug: string;
+  email: string;
+  password: string;
+}): Promise<{ id: number; name: string; email: string }> {
+  const data = await iclinicaRequest<IclinicaPatientAuthResponse>(
+    "/api/v1/integrations/lia/auth",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+
+  return {
+    id: data.patient.id,
+    name: data.patient.name,
+    email: data.patient.email ?? payload.email,
+  };
 }

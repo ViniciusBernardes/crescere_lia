@@ -12,6 +12,8 @@ export interface SyncSessionPayload {
   profile: Record<string, unknown>;
   /** When omitted, existing needs_psych is preserved. */
   needsPsych?: boolean;
+  /** When omitted, existing patient_id is preserved. */
+  patientId?: number | null;
 }
 
 const JOURNEY_TITLES: Record<number, string> = {
@@ -59,6 +61,7 @@ function buildSessionFields(payload: SyncSessionPayload) {
       typeof profile.emotionToday === "string" ? profile.emotionToday.slice(0, 120) : null,
     displayName: payload.displayName?.trim().slice(0, 120) || null,
     needsPsych: typeof payload.needsPsych === "boolean" ? payload.needsPsych : undefined,
+    patientId: typeof payload.patientId === "number" ? payload.patientId : payload.patientId === null ? null : undefined,
     meta,
   };
 }
@@ -72,7 +75,7 @@ async function syncCaregiverSessionViaDb(
   const pool = getPool();
 
   const [existing] = await pool.execute<RowDataPacket[]>(
-    `SELECT id, needs_psych FROM lia_caregiver_sessions
+    `SELECT id, needs_psych, patient_id FROM lia_caregiver_sessions
      WHERE company_id = ? AND session_token = ?
      LIMIT 1`,
     [companyId, sessionToken],
@@ -88,6 +91,13 @@ async function syncCaregiverSessionViaDb(
           ? 1
           : 0;
 
+    const patientId =
+      typeof fields.patientId === "number"
+        ? fields.patientId
+        : fields.patientId === null
+          ? null
+          : existing[0].patient_id ?? null;
+
     await pool.execute(
       `UPDATE lia_caregiver_sessions SET
         display_name = COALESCE(?, display_name),
@@ -99,6 +109,7 @@ async function syncCaregiverSessionViaDb(
         current_journey = ?,
         current_journey_title = ?,
         needs_psych = ?,
+        patient_id = ?,
         last_activity_at = NOW(),
         updated_at = NOW()
        WHERE id = ?`,
@@ -112,6 +123,7 @@ async function syncCaregiverSessionViaDb(
         fields.meta.current_journey,
         fields.meta.current_journey_title,
         needsPsych,
+        patientId,
         existing[0].id,
       ],
     );
@@ -123,8 +135,8 @@ async function syncCaregiverSessionViaDb(
       company_id, session_token, display_name, profile_json,
       stress_level, selfcare_level, emotion_today,
       journeys_completed_count, current_journey, current_journey_title,
-      needs_psych, last_activity_at, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), NOW())`,
+      needs_psych, patient_id, last_activity_at, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), NOW())`,
     [
       companyId,
       sessionToken,
@@ -137,6 +149,7 @@ async function syncCaregiverSessionViaDb(
       fields.meta.current_journey,
       fields.meta.current_journey_title,
       fields.needsPsych ? 1 : 0,
+      typeof fields.patientId === "number" ? fields.patientId : null,
     ],
   );
 }
@@ -167,6 +180,9 @@ export async function syncCaregiverSession(
     };
     if (typeof fields.needsPsych === "boolean") {
       body.needs_psych = fields.needsPsych;
+    }
+    if (typeof fields.patientId === "number" || fields.patientId === null) {
+      body.patient_id = fields.patientId;
     }
     await pushSessionToIclinica(body);
     return;

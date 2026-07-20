@@ -16,12 +16,24 @@ sessionsRouter.post("/sessions/sync", async (req, res) => {
         : {};
     const needsPsych =
       typeof body.needsPsych === "boolean" ? body.needsPsych : undefined;
+    const patientId =
+      typeof body.patientId === "number"
+        ? body.patientId
+        : body.patientId === null
+          ? null
+          : undefined;
 
     if (!sessionToken.trim()) {
       return res.status(400).json({ error: "invalid_session", message: "sessionToken é obrigatório." });
     }
 
-    await syncCaregiverSession(tenantSlug, { sessionToken, displayName, profile, needsPsych });
+    await syncCaregiverSession(tenantSlug, {
+      sessionToken,
+      displayName,
+      profile,
+      needsPsych,
+      patientId,
+    });
 
     res.json({ ok: true });
   } catch (error) {
