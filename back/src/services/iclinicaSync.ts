@@ -98,6 +98,35 @@ export async function pushSessionToIclinica(
   });
 }
 
+export interface IclinicaSessionSnapshot {
+  session_id: number;
+  session_token: string;
+  display_name: string | null;
+  patient_id: number | null;
+  needs_psych: boolean;
+  stress_level: number;
+  selfcare_level: number;
+  emotion_today: string | null;
+  profile_json: Record<string, unknown>;
+  journeys_completed_count: number;
+  current_journey: number | null;
+  current_journey_title: string | null;
+  last_activity_at: string | null;
+}
+
+export async function fetchSessionFromIclinica(
+  companySlug: string,
+  sessionToken: string,
+): Promise<IclinicaSessionSnapshot> {
+  const query = new URLSearchParams({
+    company_slug: companySlug.trim().toLowerCase(),
+    session_token: sessionToken,
+  });
+  return iclinicaRequest<IclinicaSessionSnapshot>(
+    `/api/v1/integrations/lia/sessions/me?${query}`,
+  );
+}
+
 export async function fetchJourneysFromIclinica(
   companySlug: string,
 ): Promise<IclinicaJourneysResponse> {
@@ -120,11 +149,40 @@ export interface PsychChatMessagesResponse {
   attendance_status: string;
 }
 
+export interface PsychStatusResponse {
+  attendance_id: number | null;
+  status: string;
+  channel: string | null;
+}
+
+export interface VideoTokenResponse {
+  token: string;
+  ws_url: string;
+  room_name: string;
+}
+
+export async function fetchPsychStatusFromIclinica(
+  companySlug: string,
+  sessionToken: string,
+): Promise<PsychStatusResponse> {
+  const query = new URLSearchParams({
+    company_slug: companySlug.trim().toLowerCase(),
+    session_token: sessionToken,
+  });
+  return iclinicaRequest<PsychStatusResponse>(
+    `/api/v1/integrations/lia/chat/status?${query}`,
+  );
+}
+
 export async function fetchPsychChatMessages(
+  companySlug: string,
+  sessionToken: string,
   attendanceId: number,
   afterId = 0,
 ): Promise<PsychChatMessagesResponse> {
   const query = new URLSearchParams({
+    company_slug: companySlug.trim().toLowerCase(),
+    session_token: sessionToken,
     attendance_id: String(attendanceId),
     after: String(afterId),
   });
@@ -134,25 +192,35 @@ export async function fetchPsychChatMessages(
 }
 
 export async function sendPsychChatMessage(
+  companySlug: string,
+  sessionToken: string,
   attendanceId: number,
   body: string,
 ): Promise<PsychChatMessage> {
   return iclinicaRequest<PsychChatMessage>(
     `/api/v1/integrations/lia/chat/send`,
-    { method: "POST", body: JSON.stringify({ attendance_id: attendanceId, body }) },
+    {
+      method: "POST",
+      body: JSON.stringify({
+        company_slug: companySlug.trim().toLowerCase(),
+        session_token: sessionToken,
+        attendance_id: attendanceId,
+        body,
+      }),
+    },
   );
 }
 
-export interface VideoTokenResponse {
-  token: string;
-  ws_url: string;
-  room_name: string;
-}
-
 export async function fetchVideoTokenFromIclinica(
+  companySlug: string,
+  sessionToken: string,
   attendanceId: number,
 ): Promise<VideoTokenResponse> {
-  const query = new URLSearchParams({ attendance_id: String(attendanceId) });
+  const query = new URLSearchParams({
+    company_slug: companySlug.trim().toLowerCase(),
+    session_token: sessionToken,
+    attendance_id: String(attendanceId),
+  });
   return iclinicaRequest<VideoTokenResponse>(
     `/api/v1/integrations/lia/video/token?${query}`,
   );

@@ -1,8 +1,45 @@
 import { Router } from "express";
-import { syncCaregiverSession } from "../services/sessions.js";
+import { getCaregiverSession, syncCaregiverSession } from "../services/sessions.js";
 import { resolveTenantSlug } from "../services/tenants.js";
 
 export const sessionsRouter = Router();
+
+function sessionTokenFromRequest(req: import("express").Request): string {
+  const header = req.headers["x-lia-session-token"];
+  if (typeof header === "string" && header.trim()) {
+    return header.trim();
+  }
+  const query = req.query.session_token;
+  if (typeof query === "string" && query.trim()) {
+    return query.trim();
+  }
+  return "";
+}
+
+sessionsRouter.get("/sessions/me", async (req, res) => {
+  try {
+    const tenantSlug = resolveTenantSlug(req.headers["x-tenant-slug"]);
+    const sessionToken = sessionTokenFromRequest(req);
+    if (!sessionToken) {
+      return res.status(400).json({ error: "missing_session_token" });
+    }
+
+    const snapshot = await getCaregiverSession(tenantSlug, sessionToken);
+    if (!snapshot) {
+      return res.status(404).json({ error: "session_not_found" });
+    }
+
+    return res.json({
+      displayName: snapshot.displayName,
+      patientId: snapshot.patientId,
+      needsPsych: snapshot.needsPsych,
+      profile: snapshot.profile,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Falha ao carregar sessão.";
+    return res.status(500).json({ error: "session_load_failed", message });
+  }
+});
 
 sessionsRouter.post("/sessions/sync", async (req, res) => {
   try {

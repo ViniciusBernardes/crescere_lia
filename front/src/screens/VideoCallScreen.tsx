@@ -9,7 +9,7 @@ import {
   type RemoteParticipant,
 } from 'livekit-client'
 import { useLia } from '../context/LiaContext'
-import { resolveTenantSlug } from '../utils/tenant'
+import { getPsychApiHeaders } from '../services/sessionSync'
 
 const API_BASE = '/api'
 
@@ -151,7 +151,7 @@ export function VideoCallScreen() {
     for (let attempt = 0; attempt < 5; attempt++) {
       try {
         const res = await fetch(`${API_BASE}/chat/psych/video-token`, {
-          headers: { 'X-Tenant-Slug': resolveTenantSlug() },
+          headers: getPsychApiHeaders(),
         })
         if (res.ok) return await res.json()
         if (res.status === 404 && attempt < 4) {

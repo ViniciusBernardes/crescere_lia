@@ -3,6 +3,8 @@ import { getPool } from "../db/database.js";
 import {
   isIclinicaSyncConfigured,
   pushSessionToIclinica,
+  fetchSessionFromIclinica,
+  type IclinicaSessionSnapshot,
 } from "./iclinicaSync.js";
 import { resolveTenant } from "./tenants.js";
 
@@ -219,4 +221,98 @@ export async function syncCaregiverSession(
   }
 
   await syncCaregiverSessionViaDb(Number(tenant.id), token, fields);
+}
+
+export interface CaregiverSessionSnapshot {
+  displayName: string | null;
+  patientId: number | null;
+  needsPsych: boolean;
+  profile: Record<string, unknown>;
+}
+
+function mapIclinicaSnapshot(data: IclinicaSessionSnapshot): CaregiverSessionSnapshot {
+  return {
+    displayName: data.display_name,
+    patientId: data.patient_id,
+    needsPsych: data.needs_psych,
+    profile: mergeProfileRecord(data.profile_json, {
+      stressLevel: data.stress_level,
+      selfcareLevel: data.selfcare_level,
+      emotionToday: data.emotion_today,
+    }),
+  };
+}
+
+function mergeProfileRecord(
+  profileJson: Record<string, unknown>,
+  columns: { stressLevel: number; selfcareLevel: number; emotionToday: string | null },
+): Record<string, unknown> {
+  const profile = { ...profileJson };
+  if (profile.stressLevel === undefined && columns.stressLevel > 0) {
+    profile.stressLevel = columns.stressLevel;
+  }
+  if (profile.selfcareLevel === undefined && columns.selfcareLevel > 0) {
+    profile.selfcareLevel = columns.selfcareLevel;
+  }
+  if (profile.emotionToday === undefined && columns.emotionToday) {
+    profile.emotionToday = columns.emotionToday;
+  }
+  return profile;
+}
+
+export async function getCaregiverSession(
+  tenantSlug: string,
+  sessionToken: string,
+): Promise<CaregiverSessionSnapshot | null> {
+  const token = sessionToken.trim();
+  if (!token) return null;
+
+  const tenant = await resolveTenant(tenantSlug);
+
+  if (isIclinicaSyncConfigured()) {
+    try {
+      const data = await fetchSessionFromIclinica(tenant.slug, token);
+      return mapIclinicaSnapshot(data);
+    } catch (error) {
+      const status = (error as Error & { status?: number }).status;
+      if (status === 404) return null;
+      throw error;
+    }
+  }
+
+  const pool = getPool();
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT display_name, patient_id, needs_psych, profile_json,
+            stress_level, selfcare_level, emotion_today
+     FROM lia_caregiver_sessions
+     WHERE company_id = ? AND session_token = ?
+     LIMIT 1`,
+    [tenant.id, token],
+  );
+
+  if (!rows[0]) return null;
+
+  let profileJson: Record<string, unknown> = {};
+  try {
+    const raw = rows[0].profile_json;
+    profileJson =
+      typeof raw === "string"
+        ? (JSON.parse(raw) as Record<string, unknown>)
+        : raw && typeof raw === "object"
+          ? (raw as Record<string, unknown>)
+          : {};
+  } catch {
+    profileJson = {};
+  }
+
+  return {
+    displayName: rows[0].display_name ? String(rows[0].display_name) : null,
+    patientId: rows[0].patient_id != null ? Number(rows[0].patient_id) : null,
+    needsPsych: Boolean(rows[0].needs_psych),
+    profile: mergeProfileRecord(profileJson, {
+      stressLevel: Number(rows[0].stress_level) || 0,
+      selfcareLevel: Number(rows[0].selfcare_level) || 0,
+      emotionToday: rows[0].emotion_today ? String(rows[0].emotion_today) : null,
+    }),
+  };
 }

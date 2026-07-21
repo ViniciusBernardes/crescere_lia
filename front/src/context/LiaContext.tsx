@@ -12,8 +12,14 @@ import { createJourneyRunner } from '../flows/journeyFlows'
 import { ensureJourneysLoaded } from '../data/journeys'
 import { showEmotionalMap, showJourneys, showQuickReplies } from '../lib/features'
 import { isMoodQuestion, OPEN_MOOD_PROMPT, OPEN_REPLY_HINT } from '../lib/openPrompts'
-import { syncCaregiverProfile } from '../services/sessionSync'
-import { hasCaregiverIdentity } from '../services/caregiverIdentity'
+import { syncCaregiverProfile, fetchCaregiverSession } from '../services/sessionSync'
+import {
+  clearCaregiverIdentity,
+  getCaregiverIdentity,
+  hasCaregiverIdentity,
+  setCaregiverIdentity,
+} from '../services/caregiverIdentity'
+import { parseStoredProfile, progressFromProfile } from '../services/profileRestore'
 import { useSpeech, type SpeechPlayback } from '../hooks/useSpeech'
 import { isAiChatEnabled, fetchChatSettings, fetchJourneys, transcribeAudio } from '../services/liaApi'
 import { canUseMicrophone, createMediaRecorder, getRecorderFormat, micErrorMessage } from '../utils/voiceRecorder'
@@ -51,6 +57,7 @@ interface LiaContextValue {
   openPsych: () => void
   closePsych: () => void
   openPsychChat: () => void
+  cancelPsychRequest: () => Promise<void>
   openVideoCall: () => void
   continueFromIdle: () => void
   endFromIdle: () => void
@@ -66,6 +73,7 @@ interface LiaContextValue {
   speechRate: SpeechRate
   cycleSpeechRate: () => void
   startJourney: (n: number) => void
+  logout: () => Promise<void>
 }
 
 const LiaContext = createContext<LiaContextValue | null>(null)
@@ -361,7 +369,6 @@ export function LiaProvider({ children }: { children: ReactNode }) {
       },
       openPsych: () => {
         setPsychOpen(true)
-        void syncCaregiverProfile(profileRef.current, { needsPsych: true }).catch(() => undefined)
       },
       startJourney: (n) => {
         if (!showJourneys()) return
@@ -380,6 +387,40 @@ export function LiaProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
+    if (!hasCaregiverIdentity()) return
+
+    let cancelled = false
+
+    void fetchCaregiverSession()
+      .then((snapshot) => {
+        if (cancelled || !snapshot) return
+
+        const restored = parseStoredProfile(snapshot.profile)
+        profileRef.current = restored
+        setProfile(restored)
+        setProgress(progressFromProfile(restored))
+
+        const identity = getCaregiverIdentity()
+        if (identity) {
+          setCaregiverIdentity({
+            email: identity.email,
+            displayName: snapshot.displayName?.trim() || identity.displayName,
+            patientId: snapshot.patientId ?? identity.patientId,
+          })
+        }
+
+        if (snapshot.needsPsych) {
+          setScreen('psychChat')
+        }
+      })
+      .catch(() => undefined)
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
     runnerRef.current = createJourneyRunner(chatApi)
   }, [chatApi])
 
@@ -394,13 +435,18 @@ export function LiaProvider({ children }: { children: ReactNode }) {
 
   const openPsych = useCallback(() => {
     setPsychOpen(true)
-    void syncCaregiverProfile(profileRef.current, { needsPsych: true }).catch(() => undefined)
   }, [])
   const closePsych = useCallback(() => setPsychOpen(false), [])
   const openPsychChat = useCallback(() => {
     setPsychOpen(false)
     setScreen('psychChat')
     void syncCaregiverProfile(profileRef.current, { needsPsych: true }).catch(() => undefined)
+  }, [])
+
+  const cancelPsychRequest = useCallback(async () => {
+    await syncCaregiverProfile(profileRef.current, { needsPsych: false }).catch(() => undefined)
+    setPsychOpen(false)
+    setScreen('chat')
   }, [])
   const openVideoCall = useCallback(() => {
     setPsychOpen(false)
@@ -416,6 +462,30 @@ export function LiaProvider({ children }: { children: ReactNode }) {
     clearIdleTimer()
     setScreen('intro')
   }, [clearIdleTimer])
+
+  const logout = useCallback(async () => {
+    if (isRecording) {
+      mediaRecorderRef.current?.stop()
+      setIsRecording(false)
+    }
+    clearIdleTimer()
+    setPsychOpen(false)
+    setIdlePromptOpen(false)
+
+    await syncCaregiverProfile(createEmptyProfile(), {
+      needsPsych: false,
+      patientId: null,
+    }).catch(() => undefined)
+
+    clearCaregiverIdentity()
+    profileRef.current = createEmptyProfile()
+    setProfile(createEmptyProfile())
+    setMessages([])
+    setProgress(0)
+    setMapBadge(false)
+    setIsTranscribing(false)
+    setScreen('login')
+  }, [clearIdleTimer, isRecording])
 
   const sendMessage = useCallback((text: string) => {
     void unlockAudio()
@@ -562,6 +632,7 @@ export function LiaProvider({ children }: { children: ReactNode }) {
     openPsych,
     closePsych,
     openPsychChat,
+    cancelPsychRequest,
     openVideoCall,
     continueFromIdle,
     endFromIdle,
@@ -577,6 +648,7 @@ export function LiaProvider({ children }: { children: ReactNode }) {
     speechRate,
     cycleSpeechRate,
     startJourney,
+    logout,
   }
 
   return (

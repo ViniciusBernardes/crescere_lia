@@ -1,5 +1,6 @@
 import { ChatInput } from '../components/chat/ChatInput'
 import { MessageList } from '../components/chat/MessageList'
+import { LogoutButton } from '../components/LogoutButton'
 import { useLia } from '../context/LiaContext'
 import { showEmotionalMap, showJourneys } from '../lib/features'
 
@@ -40,6 +41,7 @@ export function ChatScreen() {
                   {mapBadge && <span className="badge-new">!</span>}
                 </div>
               )}
+              <LogoutButton variant="icon" />
             </div>
           </div>
           {showJourneys() && (
