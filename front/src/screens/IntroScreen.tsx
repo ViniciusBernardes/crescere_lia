@@ -1,5 +1,4 @@
 import { useLia } from '../context/LiaContext'
-import { getCaregiverIdentity } from '../services/caregiverIdentity'
 import { LogoutButton } from '../components/LogoutButton'
 
 const FEATURES = [
@@ -11,16 +10,9 @@ const FEATURES = [
 
 export function IntroScreen() {
   const { goToChat } = useLia()
-  const identity = getCaregiverIdentity()
-  const firstName = identity?.displayName.split(/\s+/)[0] ?? 'Cuidador'
 
   return (
     <div className="screen slide-in" id="introScreen">
-      <div className="intro-topbar">
-        <p className="intro-user">
-          Olá, <strong>{firstName}</strong>
-        </p>
-      </div>
       <div className="intro-hero">
         <div className="intro-hero-glow" aria-hidden />
         <div className="intro-orb">
