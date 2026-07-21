@@ -20,7 +20,6 @@ export function IntroScreen() {
         <p className="intro-user">
           Olá, <strong>{firstName}</strong>
         </p>
-        <LogoutButton />
       </div>
       <div className="intro-hero">
         <div className="intro-hero-glow" aria-hidden />
@@ -68,6 +67,7 @@ export function IntroScreen() {
               </span>
             </button>
             <p className="intro-cta-hint">Leva menos de 2 minutos · no seu ritmo</p>
+            <LogoutButton className="logout-btn--intro" />
             <img className="crescere-brand-logo" src="/crescere-logo.png" alt="Crescere" />
           </div>
         </div>
