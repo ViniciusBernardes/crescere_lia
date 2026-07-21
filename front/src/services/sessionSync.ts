@@ -29,9 +29,23 @@ export function resolveTenantFromQuery(): string | null {
   return params.get('tenant')?.trim().toLowerCase() || null
 }
 
+/** Headers for plantão psicológico — inclui session_token da sessão atual. */
+export function getPsychApiHeaders(): Record<string, string> {
+  return {
+    'X-Tenant-Slug': resolveTenantFromQuery() || getTenantSlug(),
+    'X-Lia-Session-Token': getSessionToken(),
+  }
+}
+
 export async function syncCaregiverProfile(
   profile: UserProfile,
-  options?: { needsPsych?: boolean; displayName?: string },
+  options?: {
+    needsPsych?: boolean
+    displayName?: string
+    patientId?: number | null
+    /** Keep request alive during page unload / tab close. */
+    keepalive?: boolean
+  },
 ): Promise<void> {
   const tenant = resolveTenantFromQuery() || getTenantSlug()
   const sessionToken = getSessionToken()
@@ -49,12 +63,53 @@ export async function syncCaregiverProfile(
     body.needsPsych = options.needsPsych
   }
 
-  await fetch('/api/sessions/sync', {
+  if (typeof options?.patientId === 'number' || options?.patientId === null) {
+    body.patientId = options.patientId
+  } else if (typeof identity?.patientId === 'number') {
+    body.patientId = identity.patientId
+  }
+
+  const res = await fetch('/api/sessions/sync', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'X-Tenant-Slug': tenant,
     },
     body: JSON.stringify(body),
+    keepalive: options?.keepalive === true,
   })
+
+  if (!res.ok) {
+    throw new Error(`Falha ao sincronizar sessão (${res.status}).`)
+  }
+}
+
+/** Remove a solicitação de plantão da fila do psicólogo. */
+export async function releasePsychRequest(
+  profile: UserProfile,
+  options?: { keepalive?: boolean },
+): Promise<void> {
+  await syncCaregiverProfile(profile, {
+    needsPsych: false,
+    keepalive: options?.keepalive,
+  })
+}
+
+export type CaregiverSessionSnapshot = {
+  displayName: string | null
+  patientId: number | null
+  needsPsych: boolean
+  profile: Record<string, unknown>
+}
+
+/** Carrega perfil e metadados da sessão persistidos no servidor. */
+export async function fetchCaregiverSession(): Promise<CaregiverSessionSnapshot | null> {
+  const res = await fetch('/api/sessions/me', {
+    headers: getPsychApiHeaders(),
+  })
+  if (res.status === 404) return null
+  if (!res.ok) {
+    throw new Error('Não foi possível restaurar a sessão.')
+  }
+  return (await res.json()) as CaregiverSessionSnapshot
 }

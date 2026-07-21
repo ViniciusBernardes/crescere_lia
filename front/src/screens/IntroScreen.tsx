@@ -1,4 +1,5 @@
 import { useLia } from '../context/LiaContext'
+import { LogoutButton } from '../components/LogoutButton'
 
 const FEATURES = [
   { icon: '📚', title: 'Psicoeducação acolhedora', desc: 'Informação clara sobre TEA em linguagem humana' },
@@ -58,6 +59,7 @@ export function IntroScreen() {
               </span>
             </button>
             <p className="intro-cta-hint">Leva menos de 2 minutos · no seu ritmo</p>
+            <LogoutButton className="logout-btn--intro" />
             <img className="crescere-brand-logo" src="/crescere-logo.png" alt="Crescere" />
           </div>
         </div>

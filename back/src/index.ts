@@ -11,6 +11,7 @@ import { initDb } from "./db/database.js";
 import { adminRouter } from "./routes/admin.js";
 import { chatRouter } from "./routes/chat.js";
 import { iclinicaRouter } from "./routes/iclinica.js";
+import { authRouter } from "./routes/auth.js";
 import { sessionsRouter } from "./routes/sessions.js";
 import { isIclinicaIntegrationEnabled } from "./services/iclinica.js";
 import { isIclinicaSyncConfigured } from "./services/iclinicaSync.js";
@@ -43,6 +44,7 @@ app.get("/api/health", async (_req, res) => {
 });
 
 app.use("/api/admin", adminRouter);
+app.use("/api", authRouter);
 app.use("/api", iclinicaRouter);
 app.use("/api", sessionsRouter);
 app.use("/api", chatRouter);
