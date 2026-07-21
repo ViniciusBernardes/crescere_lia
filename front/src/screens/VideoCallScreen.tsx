@@ -20,7 +20,7 @@ interface VideoTokenData {
 }
 
 export function VideoCallScreen() {
-  const { showScreen } = useLia()
+  const { showScreen, releasePsychRequest } = useLia()
   const [status, setStatus] = useState<'connecting' | 'active' | 'ended'>('connecting')
   const [error, setError] = useState<string | null>(null)
   const [mediaWarning, setMediaWarning] = useState<string | null>(null)
@@ -29,8 +29,15 @@ export function VideoCallScreen() {
   const localVideoRef = useRef<HTMLVideoElement>(null)
   const roomRef = useRef<Room | null>(null)
   const connectingRef = useRef(false)
+  const releasedRef = useRef(false)
   const [micEnabled, setMicEnabled] = useState(true)
   const [camEnabled, setCamEnabled] = useState(true)
+
+  const leavePsychQueue = useCallback(async (keepalive = false) => {
+    if (releasedRef.current) return
+    releasedRef.current = true
+    await releasePsychRequest({ keepalive }).catch(() => undefined)
+  }, [releasePsychRequest])
 
   const attachRemoteTrack = useCallback((track: RemoteTrack) => {
     if (track.kind === Track.Kind.Video && remoteVideoRef.current) {
@@ -201,7 +208,17 @@ export function VideoCallScreen() {
     roomRef.current?.disconnect()
     roomRef.current = null
     setStatus('ended')
-  }, [])
+    void leavePsychQueue()
+  }, [leavePsychQueue])
+
+  // Fecha aba/app no meio da chamada → tira da fila (needs_psych).
+  useEffect(() => {
+    const onLeave = () => {
+      void leavePsychQueue(true)
+    }
+    window.addEventListener('pagehide', onLeave)
+    return () => window.removeEventListener('pagehide', onLeave)
+  }, [leavePsychQueue])
 
   if (status === 'ended') {
     return (
@@ -209,7 +226,14 @@ export function VideoCallScreen() {
         <div className="vc-ended">
           <div className="vc-ended-icon">💜</div>
           <p>{error || 'Videochamada encerrada.'}</p>
-          <button type="button" className="vc-back-btn" onClick={() => showScreen('chat')}>
+          <button
+            type="button"
+            className="vc-back-btn"
+            onClick={() => {
+              void leavePsychQueue()
+              showScreen('chat')
+            }}
+          >
             Voltar ao chat
           </button>
         </div>

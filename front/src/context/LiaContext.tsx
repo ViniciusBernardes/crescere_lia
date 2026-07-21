@@ -12,7 +12,7 @@ import { createJourneyRunner } from '../flows/journeyFlows'
 import { ensureJourneysLoaded } from '../data/journeys'
 import { showEmotionalMap, showJourneys, showQuickReplies } from '../lib/features'
 import { isMoodQuestion, OPEN_MOOD_PROMPT, OPEN_REPLY_HINT } from '../lib/openPrompts'
-import { syncCaregiverProfile, fetchCaregiverSession } from '../services/sessionSync'
+import { syncCaregiverProfile, fetchCaregiverSession, releasePsychRequest as releasePsychRequestSync } from '../services/sessionSync'
 import {
   clearCaregiverIdentity,
   getCaregiverIdentity,
@@ -58,6 +58,8 @@ interface LiaContextValue {
   closePsych: () => void
   openPsychChat: () => void
   cancelPsychRequest: () => Promise<void>
+  /** Só limpa needsPsych na fila (sem navegar). */
+  releasePsychRequest: (options?: { keepalive?: boolean }) => Promise<void>
   openVideoCall: () => void
   continueFromIdle: () => void
   endFromIdle: () => void
@@ -444,10 +446,15 @@ export function LiaProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const cancelPsychRequest = useCallback(async () => {
-    await syncCaregiverProfile(profileRef.current, { needsPsych: false }).catch(() => undefined)
+    await releasePsychRequestSync(profileRef.current).catch(() => undefined)
     setPsychOpen(false)
     setScreen('chat')
   }, [])
+
+  const releasePsychRequest = useCallback(async (options?: { keepalive?: boolean }) => {
+    await releasePsychRequestSync(profileRef.current, options)
+  }, [])
+
   const openVideoCall = useCallback(() => {
     setPsychOpen(false)
     setScreen('videoCall')
@@ -633,6 +640,7 @@ export function LiaProvider({ children }: { children: ReactNode }) {
     closePsych,
     openPsychChat,
     cancelPsychRequest,
+    releasePsychRequest,
     openVideoCall,
     continueFromIdle,
     endFromIdle,

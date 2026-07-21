@@ -39,7 +39,13 @@ export function getPsychApiHeaders(): Record<string, string> {
 
 export async function syncCaregiverProfile(
   profile: UserProfile,
-  options?: { needsPsych?: boolean; displayName?: string; patientId?: number | null },
+  options?: {
+    needsPsych?: boolean
+    displayName?: string
+    patientId?: number | null
+    /** Keep request alive during page unload / tab close. */
+    keepalive?: boolean
+  },
 ): Promise<void> {
   const tenant = resolveTenantFromQuery() || getTenantSlug()
   const sessionToken = getSessionToken()
@@ -63,13 +69,29 @@ export async function syncCaregiverProfile(
     body.patientId = identity.patientId
   }
 
-  await fetch('/api/sessions/sync', {
+  const res = await fetch('/api/sessions/sync', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'X-Tenant-Slug': tenant,
     },
     body: JSON.stringify(body),
+    keepalive: options?.keepalive === true,
+  })
+
+  if (!res.ok) {
+    throw new Error(`Falha ao sincronizar sessão (${res.status}).`)
+  }
+}
+
+/** Remove a solicitação de plantão da fila do psicólogo. */
+export async function releasePsychRequest(
+  profile: UserProfile,
+  options?: { keepalive?: boolean },
+): Promise<void> {
+  await syncCaregiverProfile(profile, {
+    needsPsych: false,
+    keepalive: options?.keepalive,
   })
 }
 

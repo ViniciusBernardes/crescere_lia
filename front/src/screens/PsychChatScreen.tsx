@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLia } from '../context/LiaContext'
-import { getPsychApiHeaders } from '../services/sessionSync'
+import { getPsychApiHeaders, syncCaregiverProfile } from '../services/sessionSync'
 
 interface Message {
   id: number
@@ -43,7 +43,7 @@ async function fetchPsychStatus(signal?: AbortSignal) {
 }
 
 export function PsychChatScreen() {
-  const { showScreen, openVideoCall, cancelPsychRequest } = useLia()
+  const { showScreen, openVideoCall, cancelPsychRequest, releasePsychRequest, profile } = useLia()
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [status, setStatus] = useState<'waiting' | 'active' | 'ended'>('waiting')
@@ -58,6 +58,9 @@ export function PsychChatScreen() {
   const statusPollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const statusFailCountRef = useRef(0)
   const messageFailCountRef = useRef(0)
+  const waitingInQueueRef = useRef(true)
+  const transferringToVideoRef = useRef(false)
+  const releasedRef = useRef(false)
 
   const stopPolling = useCallback(() => {
     if (pollRef.current) {
@@ -103,7 +106,9 @@ export function PsychChatScreen() {
       setIntegrationIssue(null)
 
       if (data.attendance_id) {
+        waitingInQueueRef.current = false
         if (data.channel === 'video') {
+          transferringToVideoRef.current = true
           stopPolling()
           openVideoCall()
           return
@@ -131,6 +136,46 @@ export function PsychChatScreen() {
     }, STATUS_POLL_MS)
     return stopPolling
   }, [checkAttendance, stopPolling])
+
+  // Mantém last_activity_at fresco enquanto aguarda — a fila descarta sessões abandonadas.
+  useEffect(() => {
+    if (status !== 'waiting' || attendanceId !== null) return
+
+    const beat = () => {
+      void syncCaregiverProfile(profile, { needsPsych: true }).catch(() => undefined)
+    }
+    beat()
+    const id = window.setInterval(beat, 30_000)
+    return () => window.clearInterval(id)
+  }, [attendanceId, profile, status])
+
+  const dropFromQueue = useCallback(
+    async (options?: { keepalive?: boolean }) => {
+      if (releasedRef.current || transferringToVideoRef.current) return
+      if (!waitingInQueueRef.current) return
+      releasedRef.current = true
+      waitingInQueueRef.current = false
+      await releasePsychRequest(options).catch(() => undefined)
+    },
+    [releasePsychRequest],
+  )
+
+  // Saiu da tela / fechou aba enquanto ainda estava na fila → some da fila do psicólogo.
+  useEffect(() => {
+    const onLeave = () => {
+      if (transferringToVideoRef.current) return
+      if (!waitingInQueueRef.current || releasedRef.current) return
+      void dropFromQueue({ keepalive: true })
+    }
+
+    window.addEventListener('pagehide', onLeave)
+    return () => {
+      window.removeEventListener('pagehide', onLeave)
+      if (!transferringToVideoRef.current && waitingInQueueRef.current) {
+        void dropFromQueue({ keepalive: true })
+      }
+    }
+  }, [dropFromQueue])
 
   const pollMessages = useCallback(async () => {
     if (!attendanceId) return
@@ -226,6 +271,8 @@ export function PsychChatScreen() {
     setCancelling(true)
     stopPolling()
     try {
+      releasedRef.current = true
+      waitingInQueueRef.current = false
       await cancelPsychRequest()
     } finally {
       setCancelling(false)
@@ -237,8 +284,9 @@ export function PsychChatScreen() {
       void handleCancelWait()
       return
     }
+    void dropFromQueue()
     showScreen('chat')
-  }, [canCancelWait, handleCancelWait, showScreen])
+  }, [canCancelWait, dropFromQueue, handleCancelWait, showScreen])
 
   const handleSend = useCallback(async () => {
     const text = input.trim()
@@ -393,7 +441,14 @@ export function PsychChatScreen() {
         </div>
       ) : (
         <div className="pcs-input-area">
-          <button type="button" className="pcs-back-full" onClick={() => showScreen('chat')}>
+          <button
+            type="button"
+            className="pcs-back-full"
+            onClick={() => {
+              void dropFromQueue()
+              showScreen('chat')
+            }}
+          >
             Voltar ao chat
           </button>
         </div>
