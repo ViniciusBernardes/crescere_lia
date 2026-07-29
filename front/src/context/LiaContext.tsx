@@ -82,14 +82,24 @@ const LiaContext = createContext<LiaContextValue | null>(null)
 
 const screenMap: Record<string, ScreenId> = {
   loginScreen: 'login',
+  forgotPasswordScreen: 'forgotPassword',
+  resetPasswordScreen: 'resetPassword',
   introScreen: 'intro',
   chatScreen: 'chat',
   journeyScreen: 'journey',
   mapScreen: 'map',
 }
 
+function initialScreen(): ScreenId {
+  if (typeof window !== 'undefined') {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('reset_token')) return 'resetPassword'
+  }
+  return hasCaregiverIdentity() ? 'intro' : 'login'
+}
+
 export function LiaProvider({ children }: { children: ReactNode }) {
-  const [screen, setScreen] = useState<ScreenId>(() => (hasCaregiverIdentity() ? 'intro' : 'login'))
+  const [screen, setScreen] = useState<ScreenId>(() => initialScreen())
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [profile, setProfile] = useState<UserProfile>(createEmptyProfile)
   const [progress, setProgress] = useState(0)

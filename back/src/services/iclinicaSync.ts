@@ -253,3 +253,25 @@ export async function loginPatientInIclinica(payload: {
     email: data.patient.email ?? payload.email,
   };
 }
+
+export async function forgotPatientPasswordInIclinica(payload: {
+  company_slug: string;
+  email: string;
+}): Promise<{ message: string }> {
+  return iclinicaRequest<{ message: string }>("/api/v1/integrations/lia/auth/forgot", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function resetPatientPasswordInIclinica(payload: {
+  email: string;
+  token: string;
+  password: string;
+  password_confirmation: string;
+}): Promise<{ message: string }> {
+  return iclinicaRequest<{ message: string }>("/api/v1/integrations/lia/auth/reset", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}

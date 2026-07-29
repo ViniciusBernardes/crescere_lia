@@ -105,6 +105,12 @@ export function LoginScreen() {
             </button>
           </form>
 
+          <p className="login-footer">
+            <button type="button" className="login-skip" onClick={() => showScreen('forgotPassword')}>
+              Esqueci a senha
+            </button>
+          </p>
+
           <img className="crescere-brand-logo login-brand" src="/crescere-logo.png" alt="Crescere" />
         </div>
       </div>
