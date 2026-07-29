@@ -1,6 +1,7 @@
 import type { ChatApi, JourneyQuestion } from '../types/chat'
 import { getJourneyByNumber } from '../data/journeys'
 import { schedulePostJourneyFollowUp } from './postJourneyFollowUp'
+import { markJourneyCompleted } from './markJourneyCompleted'
 
 export type QuestionJourneyController = {
   handleUserMessage: (text: string) => boolean
@@ -52,6 +53,7 @@ export function startQuestionJourney(
         `<strong>Jornada ${journeyNumber} concluída!</strong> 💜\n\nObrigada por dedicar este tempo a você. Cada passo conta.`,
         `Jornada ${journeyNumber} concluída! Obrigada por dedicar este tempo a você.`,
       )
+      markJourneyCompleted(api, journeyNumber)
       api.addCtas([
         {
           icon: '📊',

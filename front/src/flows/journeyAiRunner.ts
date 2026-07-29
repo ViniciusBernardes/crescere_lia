@@ -4,6 +4,7 @@ import { isAiChatEnabled, sendJourneyStep } from '../services/liaApi'
 import { prepareSpeechFromResponse } from '../services/chatSpeech'
 import { buildJourneySteps, type JourneyDeps } from './journeyAiSteps'
 import { schedulePostJourneyFollowUp } from './postJourneyFollowUp'
+import { markJourneyCompleted } from './markJourneyCompleted'
 
 export type AiJourneyController = {
   handleUserMessage: (text: string) => boolean
@@ -166,6 +167,7 @@ export function startAiJourney(
     }
 
     if (step.type === 'ctas') {
+      markJourneyCompleted(api, journeyNumber)
       api.addCtas(step.buildCtas(deps))
       active = false
       schedulePostJourneyFollowUp(api)
