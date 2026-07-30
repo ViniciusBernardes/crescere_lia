@@ -79,18 +79,19 @@ export async function resolveSystemPrompt(
   tenantSlug?: string,
   profile?: UserProfileContext,
 ): Promise<string> {
-  // Prompt customizado no /admin da Lia tem prioridade sobre o iClinica.
-  const custom = await getCustomSystemPrompt(tenantId);
-  if (custom) {
-    return custom;
-  }
-
+  // Fonte única: iClinica (base + override de clínica/master + catálogo de jornadas).
   if (tenantSlug && isIclinicaIntegrationEnabled()) {
     try {
       return await fetchIclinicaSystemPrompt(tenantSlug, profile);
     } catch (error) {
-      console.warn("[prompt] iClinica indisponível, usando fallback local:", error);
+      console.warn("[prompt] iClinica indisponível, tentando fallback local:", error);
     }
+  }
+
+  // Fallback offline: override salvo no admin da Lia, senão prompt embutido.
+  const custom = await getCustomSystemPrompt(tenantId);
+  if (custom) {
+    return custom;
   }
 
   return getDefaultSystemPrompt();

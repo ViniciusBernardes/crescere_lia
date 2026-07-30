@@ -391,7 +391,7 @@ export function AdminScreen({ onLogout }: { onLogout?: () => void }) {
             icon="💬"
             title="Prompt de atendimento"
             subtitle={tenantLabel}
-            description="Override local: se estiver salvo aqui, tem prioridade sobre o prompt do iClinica. Sem custom, usa o iClinica."
+            description="Fallback offline apenas. Com a integração iClinica ativa, o chat usa o prompt do painel Crescere (Master/clínica). Este texto só entra se o iClinica estiver indisponível."
           />
           <form onSubmit={handleSavePrompt} className="admin-form">
             <label className="admin-field">
