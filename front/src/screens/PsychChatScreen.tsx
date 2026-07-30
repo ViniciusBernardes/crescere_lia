@@ -13,7 +13,6 @@ type IntegrationIssue = 'unavailable' | 'error' | 'network'
 
 const API_BASE = '/api'
 const STATUS_POLL_MS = 3000
-const MESSAGE_POLL_MS = 3000
 const REQUEST_TIMEOUT_MS = 12_000
 const NETWORK_FAIL_THRESHOLD = 3
 
@@ -54,7 +53,7 @@ export function PsychChatScreen() {
   const [messageSyncIssue, setMessageSyncIssue] = useState(false)
   const cursorRef = useRef(0)
   const scrollRef = useRef<HTMLDivElement>(null)
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const streamRef = useRef<EventSource | null>(null)
   const statusPollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const statusFailCountRef = useRef(0)
   const messageFailCountRef = useRef(0)
@@ -63,9 +62,9 @@ export function PsychChatScreen() {
   const releasedRef = useRef(false)
 
   const stopPolling = useCallback(() => {
-    if (pollRef.current) {
-      clearInterval(pollRef.current)
-      pollRef.current = null
+    if (streamRef.current) {
+      streamRef.current.close()
+      streamRef.current = null
     }
     if (statusPollRef.current) {
       clearInterval(statusPollRef.current)
@@ -177,6 +176,26 @@ export function PsychChatScreen() {
     }
   }, [dropFromQueue])
 
+  const appendMessages = useCallback((incoming: Message[]) => {
+    if (!incoming.length) return
+    setMessages((prev) => {
+      const existingIds = new Set(prev.map((m) => m.id))
+      const newMsgs = incoming.filter((m) => !existingIds.has(m.id))
+      if (!newMsgs.length) return prev
+      const merged = [...prev, ...newMsgs]
+      cursorRef.current = merged[merged.length - 1].id
+      return merged
+    })
+  }, [])
+
+  const applyAttendanceStatus = useCallback((attendanceStatus: string | undefined) => {
+    if (attendanceStatus === 'in_progress') {
+      setStatus('active')
+    } else if (attendanceStatus === 'completed' || attendanceStatus === 'cancelled') {
+      setStatus('ended')
+    }
+  }, [])
+
   const pollMessages = useCallback(async () => {
     if (!attendanceId) return
 
@@ -202,20 +221,9 @@ export function PsychChatScreen() {
       setMessageSyncIssue(false)
 
       const data = await res.json()
-      if (data.attendance_status === 'in_progress') {
-        setStatus('active')
-      } else if (data.attendance_status === 'completed') {
-        setStatus('ended')
-      }
+      applyAttendanceStatus(data.attendance_status)
       if (data.messages?.length) {
-        setMessages((prev) => {
-          const existingIds = new Set(prev.map((m) => m.id))
-          const newMsgs = data.messages.filter((m: Message) => !existingIds.has(m.id))
-          if (!newMsgs.length) return prev
-          const merged = [...prev, ...newMsgs]
-          cursorRef.current = merged[merged.length - 1].id
-          return merged
-        })
+        appendMessages(data.messages)
       }
     } catch {
       window.clearTimeout(timeoutId)
@@ -224,21 +232,108 @@ export function PsychChatScreen() {
         setMessageSyncIssue(true)
       }
     }
-  }, [attendanceId])
+  }, [appendMessages, applyAttendanceStatus, attendanceId])
 
   useEffect(() => {
     if (!attendanceId) return
-    void pollMessages()
-    pollRef.current = setInterval(() => {
-      void pollMessages()
-    }, MESSAGE_POLL_MS)
-    return () => {
-      if (pollRef.current) {
-        clearInterval(pollRef.current)
-        pollRef.current = null
+
+    let cancelled = false
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null
+    let abort: AbortController | null = null
+
+    const handleSseChunk = (rawEvent: string) => {
+      const lines = rawEvent.split('\n')
+      let eventName = 'message'
+      const dataLines: string[] = []
+      for (const line of lines) {
+        if (line.startsWith('event:')) eventName = line.slice(6).trim()
+        if (line.startsWith('data:')) dataLines.push(line.slice(5).trim())
+      }
+      if (!dataLines.length) return
+      let data: Record<string, unknown> = {}
+      try {
+        data = JSON.parse(dataLines.join('\n')) as Record<string, unknown>
+      } catch {
+        return
+      }
+
+      if (eventName === 'chat') {
+        appendMessages([data as unknown as Message])
+        messageFailCountRef.current = 0
+        setMessageSyncIssue(false)
+      } else if (eventName === 'status' || eventName === 'ended') {
+        applyAttendanceStatus(data.attendance_status as string | undefined)
       }
     }
-  }, [attendanceId, pollMessages])
+
+    const connectStream = async () => {
+      if (cancelled) return
+      abort?.abort()
+      abort = new AbortController()
+
+      try {
+        const res = await fetch(
+          `${API_BASE}/chat/psych/stream?attendance_id=${attendanceId}&after=${cursorRef.current}`,
+          {
+            headers: {
+              ...getPsychApiHeaders(),
+              Accept: 'text/event-stream',
+            },
+            signal: abort.signal,
+          },
+        )
+
+        if (!res.ok || !res.body) {
+          throw new Error(`stream_http_${res.status}`)
+        }
+
+        messageFailCountRef.current = 0
+        setMessageSyncIssue(false)
+
+        const reader = res.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+
+        while (!cancelled) {
+          const { done, value } = await reader.read()
+          if (done) break
+          buffer += decoder.decode(value, { stream: true })
+          const parts = buffer.split('\n\n')
+          buffer = parts.pop() ?? ''
+          for (const part of parts) {
+            if (part.trim()) handleSseChunk(part)
+          }
+        }
+
+        if (!cancelled) {
+          reconnectTimer = setTimeout(() => {
+            void connectStream()
+          }, 400)
+        }
+      } catch {
+        if (cancelled) return
+        messageFailCountRef.current += 1
+        if (messageFailCountRef.current >= NETWORK_FAIL_THRESHOLD) {
+          setMessageSyncIssue(true)
+        }
+        reconnectTimer = setTimeout(() => {
+          void connectStream()
+        }, 1_500)
+      }
+    }
+
+    void pollMessages().finally(() => {
+      if (!cancelled) void connectStream()
+    })
+
+    return () => {
+      cancelled = true
+      if (reconnectTimer) clearTimeout(reconnectTimer)
+      abort?.abort()
+      streamRef.current?.close()
+      streamRef.current = null
+    }
+  }, [appendMessages, applyAttendanceStatus, attendanceId, pollMessages])
 
   useEffect(() => {
     if (scrollRef.current) {

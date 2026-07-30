@@ -191,6 +191,34 @@ export async function fetchPsychChatMessages(
   );
 }
 
+/** Open upstream SSE for plantão chat (Node proxies the stream to the browser). */
+export async function openPsychChatStream(
+  companySlug: string,
+  sessionToken: string,
+  attendanceId: number,
+  afterId = 0,
+): Promise<Response> {
+  const base = apiBaseUrl();
+  const secret = syncSecret();
+  if (!base || !secret) {
+    throw new Error("Integração iClinica não configurada (ICLINICA_API_URL / LIA_SYNC_SECRET).");
+  }
+
+  const query = new URLSearchParams({
+    company_slug: companySlug.trim().toLowerCase(),
+    session_token: sessionToken,
+    attendance_id: String(attendanceId),
+    after: String(afterId),
+  });
+
+  return fetch(`${base}/api/v1/integrations/lia/chat/stream?${query}`, {
+    headers: {
+      Accept: "text/event-stream",
+      "X-Lia-Sync-Secret": secret,
+    },
+  });
+}
+
 export async function sendPsychChatMessage(
   companySlug: string,
   sessionToken: string,
