@@ -152,6 +152,109 @@ function SuggestBubble({ msg }: { msg: Extract<ChatMessage, { kind: 'suggest' }>
   )
 }
 
+function youtubeEmbedUrl(url: string): string | null {
+  try {
+    const parsed = new URL(url)
+    if (parsed.hostname.includes('youtu.be')) {
+      const id = parsed.pathname.replace('/', '')
+      return id ? `https://www.youtube.com/embed/${id}` : null
+    }
+    if (parsed.hostname.includes('youtube.com')) {
+      const id = parsed.searchParams.get('v')
+      if (id) return `https://www.youtube.com/embed/${id}`
+      const embed = parsed.pathname.match(/\/embed\/([\w-]{6,})/)
+      if (embed?.[1]) return `https://www.youtube.com/embed/${embed[1]}`
+    }
+    if (parsed.hostname.includes('vimeo.com')) {
+      const id = parsed.pathname.split('/').filter(Boolean).pop()
+      return id ? `https://player.vimeo.com/video/${id}` : null
+    }
+  } catch {
+    return null
+  }
+  return null
+}
+
+function MediaBubble({ msg }: { msg: Extract<ChatMessage, { kind: 'media' }> }) {
+  return (
+    <MessageRow>
+      <LiaAvatar />
+      <div className="bwrap">
+        <div className="bubble ai">
+          <p>Preparei estes conteúdos para esta jornada:</p>
+          <div className="journey-media-stack">
+            {msg.items.map((item, index) => {
+              const key = `${item.kind}-${item.id ?? index}`
+              const title = item.title || item.original_name || 'Anexo'
+              if (item.kind === 'pdf') {
+                return (
+                  <a
+                    key={key}
+                    className="journey-media-card"
+                    href={item.url}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <span className="journey-media-icon">📄</span>
+                    <span>
+                      <strong>{title}</strong>
+                      <small>Abrir PDF</small>
+                    </span>
+                  </a>
+                )
+              }
+              if (item.kind === 'audio') {
+                return (
+                  <div key={key} className="journey-media-card static">
+                    <span className="journey-media-icon">🎧</span>
+                    <div className="journey-media-body">
+                      <strong>{title}</strong>
+                      <audio controls preload="none" src={item.url}>
+                        Seu navegador não reproduz áudio.
+                      </audio>
+                    </div>
+                  </div>
+                )
+              }
+              const embed = item.kind === 'video_link' ? youtubeEmbedUrl(item.url) : null
+              if (embed) {
+                return (
+                  <div key={key} className="journey-media-card static">
+                    <span className="journey-media-icon">🎬</span>
+                    <div className="journey-media-body">
+                      <strong>{title}</strong>
+                      <div className="journey-media-frame">
+                        <iframe
+                          src={embed}
+                          title={title}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )
+              }
+              return (
+                <div key={key} className="journey-media-card static">
+                  <span className="journey-media-icon">🎬</span>
+                  <div className="journey-media-body">
+                    <strong>{title}</strong>
+                    <video controls preload="metadata" src={item.url}>
+                      Seu navegador não reproduz vídeo.
+                    </video>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+        <span className="btime">{msg.time}</span>
+      </div>
+    </MessageRow>
+  )
+}
+
 export function MessageList() {
   const { messages } = useLia()
   const containerRef = useRef<HTMLDivElement>(null)
@@ -228,6 +331,7 @@ export function MessageList() {
         if (msg.kind === 'picker') return <PickerBubble key={msg.id} msg={msg} />
         if (msg.kind === 'ctas') return <CtasBubble key={msg.id} msg={msg} />
         if (msg.kind === 'suggest') return <SuggestBubble key={msg.id} msg={msg} />
+        if (msg.kind === 'media') return <MediaBubble key={msg.id} msg={msg} />
         if (msg.kind === 'ai') {
           if (!msg.html?.trim()) return null
           return (

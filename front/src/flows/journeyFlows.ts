@@ -1,6 +1,6 @@
 // @ts-nocheck
 import type { ChatApi } from '../types/chat';
-import { getJourneyQuestions } from '../data/journeys';
+import { getJourneyAttachments, getJourneyQuestions } from '../data/journeys';
 import { isAiChatEnabled, sendChatMessage } from '../services/liaApi';
 import { prepareSpeechFromResponse } from '../services/chatSpeech';
 import { startAiJourney } from './journeyAiRunner';
@@ -196,12 +196,17 @@ export function createJourneyRunner(api: ChatApi) {
   api.showScreen('chatScreen');
 
   const apiQuestions = getJourneyQuestions(n);
+  const attachments = getJourneyAttachments(n);
 
   cancelPostJourneyFollowUp();
   questionJourneyCtrl?.cancel();
   questionJourneyCtrl = null;
   aiJourneyCtrl?.cancel();
   aiJourneyCtrl = null;
+
+  if (attachments.length > 0) {
+    api.addMedia(attachments);
+  }
 
   if (apiQuestions.length > 0) {
     questionJourneyCtrl = startQuestionJourney(api, n, apiQuestions, () => {

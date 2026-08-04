@@ -329,6 +329,11 @@ export function LiaProvider({ children }: { children: ReactNode }) {
         if (filtered.length === 0) return
         appendMessage({ id: uid(), kind: 'ctas', buttons: filtered, time: formatTime() })
       },
+      addMedia: (items) => {
+        const cleaned = items.filter((item) => Boolean(item?.url))
+        if (cleaned.length === 0) return
+        appendMessage({ id: uid(), kind: 'media', items: cleaned, time: formatTime() })
+      },
       suggestBlock: (journey) => {
         if (!showJourneys()) {
           const buttons = [

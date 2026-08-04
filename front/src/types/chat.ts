@@ -34,6 +34,17 @@ export interface JourneyQuestion {
   options?: string[]
 }
 
+export interface JourneyAttachment {
+  id?: number
+  sort_order: number
+  kind: 'pdf' | 'video' | 'audio' | 'video_link'
+  title?: string | null
+  url: string
+  mime?: string | null
+  size?: number | null
+  original_name?: string | null
+}
+
 export interface JourneyItem {
   n: number
   icon: string
@@ -41,6 +52,7 @@ export interface JourneyItem {
   sub: string
   color: string
   questions?: JourneyQuestion[]
+  attachments?: JourneyAttachment[]
 }
 
 export interface ChatHistoryEntry {
@@ -64,6 +76,7 @@ export interface ChatApi {
     options?: { forcePills?: boolean },
   ) => void
   addCtas: (buttons: CtaButton[]) => void
+  addMedia: (items: JourneyAttachment[]) => void
   suggestBlock: (journey: JourneyItem) => void
   updateMap: () => void
   setProgress: (pct: number) => void
@@ -118,6 +131,13 @@ export type SuggestMessage = {
   time: string
 }
 
+export type MediaMessage = {
+  id: string
+  kind: 'media'
+  items: JourneyAttachment[]
+  time: string
+}
+
 export type ChatMessage =
   | AiMessage
   | UserMessage
@@ -125,3 +145,4 @@ export type ChatMessage =
   | PickerMessage
   | CtasMessage
   | SuggestMessage
+  | MediaMessage

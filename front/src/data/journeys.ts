@@ -35,6 +35,13 @@ export function getJourneyQuestions(n: number): JourneyQuestion[] {
   return [...(journey?.questions ?? [])].sort((a, b) => a.sort_order - b.sort_order)
 }
 
+export function getJourneyAttachments(n: number) {
+  const journey = journeysCache.find((j) => j.n === n)
+  return [...(journey?.attachments ?? [])]
+    .filter((item) => Boolean(item?.url))
+    .sort((a, b) => a.sort_order - b.sort_order)
+}
+
 export function getJourneysSource(): 'iclinica' | 'fallback' {
   return journeysSource
 }
