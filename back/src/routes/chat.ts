@@ -11,6 +11,7 @@ import {
   fetchPsychChatMessages,
   fetchPsychStatusFromIclinica,
   fetchVideoTokenFromIclinica,
+  openPsychChatStream,
   sendPsychChatMessage,
   isIclinicaSyncConfigured,
   endVideoCallInIclinica,
@@ -275,6 +276,62 @@ chatRouter.get("/chat/psych/messages", async (req, res) => {
   } catch (error) {
     console.error("[psych-chat] fetch messages error:", error);
     return res.status(502).json({ error: "upstream_error" });
+  }
+});
+
+chatRouter.get("/chat/psych/stream", async (req, res) => {
+  if (!isIclinicaSyncConfigured()) {
+    return res.status(503).json({ error: "integration_not_configured" });
+  }
+  const tenantSlug = tenantSlugFromRequest(req);
+  const sessionToken = sessionTokenFromRequest(req);
+  const attendanceId = Number(req.query.attendance_id);
+  const afterId = Number(req.query.after) || 0;
+  if (!sessionToken) {
+    return res.status(400).json({ error: "missing_session_token" });
+  }
+  if (!attendanceId) {
+    return res.status(400).json({ error: "missing_attendance_id" });
+  }
+  try {
+    const tenant = await getTenantBySlug(tenantSlug);
+    if (!tenant) return res.status(404).json({ error: "tenant_not_found" });
+
+    const upstream = await openPsychChatStream(tenant.slug, sessionToken, attendanceId, afterId);
+    if (!upstream.ok || !upstream.body) {
+      const text = await upstream.text().catch(() => "");
+      return res.status(upstream.status || 502).json({
+        error: "upstream_error",
+        message: text || "Falha ao abrir stream do plantão.",
+      });
+    }
+
+    res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
+    res.setHeader("Cache-Control", "no-cache, no-transform");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Accel-Buffering", "no");
+    res.flushHeaders?.();
+
+    const reader = upstream.body.getReader();
+    const onClose = () => {
+      void reader.cancel().catch(() => undefined);
+    };
+    req.on("close", onClose);
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) {
+        res.write(Buffer.from(value));
+      }
+    }
+    res.end();
+  } catch (error) {
+    console.error("[psych-chat] stream error:", error);
+    if (!res.headersSent) {
+      return res.status(502).json({ error: "upstream_error" });
+    }
+    res.end();
   }
 });
 

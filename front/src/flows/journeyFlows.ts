@@ -1,6 +1,6 @@
 // @ts-nocheck
 import type { ChatApi } from '../types/chat';
-import { getJourneyByNumber, getJourneyQuestions } from '../data/journeys';
+import { getJourneyAttachments, getJourneyQuestions, getJourneySteps } from '../data/journeys';
 import { isAiChatEnabled, sendChatMessage } from '../services/liaApi';
 import { prepareSpeechFromResponse } from '../services/chatSpeech';
 import { startAiJourney } from './journeyAiRunner';
@@ -17,6 +17,7 @@ import {
   cancelPostJourneyFollowUp,
   schedulePostJourneyFollowUp,
 } from './postJourneyFollowUp';
+import { markJourneyCompleted } from './markJourneyCompleted';
 
 export function createJourneyRunner(api: ChatApi) {
   const profile = api.getProfile();
@@ -183,26 +184,30 @@ export function createJourneyRunner(api: ChatApi) {
   }
 
 // ═══════════════════════ START JOURNEY ═══════════════════════
-  function endJourneyCtas(buttons) {
+  function endJourneyCtas(buttons, completedJourney) {
+    if (typeof completedJourney === 'number') {
+      markJourneyCompleted(api, completedJourney);
+    }
     api.addCtas(buttons);
     schedulePostJourneyFollowUp(api);
   }
 
   function startJourney(n: number) {
   api.showScreen('chatScreen');
-  if (!profile.journeysCompleted.includes(n)) profile.journeysCompleted.push(n);
-  api.setProgress(Math.min(100, profile.journeysCompleted.length * 8 + 10));
-  api.updateMap();
 
-  const journey = getJourneyByNumber(n);
   const apiQuestions = getJourneyQuestions(n);
-  const apiSteps = journey?.steps ?? [];
+  const apiSteps = getJourneySteps(n);
+  const attachments = getJourneyAttachments(n);
 
   cancelPostJourneyFollowUp();
   questionJourneyCtrl?.cancel();
   questionJourneyCtrl = null;
   aiJourneyCtrl?.cancel();
   aiJourneyCtrl = null;
+
+  if (attachments.length > 0) {
+    api.addMedia(attachments);
+  }
 
   if (apiSteps.length > 0 && isAiChatEnabled()) {
     aiJourneyCtrl = startAiJourney(api, n, startJourney);
@@ -327,7 +332,7 @@ export function createJourneyRunner(api: ChatApi) {
                   {icon:'▶️',label:'Continuar — Jornada 2',style:'primary',action: () => j2()},
                   {icon:'📊',label:'Ver meu mapa emocional',style:'secondary',action: () => api.showScreen('mapScreen')},
                   {icon:'💜',label:'Falar com psicólogo',style:'accent',action: () => api.openPsych()}
-                ]),400);
+                ], 1),400);
               },2400),800);
             });
           });
@@ -388,7 +393,7 @@ export function createJourneyRunner(api: ChatApi) {
               {icon:'▶️',label:'Continuar — Jornada 3',style:'primary',action: () => j3()},
               {icon:'📊',label:'Ver meu mapa',style:'secondary',action: () => api.showScreen('mapScreen')},
               {icon:'💜',label:'Falar com psicólogo',style:'accent',action: () => api.openPsych()}
-            ]),400);
+            ], 2),400);
           },2000),800);
         });
       });
@@ -422,7 +427,7 @@ export function createJourneyRunner(api: ChatApi) {
                     {icon:'▶️',label:'Continuar — Jornada 4',style:'primary',action: () => j4()},
                     {icon:'🌱',label:'Jornada 5 — Cuidar de Si',style:'secondary',action: () => j5()},
                     {icon:'💜',label:'Falar com psicólogo',style:'accent',action: () => api.openPsych()}
-                  ]),400);
+                  ], 3),400);
                 },2200),800);
               },2200),800);
             });
@@ -486,7 +491,7 @@ export function createJourneyRunner(api: ChatApi) {
             {icon:'▶️',label:'Continuar — Jornada 5',style:'primary',action: () => j5()},
             {icon:'📊',label:'Ver meu mapa',style:'secondary',action: () => api.showScreen('mapScreen')},
             {icon:'💜',label:'Falar com psicólogo',style:'accent',action: () => api.openPsych()}
-          ]),400);
+          ], 4),400);
         },2000),800);
       });
     });
@@ -537,7 +542,7 @@ export function createJourneyRunner(api: ChatApi) {
         {icon:'▶️',label:'Continuar — Jornada 6',style:'primary',action: () => j6()},
         {icon:'📊',label:'Ver meu mapa',style:'secondary',action: () => api.showScreen('mapScreen')},
         {icon:'💜',label:'Falar com psicólogo',style:'accent',action: () => api.openPsych()}
-      ]),400);
+      ], 5),400);
     },2200),800);
   },2200),800);
 }
@@ -570,7 +575,7 @@ export function createJourneyRunner(api: ChatApi) {
                 setTimeout(()=>endJourneyCtas([
                   {icon:'▶️',label:'Continuar — Jornada 7',style:'primary',action: () => j7()},
                   {icon:'💜',label:'Falar com psicólogo',style:'accent',action: () => api.openPsych()}
-                ]),400);
+                ], 6),400);
               },2200),800);
             });
           });
@@ -607,7 +612,7 @@ export function createJourneyRunner(api: ChatApi) {
                 setTimeout(()=>endJourneyCtas([
                   {icon:'▶️',label:'Continuar — Jornada 8',style:'primary',action: () => j8()},
                   {icon:'💜',label:'Falar com psicólogo',style:'accent',action: () => api.openPsych()}
-                ]),400);
+                ], 7),400);
               },2000),800);
             },2200),800);
           });
@@ -634,7 +639,7 @@ export function createJourneyRunner(api: ChatApi) {
           setTimeout(()=>endJourneyCtas([
             {icon:'▶️',label:'Continuar — Jornada 9',style:'primary',action: () => j9()},
             {icon:'💜',label:'Falar com psicólogo',style:'accent',action: () => api.openPsych()}
-          ]),400);
+          ], 8),400);
         },2000),800);
       },2200),800);
     },2200),800);
@@ -672,7 +677,7 @@ export function createJourneyRunner(api: ChatApi) {
                   {icon:'💜',label:'Falar com psicólogo AGORA',sub:'Plantão disponível 24h',style:'accent',action: () => api.openPsych()},
                   {icon:'🌱',label:'Jornada 5 — Cuidar de Si',style:'primary',action: () => j5()},
                   {icon:'📊',label:'Ver meu mapa',style:'secondary',action: () => api.showScreen('mapScreen')}
-                ]),400);
+                ], 9),400);
               },2200),800);
             },2200),800);
           });
@@ -699,7 +704,7 @@ export function createJourneyRunner(api: ChatApi) {
           setTimeout(()=>endJourneyCtas([
             {icon:'▶️',label:'Continuar — Jornada 11',style:'primary',action: () => j11()},
             {icon:'💜',label:'Falar com psicólogo',style:'accent',action: () => api.openPsych()}
-          ]),400);
+          ], 10),400);
         },2000),800);
       },2200),800);
     },2200),800);
@@ -724,7 +729,7 @@ export function createJourneyRunner(api: ChatApi) {
           setTimeout(()=>endJourneyCtas([
             {icon:'▶️',label:'Continuar — Jornada 12',style:'primary',action: () => j12()},
             {icon:'💜',label:'Falar com psicólogo',style:'accent',action: () => api.openPsych()}
-          ]),400);
+          ], 11),400);
         },2000),800);
       },2200),800);
     },2200),800);
@@ -761,7 +766,7 @@ export function createJourneyRunner(api: ChatApi) {
                   {icon:'📊',label:'Ver meu mapa completo',style:'primary',action: () => api.showScreen('mapScreen')},
                   {icon:'🔄',label:'Revisitar jornadas',style:'secondary',action: () => api.showScreen('journeyScreen')},
                   {icon:'💜',label:'Falar com psicólogo',style:'accent',action: () => api.openPsych()}
-                ]),400);
+                ], 12),400);
                 api.setProgress(100);
               },2400),800);
             },2200),800);

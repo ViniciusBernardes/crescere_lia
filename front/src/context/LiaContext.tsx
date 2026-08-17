@@ -82,14 +82,24 @@ const LiaContext = createContext<LiaContextValue | null>(null)
 
 const screenMap: Record<string, ScreenId> = {
   loginScreen: 'login',
+  forgotPasswordScreen: 'forgotPassword',
+  resetPasswordScreen: 'resetPassword',
   introScreen: 'intro',
   chatScreen: 'chat',
   journeyScreen: 'journey',
   mapScreen: 'map',
 }
 
+function initialScreen(): ScreenId {
+  if (typeof window !== 'undefined') {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('reset_token')) return 'resetPassword'
+  }
+  return hasCaregiverIdentity() ? 'intro' : 'login'
+}
+
 export function LiaProvider({ children }: { children: ReactNode }) {
-  const [screen, setScreen] = useState<ScreenId>(() => (hasCaregiverIdentity() ? 'intro' : 'login'))
+  const [screen, setScreen] = useState<ScreenId>(() => initialScreen())
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [profile, setProfile] = useState<UserProfile>(createEmptyProfile)
   const [progress, setProgress] = useState(0)
@@ -318,6 +328,11 @@ export function LiaProvider({ children }: { children: ReactNode }) {
         })
         if (filtered.length === 0) return
         appendMessage({ id: uid(), kind: 'ctas', buttons: filtered, time: formatTime() })
+      },
+      addMedia: (items) => {
+        const cleaned = items.filter((item) => Boolean(item?.url))
+        if (cleaned.length === 0) return
+        appendMessage({ id: uid(), kind: 'media', items: cleaned, time: formatTime() })
       },
       suggestBlock: (journey) => {
         if (!showJourneys()) {

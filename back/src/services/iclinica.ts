@@ -10,6 +10,17 @@ export interface IclinicaJourneyQuestion {
   options: string[];
 }
 
+export interface IclinicaJourneyAttachment {
+  id: number;
+  sort_order: number;
+  kind: "pdf" | "video" | "audio" | "video_link";
+  title: string | null;
+  url: string | null;
+  mime?: string | null;
+  size?: number | null;
+  original_name?: string | null;
+}
+
 export interface IclinicaJourney {
   number: number;
   title: string;
@@ -22,6 +33,7 @@ export interface IclinicaJourney {
   activation_signals: string[];
   questions: IclinicaJourneyQuestion[];
   steps?: Array<Record<string, unknown>>;
+  attachments?: IclinicaJourneyAttachment[];
 }
 
 export interface IclinicaPromptResponse {

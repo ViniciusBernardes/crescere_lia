@@ -1,7 +1,10 @@
 import { Router } from "express";
-import { authenticateCaregiver } from "../services/caregiverAuth.js";
 import {
-  forgotPasswordInIclinica,
+  authenticateCaregiver,
+  requestCaregiverPasswordReset,
+  resetCaregiverPassword,
+} from "../services/caregiverAuth.js";
+import {
   isIclinicaSyncConfigured,
   registerPatientInIclinica,
 } from "../services/iclinicaSync.js";
@@ -9,17 +12,26 @@ import { resolveTenantSlug } from "../services/tenants.js";
 
 export const authRouter = Router();
 
-function authError(res: import("express").Response, error: unknown) {
-  const message =
-    error instanceof Error
-      ? error.message.replace(/^iClinica:\s*/i, "")
-      : "Falha ao autenticar.";
+function errorStatus(error: unknown): number {
   const status =
     typeof error === "object" && error && "status" in error
       ? Number((error as { status: unknown }).status) || 500
       : 500;
-  return res.status(status >= 400 && status < 600 ? status : 500).json({
-    error: "auth_failed",
+  return status >= 400 && status < 600 ? status : 500;
+}
+
+function authError(
+  res: import("express").Response,
+  error: unknown,
+  fallback: string,
+  code = "auth_failed",
+) {
+  const message =
+    error instanceof Error
+      ? error.message.replace(/^iClinica:\s*/i, "")
+      : fallback;
+  return res.status(errorStatus(error)).json({
+    error: code,
     message,
   });
 }
@@ -41,7 +53,7 @@ authRouter.post("/auth/login", async (req, res) => {
       },
     });
   } catch (error) {
-    return authError(res, error);
+    return authError(res, error, "Falha ao autenticar.");
   }
 });
 
@@ -83,28 +95,39 @@ authRouter.post("/auth/register", async (req, res) => {
       },
     });
   } catch (error) {
-    return authError(res, error);
+    return authError(res, error, "Falha ao cadastrar.");
   }
 });
 
 authRouter.post("/auth/forgot", async (req, res) => {
   try {
-    if (!isIclinicaSyncConfigured()) {
-      return res.status(503).json({
-        error: "integration_not_configured",
-        message: "Recuperação de senha depende da integração com o Crescere.",
-      });
-    }
-
     const tenantSlug = resolveTenantSlug(req.headers["x-tenant-slug"]);
     const body = req.body as Record<string, unknown>;
-    const email = typeof body.email === "string" ? body.email.trim() : "";
-    const data = await forgotPasswordInIclinica({
-      company_slug: tenantSlug,
-      email,
-    });
-    res.json(data);
+    const email = typeof body.email === "string" ? body.email : "";
+
+    const result = await requestCaregiverPasswordReset(tenantSlug, email);
+    res.json(result);
   } catch (error) {
-    return authError(res, error);
+    return authError(res, error, "Falha ao solicitar redefinição.", "forgot_failed");
+  }
+});
+
+authRouter.post("/auth/reset", async (req, res) => {
+  try {
+    const body = req.body as Record<string, unknown>;
+    const result = await resetCaregiverPassword({
+      email: typeof body.email === "string" ? body.email : "",
+      token: typeof body.token === "string" ? body.token : "",
+      password: typeof body.password === "string" ? body.password : "",
+      passwordConfirmation:
+        typeof body.password_confirmation === "string"
+          ? body.password_confirmation
+          : typeof body.passwordConfirmation === "string"
+            ? body.passwordConfirmation
+            : "",
+    });
+    res.json(result);
+  } catch (error) {
+    return authError(res, error, "Falha ao redefinir senha.", "reset_failed");
   }
 });

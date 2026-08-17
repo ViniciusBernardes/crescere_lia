@@ -192,6 +192,34 @@ export async function fetchPsychChatMessages(
   );
 }
 
+/** Open upstream SSE for plantão chat (Node proxies the stream to the browser). */
+export async function openPsychChatStream(
+  companySlug: string,
+  sessionToken: string,
+  attendanceId: number,
+  afterId = 0,
+): Promise<Response> {
+  const base = apiBaseUrl();
+  const secret = syncSecret();
+  if (!base || !secret) {
+    throw new Error("Integração iClinica não configurada (ICLINICA_API_URL / LIA_SYNC_SECRET).");
+  }
+
+  const query = new URLSearchParams({
+    company_slug: companySlug.trim().toLowerCase(),
+    session_token: sessionToken,
+    attendance_id: String(attendanceId),
+    after: String(afterId),
+  });
+
+  return fetch(`${base}/api/v1/integrations/lia/chat/stream?${query}`, {
+    headers: {
+      Accept: "text/event-stream",
+      "X-Lia-Sync-Secret": secret,
+    },
+  });
+}
+
 export async function sendPsychChatMessage(
   companySlug: string,
   sessionToken: string,
@@ -278,12 +306,27 @@ export async function registerPatientInIclinica(payload: {
   };
 }
 
-export async function forgotPasswordInIclinica(payload: {
+export async function forgotPatientPasswordInIclinica(payload: {
   company_slug: string;
   email: string;
 }): Promise<{ message: string }> {
   return iclinicaRequest<{ message: string }>(
     "/api/v1/integrations/lia/auth/forgot",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+export async function resetPatientPasswordInIclinica(payload: {
+  email: string;
+  token: string;
+  password: string;
+  password_confirmation: string;
+}): Promise<{ message: string }> {
+  return iclinicaRequest<{ message: string }>(
+    "/api/v1/integrations/lia/auth/reset",
     {
       method: "POST",
       body: JSON.stringify(payload),

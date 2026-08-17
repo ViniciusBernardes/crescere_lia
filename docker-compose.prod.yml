@@ -40,6 +40,9 @@ services:
       args:
         VITE_USE_AI_CHAT: "true"
         VITE_SHOW_JOURNEYS: "true"
+        # Produto: mapa emocional e pílulas ficam off no app do cuidador
+        VITE_SHOW_EMOTIONAL_MAP: "false"
+        VITE_SHOW_QUICK_REPLIES: "false"
     container_name: crescere-lia-front
     restart: unless-stopped
     depends_on:

@@ -207,6 +207,11 @@ html,body{height:100%;height:100dvh;width:100%;overflow:hidden;font-family:'Nuni
   border-radius:12px;
   padding:10px 12px;
 }
+.login-alert-success{
+  color:#027a48;
+  background:#ecfdf3;
+  border-color:#abefc6;
+}
 .login-field{display:flex;flex-direction:column;gap:6px;}
 .login-field span{
   font-size:11px;
@@ -1030,6 +1035,21 @@ html,body{height:100%;height:100dvh;width:100%;overflow:hidden;font-family:'Nuni
 
 /* ── CTA STACK ── */
 .cta-stack{display:flex;flex-direction:column;gap:7px;margin-top:9px;}
+.journey-media-stack{display:flex;flex-direction:column;gap:10px;margin-top:10px;}
+.journey-media-card{
+  display:flex;gap:10px;align-items:flex-start;
+  text-decoration:none;color:inherit;
+  background:var(--lilac-xpale);border:1px solid rgba(139,107,177,0.16);
+  border-radius:14px;padding:12px;
+}
+.journey-media-card.static{cursor:default;}
+.journey-media-icon{font-size:20px;line-height:1;flex-shrink:0;margin-top:2px;}
+.journey-media-body{display:flex;flex-direction:column;gap:8px;min-width:0;flex:1;}
+.journey-media-card strong{display:block;font-size:13.5px;font-weight:800;color:var(--text-dark);}
+.journey-media-card small{display:block;font-size:12px;color:var(--lilac-dark);margin-top:2px;}
+.journey-media-card audio,.journey-media-card video{width:100%;border-radius:10px;}
+.journey-media-frame{position:relative;width:100%;padding-top:56.25%;border-radius:10px;overflow:hidden;background:#111;}
+.journey-media-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
 .ctabtn{display:flex;align-items:center;gap:9px;padding:11px 14px;border-radius:var(--btn-radius);border:none;cursor:pointer;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;text-align:left;transition:all 0.18s;}
 .ctabtn.primary {
   background: linear-gradient(135deg, #7B5BA8, #5E3A98);

@@ -15,6 +15,7 @@ export interface JourneyItemDto {
   activation_signals?: string[];
   questions?: IclinicaJourney["questions"];
   steps?: IclinicaJourney["steps"];
+  attachments?: NonNullable<IclinicaJourney["attachments"]>;
 }
 
 const FALLBACK_JOURNEYS: JourneyItemDto[] = [
@@ -51,6 +52,7 @@ export function mapIclinicaJourney(j: IclinicaJourney): JourneyItemDto {
     activation_signals: j.activation_signals ?? [],
     questions: j.questions ?? [],
     steps: j.steps ?? [],
+    attachments: (j.attachments ?? []).filter((item) => Boolean(item.url)),
   };
 }
 
