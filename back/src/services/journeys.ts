@@ -14,6 +14,7 @@ export interface JourneyItemDto {
   competencies?: string[];
   activation_signals?: string[];
   questions?: IclinicaJourney["questions"];
+  steps?: IclinicaJourney["steps"];
   attachments?: NonNullable<IclinicaJourney["attachments"]>;
 }
 
@@ -50,6 +51,7 @@ export function mapIclinicaJourney(j: IclinicaJourney): JourneyItemDto {
     competencies: j.competencies ?? [],
     activation_signals: j.activation_signals ?? [],
     questions: j.questions ?? [],
+    steps: j.steps ?? [],
     attachments: (j.attachments ?? []).filter((item) => Boolean(item.url)),
   };
 }

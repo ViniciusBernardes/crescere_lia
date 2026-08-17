@@ -2,6 +2,11 @@ import { Router } from "express";
 import { isIclinicaIntegrationEnabled } from "../services/iclinica.js";
 import { resolveJourneysForTenant } from "../services/journeys.js";
 import { fetchIclinicaSystemPrompt } from "../services/iclinica.js";
+import {
+  fetchLibraryFromIclinica,
+  fetchProfessionalsFromIclinica,
+  isIclinicaSyncConfigured,
+} from "../services/iclinicaSync.js";
 import { resolveTenantSlug } from "../services/tenants.js";
 
 export const iclinicaRouter = Router();
@@ -55,5 +60,43 @@ iclinicaRouter.get("/lia-context", async (req, res) => {
     const message =
       error instanceof Error ? error.message : "Falha ao carregar contexto.";
     return res.status(502).json({ error: "context_error", message });
+  }
+});
+
+iclinicaRouter.get("/professionals", async (req, res) => {
+  if (!isIclinicaSyncConfigured()) {
+    return res.status(503).json({
+      error: "integration_not_configured",
+      message: "Catálogo de profissionais depende da integração com o Crescere.",
+    });
+  }
+
+  try {
+    const tenantSlug = tenantFromRequest(req);
+    const data = await fetchProfessionalsFromIclinica(tenantSlug);
+    return res.json(data);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Falha ao carregar profissionais.";
+    return res.status(502).json({ error: "professionals_error", message });
+  }
+});
+
+iclinicaRouter.get("/library", async (req, res) => {
+  if (!isIclinicaSyncConfigured()) {
+    return res.status(503).json({
+      error: "integration_not_configured",
+      message: "Biblioteca depende da integração com o Crescere.",
+    });
+  }
+
+  try {
+    const tenantSlug = tenantFromRequest(req);
+    const data = await fetchLibraryFromIclinica(tenantSlug);
+    return res.json(data);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Falha ao carregar a biblioteca.";
+    return res.status(502).json({ error: "library_error", message });
   }
 });

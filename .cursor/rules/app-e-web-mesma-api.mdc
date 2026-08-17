@@ -1,0 +1,14 @@
+---
+description: Flutter é mais um frontend desta API /api
+alwaysApply: true
+---
+
+# Frontends da API LIA
+
+Web e **app Flutter** usam as mesmas rotas `/api`.
+
+- Tenant: `X-Tenant-Slug`
+- Chat/voz: `POST /api/chat`, `POST /api/tts`, `POST /api/transcribe`
+- Se o app precisar de dado do Crescere (cadastro, biblioteca, plantão), **exponha aqui** um proxy. Não peça para o Flutter chamar o Laravel.
+
+Contrato do app: `lia_app/docs/ARQUITETURA.md`

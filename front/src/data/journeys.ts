@@ -35,6 +35,11 @@ export function getJourneyQuestions(n: number): JourneyQuestion[] {
   return [...(journey?.questions ?? [])].sort((a, b) => a.sort_order - b.sort_order)
 }
 
+export function getJourneySteps(n: number) {
+  const journey = journeysCache.find((j) => j.n === n)
+  return [...(journey?.steps ?? [])]
+}
+
 export function getJourneyAttachments(n: number) {
   const journey = journeysCache.find((j) => j.n === n)
   return [...(journey?.attachments ?? [])]

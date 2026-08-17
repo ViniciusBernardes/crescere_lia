@@ -18,11 +18,19 @@ export interface UserProfileContext {
   sleepQuality?: string | null;
 }
 
+export interface JourneyCatalogItem {
+  number: number;
+  title: string;
+  subtitle?: string | null;
+  activation_signals?: string[];
+}
+
 export interface ChatRequestBody {
   message: string;
   profile?: UserProfileContext;
   history?: ChatHistoryMessage[];
   journey?: JourneyContext;
+  journeys?: JourneyCatalogItem[];
 }
 
 export interface JourneyContext {

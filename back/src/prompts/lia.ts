@@ -1,4 +1,9 @@
-import type { ChatHistoryMessage, JourneyContext, UserProfileContext } from "../types/chat.js";
+import type {
+  ChatHistoryMessage,
+  JourneyCatalogItem,
+  JourneyContext,
+  UserProfileContext,
+} from "../types/chat.js";
 
 const JOURNEY_SUMMARY = [
   "1 — Acolhimento e Chegada",
@@ -107,15 +112,32 @@ function formatProfile(profile?: UserProfileContext): string {
     : "Perfil do cuidador: ainda não preenchido.";
 }
 
+function formatJourneysCatalog(journeys?: JourneyCatalogItem[]): string {
+  if (!journeys?.length) return "";
+  const lines = journeys.map((j) => {
+    const subtitle = j.subtitle?.trim() ? ` — ${j.subtitle.trim()}` : "";
+    const signals = j.activation_signals?.length
+      ? ` | sinais: ${j.activation_signals.join(", ")}`
+      : "";
+    return `${j.number} — ${j.title}${subtitle}${signals}`;
+  });
+  return `Jornadas ativas desta empresa (use só estes números e títulos; não invente outras):\n${lines.join("\n")}`;
+}
+
 export function buildChatMessages(
   message: string,
   profile?: UserProfileContext,
   history: ChatHistoryMessage[] = [],
   journey?: JourneyContext,
   systemPrompt?: string,
+  journeys?: JourneyCatalogItem[],
 ) {
   const basePrompt = systemPrompt?.trim() || LIA_SYSTEM_PROMPT;
   let systemContent = `${basePrompt}\n\n${formatProfile(profile)}`;
+  const catalog = formatJourneysCatalog(journeys);
+  if (catalog) {
+    systemContent += `\n\n${catalog}`;
+  }
 
   if (journey) {
     systemContent += `\n\n${buildJourneySupplement(journey)}`;
