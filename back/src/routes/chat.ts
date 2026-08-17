@@ -13,6 +13,7 @@ import {
   fetchVideoTokenFromIclinica,
   sendPsychChatMessage,
   isIclinicaSyncConfigured,
+  endVideoCallInIclinica,
 } from "../services/iclinicaSync.js";
 import type { ChatHistoryMessage, ChatRequestBody, JourneyContext } from "../types/chat.js";
 
@@ -101,6 +102,17 @@ function isValidJourney(journey: unknown): journey is JourneyContext {
   );
 }
 
+function isValidJourneys(value: unknown): value is import("../types/chat.js").JourneyCatalogItem[] {
+  if (!Array.isArray(value)) return false;
+  return value.every(
+    (item) =>
+      item &&
+      typeof item === "object" &&
+      typeof item.number === "number" &&
+      typeof item.title === "string",
+  );
+}
+
 function wantsSpeech(req: import("express").Request): boolean {
   return req.header("x-tts-enabled") === "true";
 }
@@ -156,6 +168,7 @@ chatRouter.post("/chat", async (req, res) => {
 
   const history = isValidHistory(body.history) ? body.history : [];
   const journey = isValidJourney(body.journey) ? body.journey : undefined;
+  const journeys = isValidJourneys(body.journeys) ? body.journeys : undefined;
 
   try {
     const result = await createChatReply(
@@ -164,6 +177,7 @@ chatRouter.post("/chat", async (req, res) => {
       body.profile,
       history,
       journey,
+      journeys,
     );
 
     if (wantsSpeech(req) && result.audioText) {
@@ -334,6 +348,30 @@ chatRouter.post("/chat/psych/send", async (req, res) => {
     return res.json(msg);
   } catch (error) {
     console.error("[psych-chat] send error:", error);
+    return res.status(502).json({ error: "upstream_error" });
+  }
+});
+
+chatRouter.post("/chat/psych/video-end", async (req, res) => {
+  if (!isIclinicaSyncConfigured()) {
+    return res.status(503).json({ error: "integration_not_configured" });
+  }
+  const tenantSlug = tenantSlugFromRequest(req);
+  const sessionToken = sessionTokenFromRequest(req);
+  const attendanceId = Number(req.body?.attendance_id);
+  if (!sessionToken) {
+    return res.status(400).json({ error: "missing_session_token" });
+  }
+  if (!attendanceId) {
+    return res.status(400).json({ error: "missing_attendance_id" });
+  }
+  try {
+    const tenant = await getTenantBySlug(tenantSlug);
+    if (!tenant) return res.status(404).json({ error: "tenant_not_found" });
+    const data = await endVideoCallInIclinica(tenant.slug, sessionToken, attendanceId);
+    return res.json(data);
+  } catch (error) {
+    console.error("[psych-video] end error:", error);
     return res.status(502).json({ error: "upstream_error" });
   }
 });

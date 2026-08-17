@@ -3,6 +3,7 @@ import { getJourneyByNumber } from '../data/journeys'
 import { isAiChatEnabled, sendJourneyStep } from '../services/liaApi'
 import { prepareSpeechFromResponse } from '../services/chatSpeech'
 import { buildJourneySteps, type JourneyDeps } from './journeyAiSteps'
+import { parseApiJourneySteps } from './journeyApiSteps'
 import { schedulePostJourneyFollowUp } from './postJourneyFollowUp'
 
 export type AiJourneyController = {
@@ -60,9 +61,10 @@ export function startAiJourney(
     setProgress: (pct) => api.setProgress(pct),
   }
 
-  const steps = buildJourneySteps(deps)[journeyNumber] ?? []
   const journey = getJourneyByNumber(journeyNumber)
   const journeyTitle = journey?.title || `Jornada ${journeyNumber}`
+  const fromApi = parseApiJourneySteps(journey?.steps, deps)
+  const steps = fromApi.length > 0 ? fromApi : (buildJourneySteps(deps)[journeyNumber] ?? [])
 
   const cancel = () => {
     active = false

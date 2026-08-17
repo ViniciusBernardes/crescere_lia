@@ -196,12 +196,18 @@ export function createJourneyRunner(api: ChatApi) {
 
   const journey = getJourneyByNumber(n);
   const apiQuestions = getJourneyQuestions(n);
+  const apiSteps = journey?.steps ?? [];
 
   cancelPostJourneyFollowUp();
   questionJourneyCtrl?.cancel();
   questionJourneyCtrl = null;
   aiJourneyCtrl?.cancel();
   aiJourneyCtrl = null;
+
+  if (apiSteps.length > 0 && isAiChatEnabled()) {
+    aiJourneyCtrl = startAiJourney(api, n, startJourney);
+    return;
+  }
 
   if (apiQuestions.length > 0) {
     questionJourneyCtrl = startQuestionJourney(api, n, apiQuestions, () => {

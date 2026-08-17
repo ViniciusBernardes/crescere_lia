@@ -30,6 +30,7 @@ export interface IclinicaJourney {
   color: string | null;
   is_global: boolean;
   questions: IclinicaJourneyQuestion[];
+  steps?: Array<Record<string, unknown>>;
 }
 
 export interface IclinicaJourneysResponse {
@@ -252,4 +253,83 @@ export async function loginPatientInIclinica(payload: {
     name: data.patient.name,
     email: data.patient.email ?? payload.email,
   };
+}
+
+export async function registerPatientInIclinica(payload: {
+  company_slug: string;
+  name: string;
+  email: string;
+  password: string;
+  password_confirmation: string;
+  profile_type?: string;
+}): Promise<{ id: number; name: string; email: string }> {
+  const data = await iclinicaRequest<IclinicaPatientAuthResponse>(
+    "/api/v1/integrations/lia/auth/register",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+
+  return {
+    id: data.patient.id,
+    name: data.patient.name,
+    email: data.patient.email ?? payload.email,
+  };
+}
+
+export async function forgotPasswordInIclinica(payload: {
+  company_slug: string;
+  email: string;
+}): Promise<{ message: string }> {
+  return iclinicaRequest<{ message: string }>(
+    "/api/v1/integrations/lia/auth/forgot",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+export async function fetchProfessionalsFromIclinica(
+  companySlug: string,
+): Promise<Record<string, unknown>> {
+  const query = new URLSearchParams({
+    company_slug: companySlug.trim().toLowerCase(),
+  });
+  return iclinicaRequest<Record<string, unknown>>(
+    `/api/v1/integrations/lia/professionals?${query}`,
+  );
+}
+
+export async function fetchLibraryFromIclinica(
+  companySlug: string,
+): Promise<Record<string, unknown>> {
+  const query = new URLSearchParams({
+    company_slug: companySlug.trim().toLowerCase(),
+  });
+  return iclinicaRequest<Record<string, unknown>>(
+    `/api/v1/integrations/lia/library?${query}`,
+  );
+}
+
+export async function endVideoCallInIclinica(
+  companySlug: string,
+  sessionToken: string,
+  attendanceId: number,
+): Promise<Record<string, unknown>> {
+  return iclinicaRequest<Record<string, unknown>>(
+    "/api/v1/integrations/lia/video/end",
+    {
+      method: "POST",
+      headers: {
+        "X-Lia-Session-Token": sessionToken,
+      },
+      body: JSON.stringify({
+        company_slug: companySlug.trim().toLowerCase(),
+        session_token: sessionToken,
+        attendance_id: attendanceId,
+      }),
+    },
+  );
 }

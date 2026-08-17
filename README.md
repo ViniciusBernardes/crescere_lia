@@ -90,7 +90,26 @@ LIA_SYNC_SECRET=seu-segredo-compartilhado
 LIA_SYNC_SECRET=seu-segredo-compartilhado
 ```
 
-O front lê o tenant do embed iClinica: `?tenant=company-1` (ou `VITE_TENANT_SLUG` em dev).
+O front lê o tenant do embed iClinica: `?tenant=company-1` (ou `VITE_TENANT_SLUG` em dev). O app Flutter usa o mesmo header `X-Tenant-Slug`.
+
+## App Flutter (frontend desta API)
+
+O `lia_app` **não** chama o Crescere. Ele usa estas rotas (iguais à web, mais proxy de cadastro/catálogo):
+
+| Rota | Uso |
+|------|-----|
+| `POST /api/auth/login` | Login do cuidador |
+| `POST /api/auth/register` | Cadastro |
+| `POST /api/auth/forgot` | Esqueci a senha |
+| `POST /api/sessions/sync` | Sessão / plantão |
+| `GET /api/journeys` | Jornadas |
+| `POST /api/chat` | Chat |
+| `POST /api/tts` | Ouvir |
+| `GET /api/professionals` | Profissionais |
+| `GET /api/library` | Biblioteca |
+| `GET /api/chat/psych/*` | Plantão / vídeo |
+
+Local: `LIA_API_URL=http://localhost:3001`. Produção: `https://lia.crescere.life`.
 
 Rotas locais da LIA:
 

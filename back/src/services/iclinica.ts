@@ -21,6 +21,7 @@ export interface IclinicaJourney {
   competencies: string[];
   activation_signals: string[];
   questions: IclinicaJourneyQuestion[];
+  steps?: Array<Record<string, unknown>>;
 }
 
 export interface IclinicaPromptResponse {

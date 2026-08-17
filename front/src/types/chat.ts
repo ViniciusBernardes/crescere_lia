@@ -32,6 +32,7 @@ export interface JourneyItem {
   sub: string
   color: string
   questions?: JourneyQuestion[]
+  steps?: Array<Record<string, unknown>>
 }
 
 export interface ChatHistoryEntry {

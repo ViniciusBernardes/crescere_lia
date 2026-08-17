@@ -14,6 +14,7 @@ export interface JourneyItemDto {
   competencies?: string[];
   activation_signals?: string[];
   questions?: IclinicaJourney["questions"];
+  steps?: IclinicaJourney["steps"];
 }
 
 const FALLBACK_JOURNEYS: JourneyItemDto[] = [
@@ -49,6 +50,7 @@ export function mapIclinicaJourney(j: IclinicaJourney): JourneyItemDto {
     competencies: j.competencies ?? [],
     activation_signals: j.activation_signals ?? [],
     questions: j.questions ?? [],
+    steps: j.steps ?? [],
   };
 }
 

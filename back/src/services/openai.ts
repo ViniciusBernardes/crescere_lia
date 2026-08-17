@@ -9,6 +9,7 @@ import { syncCaregiverSession } from "./sessionSync.js";
 import type {
   ChatHistoryMessage,
   ChatResponseBody,
+  JourneyCatalogItem,
   JourneyContext,
   UserProfileContext,
 } from "../types/chat.js";
@@ -36,6 +37,7 @@ export async function createChatReply(
   profile?: UserProfileContext,
   history: ChatHistoryMessage[] = [],
   journey?: JourneyContext,
+  journeys?: JourneyCatalogItem[],
 ): Promise<ChatResponseBody> {
   const openai = await getClient(tenantSlug);
   const settings = (await resolveOpenAiSettings(tenantSlug))!;
@@ -47,6 +49,7 @@ export async function createChatReply(
     history,
     journey,
     systemPrompt,
+    journeys,
   );
 
   const completion = await openai.chat.completions.create({
