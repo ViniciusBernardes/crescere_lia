@@ -52,10 +52,16 @@ export async function syncCaregiverProfile(
   const identity = getCaregiverIdentity()
   const displayName = options?.displayName?.trim() || identity?.displayName || undefined
 
+  const today = new Date()
+  const visitDay = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+
   const body: Record<string, unknown> = {
     sessionToken,
     displayName,
-    profile,
+    profile: {
+      ...profile,
+      visitDays: [visitDay],
+    },
   }
 
   // Only send needsPsych when explicitly set — otherwise preserve the plantão flag server-side.
@@ -100,6 +106,13 @@ export type CaregiverSessionSnapshot = {
   patientId: number | null
   needsPsych: boolean
   profile: Record<string, unknown>
+  stats?: {
+    sessionCount: number
+    streakDays: number
+    journeysCompleted: number
+    journeysTotal: number
+  }
+  tags?: string[]
 }
 
 /** Carrega perfil e metadados da sessão persistidos no servidor. */

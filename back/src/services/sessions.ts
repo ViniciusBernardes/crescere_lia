@@ -6,6 +6,12 @@ import {
   fetchSessionFromIclinica,
   type IclinicaSessionSnapshot,
 } from "./iclinicaSync.js";
+import {
+  buildProfileStats,
+  deriveProfileTags,
+  mergeVisitDays,
+  type ProfileStats,
+} from "./profileStats.js";
 import { resolveTenant } from "./tenants.js";
 
 export interface SyncSessionPayload {
@@ -68,6 +74,20 @@ function buildSessionFields(payload: SyncSessionPayload) {
   };
 }
 
+function parseProfileJson(raw: unknown): Record<string, unknown> {
+  try {
+    if (typeof raw === "string") {
+      return JSON.parse(raw) as Record<string, unknown>;
+    }
+    if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+      return raw as Record<string, unknown>;
+    }
+  } catch {
+    // ignore malformed JSON
+  }
+  return {};
+}
+
 async function syncCaregiverSessionViaDb(
   companyId: number,
   sessionToken: string,
@@ -77,13 +97,20 @@ async function syncCaregiverSessionViaDb(
   const pool = getPool();
 
   const [existing] = await pool.execute<RowDataPacket[]>(
-    `SELECT id, needs_psych, patient_id FROM lia_caregiver_sessions
+    `SELECT id, needs_psych, patient_id, profile_json FROM lia_caregiver_sessions
      WHERE company_id = ? AND session_token = ?
      LIMIT 1`,
     [companyId, sessionToken],
   );
 
   if (existing[0]) {
+    const existingProfile = parseProfileJson(existing[0].profile_json);
+    fields.profile = {
+      ...fields.profile,
+      visitDays: mergeVisitDays(existingProfile, fields.profile),
+    };
+    const mergedProfileJson = JSON.stringify(fields.profile);
+
     const needsPsych =
       typeof fields.needsPsych === "boolean"
         ? fields.needsPsych
@@ -117,7 +144,7 @@ async function syncCaregiverSessionViaDb(
        WHERE id = ?`,
       [
         fields.displayName,
-        profileJson,
+        mergedProfileJson,
         fields.stress,
         fields.selfcare,
         fields.emotionToday,
@@ -228,19 +255,38 @@ export interface CaregiverSessionSnapshot {
   patientId: number | null;
   needsPsych: boolean;
   profile: Record<string, unknown>;
+  stats: ProfileStats;
+  tags: string[];
+}
+
+function enrichSnapshot(
+  snapshot: Omit<CaregiverSessionSnapshot, "stats" | "tags">,
+  lastActivityAt: string | null,
+  journeysTotal = 12,
+): CaregiverSessionSnapshot {
+  return {
+    ...snapshot,
+    stats: buildProfileStats(snapshot.profile, { lastActivityAt, journeysTotal }),
+    tags: deriveProfileTags(snapshot.profile),
+  };
 }
 
 function mapIclinicaSnapshot(data: IclinicaSessionSnapshot): CaregiverSessionSnapshot {
-  return {
-    displayName: data.display_name,
-    patientId: data.patient_id,
-    needsPsych: data.needs_psych,
-    profile: mergeProfileRecord(data.profile_json, {
-      stressLevel: data.stress_level,
-      selfcareLevel: data.selfcare_level,
-      emotionToday: data.emotion_today,
-    }),
-  };
+  const profile = mergeProfileRecord(data.profile_json, {
+    stressLevel: data.stress_level,
+    selfcareLevel: data.selfcare_level,
+    emotionToday: data.emotion_today,
+  });
+
+  return enrichSnapshot(
+    {
+      displayName: data.display_name,
+      patientId: data.patient_id,
+      needsPsych: data.needs_psych,
+      profile,
+    },
+    data.last_activity_at,
+  );
 }
 
 function mergeProfileRecord(
@@ -283,7 +329,7 @@ export async function getCaregiverSession(
   const pool = getPool();
   const [rows] = await pool.execute<RowDataPacket[]>(
     `SELECT display_name, patient_id, needs_psych, profile_json,
-            stress_level, selfcare_level, emotion_today
+            stress_level, selfcare_level, emotion_today, last_activity_at
      FROM lia_caregiver_sessions
      WHERE company_id = ? AND session_token = ?
      LIMIT 1`,
@@ -292,27 +338,21 @@ export async function getCaregiverSession(
 
   if (!rows[0]) return null;
 
-  let profileJson: Record<string, unknown> = {};
-  try {
-    const raw = rows[0].profile_json;
-    profileJson =
-      typeof raw === "string"
-        ? (JSON.parse(raw) as Record<string, unknown>)
-        : raw && typeof raw === "object"
-          ? (raw as Record<string, unknown>)
-          : {};
-  } catch {
-    profileJson = {};
-  }
+  const profileJson = parseProfileJson(rows[0].profile_json);
+  const lastActivityAt =
+    rows[0].last_activity_at != null ? String(rows[0].last_activity_at) : null;
 
-  return {
-    displayName: rows[0].display_name ? String(rows[0].display_name) : null,
-    patientId: rows[0].patient_id != null ? Number(rows[0].patient_id) : null,
-    needsPsych: Boolean(rows[0].needs_psych),
-    profile: mergeProfileRecord(profileJson, {
-      stressLevel: Number(rows[0].stress_level) || 0,
-      selfcareLevel: Number(rows[0].selfcare_level) || 0,
-      emotionToday: rows[0].emotion_today ? String(rows[0].emotion_today) : null,
-    }),
-  };
+  return enrichSnapshot(
+    {
+      displayName: rows[0].display_name ? String(rows[0].display_name) : null,
+      patientId: rows[0].patient_id != null ? Number(rows[0].patient_id) : null,
+      needsPsych: Boolean(rows[0].needs_psych),
+      profile: mergeProfileRecord(profileJson, {
+        stressLevel: Number(rows[0].stress_level) || 0,
+        selfcareLevel: Number(rows[0].selfcare_level) || 0,
+        emotionToday: rows[0].emotion_today ? String(rows[0].emotion_today) : null,
+      }),
+    },
+    lastActivityAt,
+  );
 }
