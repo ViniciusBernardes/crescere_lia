@@ -34,6 +34,8 @@ sessionsRouter.get("/sessions/me", async (req, res) => {
       patientId: snapshot.patientId,
       needsPsych: snapshot.needsPsych,
       profile: snapshot.profile,
+      stats: snapshot.stats,
+      tags: snapshot.tags,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Falha ao carregar sessão.";
