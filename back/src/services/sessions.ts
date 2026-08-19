@@ -22,6 +22,8 @@ export interface SyncSessionPayload {
   needsPsych?: boolean;
   /** When omitted, existing patient_id is preserved. */
   patientId?: number | null;
+  /** FCM device token for push notifications. */
+  fcmToken?: string;
 }
 
 const JOURNEY_TITLES: Record<number, string> = {
@@ -242,6 +244,9 @@ export async function syncCaregiverSession(
     }
     if (typeof fields.patientId === "number" || fields.patientId === null) {
       body.patient_id = fields.patientId;
+    }
+    if (typeof payload.fcmToken === "string" && payload.fcmToken) {
+      body.fcm_token = payload.fcmToken;
     }
     await pushSessionToIclinica(body);
     return;
