@@ -1,12 +1,10 @@
 import { Router } from "express";
 import OpenAI from "openai";
 import multer from "multer";
-import type { RowDataPacket } from "mysql2/promise";
 import { isOpenAiConfigured } from "../config.js";
 import { createChatReply, synthesizeSpeech, transcribeAudio } from "../services/openai.js";
 import { DEFAULT_IDLE_TIMEOUT_MS, getIdleTimeoutMs } from "../services/appConfig.js";
 import { getTenantBySlug, resolveTenantSlug } from "../services/tenants.js";
-import { getPool } from "../db/database.js";
 import {
   fetchPsychChatMessages,
   fetchPsychStatusFromIclinica,
@@ -15,6 +13,7 @@ import {
   sendPsychChatMessage,
   isIclinicaSyncConfigured,
   endVideoCallInIclinica,
+  streamPlantaoStatus,
 } from "../services/iclinicaSync.js";
 import type { ChatHistoryMessage, ChatRequestBody, JourneyContext } from "../types/chat.js";
 
@@ -349,38 +348,65 @@ chatRouter.get("/chat/psych/video-token", async (req, res) => {
     const tenant = await getTenantBySlug(tenantSlug);
     if (!tenant) return res.status(404).json({ error: "tenant_not_found" });
 
-    if (attendanceId) {
-      const tokenData = await fetchVideoTokenFromIclinica(tenant.slug, sessionToken, attendanceId);
-      return res.json(tokenData);
-    }
-
-    const pool = getPool();
-    const [rows] = await pool.execute<RowDataPacket[]>(
-      `SELECT pa.id
-       FROM psychologist_attendances pa
-       JOIN lia_caregiver_sessions lcs ON lcs.id = pa.lia_caregiver_session_id
-       WHERE lcs.company_id = ?
-         AND lcs.session_token = ?
-         AND pa.status = 'in_progress'
-         AND pa.channel = 'video'
-         AND pa.livekit_room_name IS NOT NULL
-       ORDER BY pa.created_at DESC
-       LIMIT 1`,
-      [tenant.id, sessionToken],
-    );
-    if (!rows[0]) {
-      return res.status(404).json({ error: "no_active_video" });
-    }
-
+    // Always delegate to the Laravel backend — it owns business logic and validates
+    // that the attendance belongs to this session.
     const tokenData = await fetchVideoTokenFromIclinica(
       tenant.slug,
       sessionToken,
-      Number(rows[0].id),
+      attendanceId || 0,
     );
     return res.json(tokenData);
   } catch (error) {
     console.error("[psych-video] token error:", error);
     return res.status(502).json({ error: "upstream_error" });
+  }
+});
+
+/**
+ * SSE stream for caregiver plantão status updates.
+ * The client opens this once and receives pushed events instead of polling.
+ *
+ * Event format: data: <JSON>\n\n
+ *   { status: "waiting"|"in_progress"|"ended"|"unavailable", attendance_id: number|null, channel: string|null }
+ */
+chatRouter.get("/chat/psych/plantao-stream", async (req, res) => {
+  if (!isIclinicaSyncConfigured()) {
+    return res.status(503).json({ error: "integration_not_configured" });
+  }
+  const tenantSlug = tenantSlugFromRequest(req);
+  const sessionToken = sessionTokenFromRequest(req);
+  if (!sessionToken) {
+    return res.status(400).json({ error: "missing_session_token" });
+  }
+  try {
+    const tenant = await getTenantBySlug(tenantSlug);
+    if (!tenant) return res.status(404).json({ error: "tenant_not_found" });
+
+    res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
+    res.setHeader("Cache-Control", "no-cache, no-transform");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Accel-Buffering", "no");
+    res.flushHeaders?.();
+
+    const controller = new AbortController();
+    req.on("close", () => controller.abort());
+
+    await streamPlantaoStatus(
+      tenant.slug,
+      sessionToken,
+      (data) => {
+        res.write(`data: ${JSON.stringify(data)}\n\n`);
+      },
+      controller.signal,
+    );
+
+    res.end();
+  } catch (error) {
+    console.error("[psych-plantao-stream] error:", error);
+    if (!res.headersSent) {
+      return res.status(502).json({ error: "upstream_error" });
+    }
+    res.end();
   }
 });
 
