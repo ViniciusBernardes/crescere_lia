@@ -12,6 +12,7 @@ export interface IclinicaSessionPayload {
   needs_psych?: boolean;
   last_activity_at?: string;
   patient_id?: number | null;
+  fcm_token?: string | null;
 }
 
 export interface IclinicaJourneyQuestion {
@@ -90,6 +91,23 @@ async function iclinicaRequest<T>(
   return data as T;
 }
 
+/**
+ * Lightweight keep-alive — only updates last_activity_at on the backend.
+ * Use instead of the full syncSession when the caregiver is just waiting in the queue.
+ */
+export async function heartbeatSession(
+  companySlug: string,
+  sessionToken: string,
+): Promise<void> {
+  await iclinicaRequest("/api/v1/integrations/lia/sessions/heartbeat", {
+    method: "POST",
+    body: JSON.stringify({
+      company_slug: companySlug.trim().toLowerCase(),
+      session_token: sessionToken,
+    }),
+  });
+}
+
 export async function pushSessionToIclinica(
   payload: IclinicaSessionPayload,
 ): Promise<void> {
@@ -154,6 +172,11 @@ export interface PsychStatusResponse {
   attendance_id: number | null;
   status: string;
   channel: string | null;
+  has_video_room?: boolean;
+  professional_name?: string | null;
+  queue_position?: number | null;
+  queue_size?: number | null;
+  psych_requested_at?: string | null;
 }
 
 export interface VideoTokenResponse {
@@ -245,11 +268,15 @@ export async function fetchVideoTokenFromIclinica(
   sessionToken: string,
   attendanceId: number,
 ): Promise<VideoTokenResponse> {
-  const query = new URLSearchParams({
+  const params: Record<string, string> = {
     company_slug: companySlug.trim().toLowerCase(),
     session_token: sessionToken,
-    attendance_id: String(attendanceId),
-  });
+  };
+  // Only include attendance_id when provided — Laravel will auto-resolve the active video attendance.
+  if (attendanceId) {
+    params.attendance_id = String(attendanceId);
+  }
+  const query = new URLSearchParams(params);
   return iclinicaRequest<VideoTokenResponse>(
     `/api/v1/integrations/lia/video/token?${query}`,
   );
@@ -354,6 +381,47 @@ export async function fetchLibraryFromIclinica(
   return iclinicaRequest<Record<string, unknown>>(
     `/api/v1/integrations/lia/library?${query}`,
   );
+}
+
+/**
+ * Poll plantão status for the caregiver and push SSE events until the
+ * attendance reaches a terminal state or the client disconnects.
+ *
+ * Events emitted:
+ *   data: {"status":"waiting"|"in_progress"|"ended"|"unavailable", "attendance_id": number|null, ...}
+ *
+ * The caller is responsible for calling `onClose` when the request closes.
+ */
+export async function streamPlantaoStatus(
+  companySlug: string,
+  sessionToken: string,
+  onEvent: (data: PsychStatusResponse) => void,
+  signal: AbortSignal,
+): Promise<void> {
+  const POLL_INTERVAL_MS = 1500;
+  const MAX_DURATION_MS = 30 * 60 * 1000; // 30 min safety cap
+
+  const started = Date.now();
+
+  while (!signal.aborted && Date.now() - started < MAX_DURATION_MS) {
+    try {
+      const status = await fetchPsychStatusFromIclinica(companySlug, sessionToken);
+      onEvent(status);
+
+      const terminal =
+        status.status === "ended" ||
+        status.status === "unavailable" ||
+        status.status === "error";
+      if (terminal) break;
+    } catch {
+      // Transient upstream error — keep looping; Flutter will handle reconnect.
+    }
+
+    await new Promise<void>((resolve) => {
+      const t = setTimeout(resolve, POLL_INTERVAL_MS);
+      signal.addEventListener("abort", () => { clearTimeout(t); resolve(); }, { once: true });
+    });
+  }
 }
 
 export async function endVideoCallInIclinica(
