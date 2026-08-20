@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Central de Ajuda da LIA — tutoriais e perguntas frequentes. Crescere."
+    />
+    <title>Central de Ajuda — Crescere LIA</title>
+    <link rel="icon" type="image/svg+xml" href="/lia-logo.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Nunito:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --lilac: #8b6bb1;
+        --lilac-light: #b89fd4;
+        --lilac-dark: #6347a0;
+        --lilac-pale: #ede6f7;
+        --lilac-xpale: #f7f4fc;
+        --cream: #fdfbff;
+        --text-dark: #1e1530;
+        --text-mid: #4a3a6a;
+        --text-light: #9080b0;
+        --shadow: 0 4px 24px rgba(99, 71, 160, 0.14);
+        --calm-red: #c45c5c;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        font-family: 'Nunito', sans-serif;
+        color: var(--text-dark);
+        background:
+          radial-gradient(ellipse 80% 50% at 50% -10%, rgba(184, 159, 212, 0.35), transparent),
+          linear-gradient(180deg, var(--lilac-xpale) 0%, var(--cream) 40%, #fff 100%);
+        min-height: 100vh;
+        line-height: 1.65;
+      }
+
+      .hero {
+        background: linear-gradient(170deg, #6347a0 0%, #8b6bb1 50%, #b89fd4 100%);
+        color: #fff;
+        padding: 28px 20px 48px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero::before {
+        content: '';
+        position: absolute;
+        width: 280px;
+        height: 280px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.14) 0%, transparent 70%);
+        top: -40px;
+        left: 50%;
+        transform: translateX(-50%);
+        pointer-events: none;
+      }
+
+      .brand-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        position: relative;
+        z-index: 1;
+        margin-bottom: 20px;
+      }
+
+      .brand-row img.lia {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        background: var(--lilac-pale);
+        object-fit: cover;
+      }
+
+      .brand-row img.crescere {
+        height: 36px;
+        width: auto;
+      }
+
+      .hero h1 {
+        font-family: 'DM Serif Display', serif;
+        font-style: italic;
+        font-size: clamp(1.6rem, 4vw, 2.2rem);
+        font-weight: 400;
+        margin-bottom: 10px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .hero p {
+        font-size: 14px;
+        font-weight: 600;
+        opacity: 0.92;
+        max-width: 440px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 1;
+      }
+
+      .wrap {
+        max-width: 720px;
+        margin: -24px auto 0;
+        padding: 0 16px 48px;
+        position: relative;
+        z-index: 2;
+      }
+
+      .card {
+        background: #fff;
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+        border: 1px solid rgba(139, 107, 177, 0.12);
+        padding: 28px 22px;
+      }
+
+      .quick {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 28px;
+      }
+
+      @media (max-width: 520px) {
+        .quick {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .quick a {
+        display: block;
+        text-decoration: none;
+        padding: 14px 16px;
+        border-radius: 16px;
+        background: var(--lilac-xpale);
+        border: 1px solid rgba(139, 107, 177, 0.16);
+        color: var(--lilac-dark);
+        font-weight: 800;
+        font-size: 13.5px;
+        transition: background 0.15s, transform 0.15s;
+      }
+
+      .quick a:hover {
+        background: var(--lilac-pale);
+        transform: translateY(-1px);
+      }
+
+      .quick a span {
+        display: block;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: var(--text-light);
+        margin-top: 4px;
+      }
+
+      .section-label {
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        color: var(--lilac);
+        margin-bottom: 12px;
+      }
+
+      details {
+        border: 1px solid rgba(139, 107, 177, 0.14);
+        border-radius: 14px;
+        margin-bottom: 10px;
+        background: #fff;
+        overflow: hidden;
+      }
+
+      details[open] {
+        background: var(--lilac-xpale);
+        border-color: rgba(139, 107, 177, 0.28);
+      }
+
+      summary {
+        cursor: pointer;
+        list-style: none;
+        padding: 14px 16px;
+        font-size: 14.5px;
+        font-weight: 800;
+        color: var(--text-dark);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      summary::-webkit-details-marker {
+        display: none;
+      }
+
+      summary::after {
+        content: '+';
+        flex-shrink: 0;
+        width: 24px;
+        height: 24px;
+        border-radius: 8px;
+        background: var(--lilac-pale);
+        color: var(--lilac-dark);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      details[open] summary::after {
+        content: '−';
+      }
+
+      .answer {
+        padding: 0 16px 16px;
+        font-size: 14px;
+        color: var(--text-mid);
+      }
+
+      .answer p {
+        margin-bottom: 10px;
+      }
+
+      .answer ul {
+        padding-left: 1.2rem;
+        margin-bottom: 10px;
+      }
+
+      .answer li {
+        margin-bottom: 4px;
+      }
+
+      .answer a {
+        color: var(--lilac-dark);
+        font-weight: 700;
+      }
+
+      .emergency {
+        margin-top: 28px;
+        background: #fff5f5;
+        border: 1px solid rgba(196, 92, 92, 0.25);
+        border-radius: 16px;
+        padding: 16px 18px;
+      }
+
+      .emergency strong {
+        display: block;
+        color: var(--calm-red);
+        font-size: 13px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        margin-bottom: 8px;
+      }
+
+      .emergency p {
+        font-size: 14px;
+        color: var(--text-mid);
+        margin-bottom: 6px;
+      }
+
+      .contact {
+        margin-top: 20px;
+        background: var(--lilac-xpale);
+        border-radius: 16px;
+        padding: 18px;
+        border: 1px solid rgba(139, 107, 177, 0.16);
+      }
+
+      .contact h2 {
+        font-size: 1rem;
+        font-weight: 800;
+        color: var(--lilac-dark);
+        margin-bottom: 8px;
+      }
+
+      .contact p {
+        font-size: 14px;
+        color: var(--text-mid);
+        margin-bottom: 8px;
+      }
+
+      .contact a {
+        color: var(--lilac-dark);
+        font-weight: 700;
+      }
+
+      footer {
+        text-align: center;
+        padding: 8px 16px 40px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-light);
+      }
+
+      footer a {
+        color: var(--lilac-dark);
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 12px;
+      }
+
+      .links a {
+        display: inline-block;
+        padding: 8px 14px;
+        border-radius: 999px;
+        border: 1px solid rgba(139, 107, 177, 0.25);
+        background: #fff;
+        font-size: 12px;
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <div class="brand-row">
+        <img class="lia" src="/lia-logo.svg" alt="LIA" width="48" height="48" />
+        <img class="crescere" src="/crescere-logo.png" alt="Crescere" height="36" />
+      </div>
+      <h1>Central de Ajuda</h1>
+      <p>Tutoriais rápidos e respostas para as dúvidas mais comuns sobre a LIA.</p>
+    </header>
+
+    <main class="wrap">
+      <article class="card">
+        <div class="quick">
+          <a href="#conta">
+            Conta e acesso
+            <span>Login, senha e cadastro</span>
+          </a>
+          <a href="#lia">
+            Conversar com a LIA
+            <span>Chat, áudio e jornadas</span>
+          </a>
+          <a href="#plantao">
+            Plantão psicológico
+            <span>Como pedir e o que esperar</span>
+          </a>
+          <a href="#privacidade">
+            Privacidade
+            <span>Dados e seus direitos</span>
+          </a>
+        </div>
+
+        <p class="section-label" id="conta">Conta e acesso</p>
+
+        <details>
+          <summary>Como faço login na LIA?</summary>
+          <div class="answer">
+            <p>
+              Use o mesmo e-mail e senha de colaborador cadastrados na clínica/empresa no Crescere.
+              No app ou em
+              <a href="https://lia.crescere.life/">lia.crescere.life</a>, escolha
+              <strong>Entrar</strong> e informe suas credenciais.
+            </p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Esqueci minha senha. O que faço?</summary>
+          <div class="answer">
+            <p>
+              Na tela de login, toque em <strong>Esqueci a senha</strong> e informe o e-mail da
+              conta. Você receberá as instruções para redefinir o acesso.
+            </p>
+            <p>
+              Se o e-mail não chegar, confira a caixa de spam ou fale com o administrador da sua
+              clínica no Crescere.
+            </p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Posso criar conta com Google ou Apple?</summary>
+          <div class="answer">
+            <p>
+              No momento, o acesso é feito com e-mail e senha vinculados à base de colaboradores do
+              Crescere. Login social (Google/Apple) ainda não está disponível.
+            </p>
+          </div>
+        </details>
+
+        <p class="section-label" id="lia" style="margin-top: 24px">Conversar com a LIA</p>
+
+        <details>
+          <summary>O que a LIA faz?</summary>
+          <div class="answer">
+            <p>
+              A LIA é uma companheira digital de jornada: conversa com você sobre como está se
+              sentindo, sugere jornadas e conteúdos, e pode encaminhar ao plantão psicológico quando
+              disponível.
+            </p>
+            <p>
+              Ela <strong>não substitui</strong> atendimento médico ou psicológico presencial/online
+              com profissional habilitado.
+            </p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Como ouvir as mensagens da LIA?</summary>
+          <div class="answer">
+            <p>
+              Em várias bolhas do chat há a opção <strong>Ouvir</strong>. Toque nela para gerar o
+              áudio da mensagem. Você também pode gravar sua resposta por voz quando o microfone
+              estiver habilitado no dispositivo.
+            </p>
+          </div>
+        </details>
+
+        <details>
+          <summary>O que são as jornadas?</summary>
+          <div class="answer">
+            <p>
+              Jornadas são trilhas guiadas (perguntas, reflexões e conteúdos) pensadas para apoiar
+              o cuidador. Acesse pela aba <strong>Jornadas</strong> no app ou pelo menu na versão
+              web.
+            </p>
+            <p>
+              Seu progresso fica salvo na conta. Você pode retomar de onde parou.
+            </p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Como mudar tema escuro ou tamanho da fonte?</summary>
+          <div class="answer">
+            <p>
+              No app, abra a aba <strong>Perfil</strong>. Lá você encontra os controles de
+              <strong>Modo escuro</strong> e de tamanho de fonte para deixar a leitura mais
+              confortável.
+            </p>
+          </div>
+        </details>
+
+        <p class="section-label" id="plantao" style="margin-top: 24px">Plantão psicológico</p>
+
+        <details>
+          <summary>Como peço o plantão 24h?</summary>
+          <div class="answer">
+            <p>Você pode solicitar o plantão de algumas formas:</p>
+            <ul>
+              <li>Pelo atalho de suporte / plantão no chat da LIA;</li>
+              <li>Pela tela de crise / suporte 24h na home do app;</li>
+              <li>Quando a LIA sugerir conversar com um psicólogo.</li>
+            </ul>
+            <p>
+              Após o pedido, você entra na fila. Quando um profissional aceitar, a videochamada
+              poderá ser iniciada.
+            </p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Fiquei muito tempo na fila. O que acontece?</summary>
+          <div class="answer">
+            <p>
+              A fila depende da disponibilidade dos psicólogos no plantão. Se a espera for longa ou
+              você sair da tela sem confirmar, o pedido pode ser liberado automaticamente para não
+              manter posições abandonadas.
+            </p>
+            <p>Você pode solicitar o plantão novamente a qualquer momento.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>A videochamada não conecta. O que verificar?</summary>
+          <div class="answer">
+            <ul>
+              <li>Permissão de câmera e microfone no celular/navegador;</li>
+              <li>Conexão estável com a internet (preferencialmente Wi‑Fi);</li>
+              <li>Fechar outros apps que usem câmera;</li>
+              <li>Atualizar o app ou tentar novamente em alguns minutos.</li>
+            </ul>
+          </div>
+        </details>
+
+        <p class="section-label" id="privacidade" style="margin-top: 24px">Privacidade e conta</p>
+
+        <details>
+          <summary>Onde vejo a política de privacidade?</summary>
+          <div class="answer">
+            <p>
+              No app: <strong>Perfil → Privacidade e dados</strong>. Ou acesse diretamente
+              <a href="https://lia.crescere.life/privacidade/">lia.crescere.life/privacidade</a>.
+            </p>
+            <p>
+              Os <a href="https://lia.crescere.life/termos/">Termos de Uso</a> também estão
+              disponíveis no site.
+            </p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Como saio da minha conta?</summary>
+          <div class="answer">
+            <p>
+              No app, vá em <strong>Perfil</strong> e toque em <strong>Sair da conta</strong>. Na
+              web, use o botão de sair disponível na introdução ou no cabeçalho, conforme a tela.
+            </p>
+          </div>
+        </details>
+
+        <div class="emergency">
+          <strong>Em caso de emergência</strong>
+          <p>
+            Se você ou alguém estiver em risco imediato, procure atendimento de urgência local.
+          </p>
+          <p>
+            No Brasil: <strong>SAMU 192</strong> · <strong>CVV 188</strong> (apoio emocional 24h).
+          </p>
+        </div>
+
+        <div class="contact" id="contato">
+          <h2>Ainda precisa de ajuda?</h2>
+          <p>
+            Fale com o administrador da sua clínica no Crescere ou envie uma mensagem pelo canal
+            de suporte da empresa.
+          </p>
+          <p>
+            Site da LIA:
+            <a href="https://lia.crescere.life/">https://lia.crescere.life/</a>
+          </p>
+        </div>
+      </article>
+    </main>
+
+    <footer>
+      <p>© Crescere · LIA — Central de Ajuda</p>
+      <div class="links">
+        <a href="https://lia.crescere.life/">Voltar à LIA</a>
+        <a href="https://lia.crescere.life/privacidade/">Privacidade</a>
+        <a href="https://lia.crescere.life/termos/">Termos</a>
+      </div>
+    </footer>
+  </body>
+</html>
