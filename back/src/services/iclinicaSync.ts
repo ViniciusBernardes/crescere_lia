@@ -108,6 +108,20 @@ export async function heartbeatSession(
   });
 }
 
+/** Remove o colaborador da fila do plantão (needs_psych = false). */
+export async function releasePlantaoSession(
+  companySlug: string,
+  sessionToken: string,
+): Promise<void> {
+  await iclinicaRequest("/api/v1/integrations/lia/sessions/release-plantao", {
+    method: "POST",
+    body: JSON.stringify({
+      company_slug: companySlug.trim().toLowerCase(),
+      session_token: sessionToken,
+    }),
+  });
+}
+
 export async function pushSessionToIclinica(
   payload: IclinicaSessionPayload,
 ): Promise<void> {
