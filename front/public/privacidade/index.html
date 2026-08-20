@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Política de Privacidade e Proteção de Dados (LGPD) da LIA — Crescere."
+    />
+    <title>Privacidade e dados — Crescere LIA</title>
+    <link rel="icon" type="image/svg+xml" href="/lia-logo.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Nunito:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --lilac: #8b6bb1;
+        --lilac-light: #b89fd4;
+        --lilac-dark: #6347a0;
+        --lilac-xdark: #432d72;
+        --lilac-pale: #ede6f7;
+        --lilac-xpale: #f7f4fc;
+        --cream: #fdfbff;
+        --text-dark: #1e1530;
+        --text-mid: #4a3a6a;
+        --text-light: #9080b0;
+        --shadow: 0 4px 24px rgba(99, 71, 160, 0.14);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        font-family: 'Nunito', sans-serif;
+        color: var(--text-dark);
+        background:
+          radial-gradient(ellipse 80% 50% at 50% -10%, rgba(184, 159, 212, 0.35), transparent),
+          linear-gradient(180deg, var(--lilac-xpale) 0%, var(--cream) 40%, #fff 100%);
+        min-height: 100vh;
+        line-height: 1.65;
+      }
+
+      .hero {
+        background: linear-gradient(170deg, #6347a0 0%, #8b6bb1 50%, #b89fd4 100%);
+        color: #fff;
+        padding: 28px 20px 48px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero::before {
+        content: '';
+        position: absolute;
+        width: 280px;
+        height: 280px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.14) 0%, transparent 70%);
+        top: -40px;
+        left: 50%;
+        transform: translateX(-50%);
+        pointer-events: none;
+      }
+
+      .brand-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        position: relative;
+        z-index: 1;
+        margin-bottom: 20px;
+      }
+
+      .brand-row img {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        background: var(--lilac-pale);
+        object-fit: cover;
+      }
+
+      .brand-name {
+        font-family: 'DM Serif Display', serif;
+        font-style: italic;
+        font-size: 22px;
+        letter-spacing: 0.5px;
+      }
+
+      .brand-name span {
+        font-weight: 400;
+        opacity: 0.9;
+      }
+
+      .hero h1 {
+        font-family: 'DM Serif Display', serif;
+        font-style: italic;
+        font-size: clamp(1.6rem, 4vw, 2.2rem);
+        font-weight: 400;
+        margin-bottom: 10px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .hero p {
+        font-size: 14px;
+        font-weight: 600;
+        opacity: 0.92;
+        max-width: 420px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 1;
+      }
+
+      .updated {
+        display: inline-block;
+        margin-top: 16px;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        background: rgba(255, 255, 255, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 6px 12px;
+        border-radius: 999px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .wrap {
+        max-width: 720px;
+        margin: -24px auto 0;
+        padding: 0 16px 48px;
+        position: relative;
+        z-index: 2;
+      }
+
+      .card {
+        background: #fff;
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+        border: 1px solid rgba(139, 107, 177, 0.12);
+        padding: 28px 22px;
+      }
+
+      .toc {
+        background: var(--lilac-xpale);
+        border-radius: 16px;
+        padding: 16px 18px;
+        margin-bottom: 28px;
+        border: 1px solid rgba(139, 107, 177, 0.14);
+      }
+
+      .toc strong {
+        display: block;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        color: var(--lilac);
+        margin-bottom: 10px;
+      }
+
+      .toc ol {
+        margin: 0;
+        padding-left: 18px;
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--text-mid);
+      }
+
+      .toc a {
+        color: var(--lilac-dark);
+        text-decoration: none;
+      }
+
+      .toc a:hover {
+        text-decoration: underline;
+      }
+
+      section {
+        margin-bottom: 28px;
+        scroll-margin-top: 24px;
+      }
+
+      section h2 {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: var(--lilac-dark);
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid var(--lilac-pale);
+      }
+
+      section p,
+      section li {
+        font-size: 14.5px;
+        color: var(--text-mid);
+        margin-bottom: 10px;
+      }
+
+      section ul {
+        padding-left: 1.2rem;
+        margin-bottom: 10px;
+      }
+
+      section li {
+        margin-bottom: 6px;
+      }
+
+      .highlight {
+        background: linear-gradient(135deg, rgba(139, 107, 177, 0.1), rgba(99, 71, 160, 0.06));
+        border-left: 3px solid var(--lilac);
+        border-radius: 0 12px 12px 0;
+        padding: 12px 14px;
+        margin: 14px 0;
+        font-size: 13.5px;
+        color: var(--text-mid);
+      }
+
+      .contact {
+        background: var(--lilac-xpale);
+        border-radius: 16px;
+        padding: 18px;
+        border: 1px solid rgba(139, 107, 177, 0.16);
+      }
+
+      .contact a {
+        color: var(--lilac-dark);
+        font-weight: 700;
+      }
+
+      footer {
+        text-align: center;
+        padding: 8px 16px 40px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-light);
+      }
+
+      footer a {
+        color: var(--lilac-dark);
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 12px;
+      }
+
+      .links a {
+        display: inline-block;
+        padding: 8px 14px;
+        border-radius: 999px;
+        border: 1px solid rgba(139, 107, 177, 0.25);
+        background: #fff;
+        font-size: 12px;
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <div class="brand-row">
+        <img src="/lia-logo.svg" alt="LIA" width="48" height="48" />
+        <img
+          src="/crescere-logo.png"
+          alt="Crescere"
+          width="120"
+          height="36"
+          style="height: 36px; width: auto; border: none; border-radius: 0; background: transparent"
+        />
+      </div>
+      <h1>Privacidade e dados</h1>
+      <p>
+        Política de Privacidade e Proteção de Dados Pessoais, em conformidade com a Lei Geral de
+        Proteção de Dados (Lei nº 13.709/2018 — LGPD).
+      </p>
+      <span class="updated">Atualizado em agosto de 2026</span>
+    </header>
+
+    <main class="wrap">
+      <article class="card">
+        <nav class="toc" aria-label="Sumário">
+          <strong>Nesta página</strong>
+          <ol>
+            <li><a href="#quem">Quem somos</a></li>
+            <li><a href="#dados">Dados que coletamos</a></li>
+            <li><a href="#finalidades">Finalidades do tratamento</a></li>
+            <li><a href="#bases">Bases legais</a></li>
+            <li><a href="#compartilhamento">Compartilhamento</a></li>
+            <li><a href="#armazenamento">Armazenamento e segurança</a></li>
+            <li><a href="#direitos">Seus direitos (LGPD)</a></li>
+            <li><a href="#cookies">Cookies e tecnologias</a></li>
+            <li><a href="#menores">Crianças e adolescentes</a></li>
+            <li><a href="#alteracoes">Alterações</a></li>
+            <li><a href="#contato">Contato do controlador / DPO</a></li>
+          </ol>
+        </nav>
+
+        <section id="quem">
+          <h2>1. Quem somos</h2>
+          <p>
+            Esta Política aplica-se ao aplicativo e à plataforma web da <strong>LIA</strong>,
+            companheira de jornada oferecida pela <strong>Crescere</strong> (“nós”, “nosso” ou
+            “Controlador”), disponível em
+            <a href="https://lia.crescere.life/">lia.crescere.life</a>.
+          </p>
+          <p>
+            A LIA oferece apoio emocional, jornadas educativas e, quando disponível, acesso a
+            plantão psicológico e conteúdos relacionados ao cuidado de famílias.
+          </p>
+        </section>
+
+        <section id="dados">
+          <h2>2. Quais dados pessoais coletamos</h2>
+          <p>Podemos tratar as seguintes categorias de dados, conforme o uso do serviço:</p>
+          <ul>
+            <li>
+              <strong>Cadastro e autenticação:</strong> nome, e-mail, senha (armazenada de forma
+              criptografada/hash), identificadores de sessão e de dispositivo.
+            </li>
+            <li>
+              <strong>Perfil e uso:</strong> preferências (ex.: tema, tamanho de fonte, notificações),
+              progresso em jornadas, estatísticas de uso e interações com a LIA.
+            </li>
+            <li>
+              <strong>Conteúdo das conversas:</strong> mensagens enviadas à LIA (e, quando aplicável,
+              áudio/transcrição), necessárias para prestar o serviço de apoio conversacional.
+            </li>
+            <li>
+              <strong>Plantão e atendimento clínico:</strong> quando você solicita plantão
+              psicológico, dados necessários ao encaminhamento e atendimento (identificação do
+              colaborador, status da fila, registros clínicos mantidos pelo profissional no âmbito
+              do Crescere).
+            </li>
+            <li>
+              <strong>Dados técnicos:</strong> endereço IP, tipo de dispositivo/navegador, logs de
+              segurança, tokens de notificação push (quando habilitado) e dados de diagnóstico.
+            </li>
+          </ul>
+          <div class="highlight">
+            Não solicitamos dados sensíveis além do estritamente necessário ao serviço. Conteúdos
+            de natureza emocional ou de saúde que você optar por compartilhar nas conversas são
+            tratados com confidencialidade e finalidade limitada ao apoio solicitado.
+          </div>
+        </section>
+
+        <section id="finalidades">
+          <h2>3. Finalidades do tratamento</h2>
+          <ul>
+            <li>Criar e gerenciar sua conta de acesso;</li>
+            <li>Personalizar jornadas, recomendações e a experiência na LIA;</li>
+            <li>Operar chat com inteligência artificial e recursos de áudio (TTS/transcrição);</li>
+            <li>Viabilizar plantão psicológico e integração com a plataforma Crescere;</li>
+            <li>Enviar notificações e lembretes, quando você autorizar;</li>
+            <li>Garantir segurança, prevenção a fraudes e cumprimento de obrigações legais;</li>
+            <li>Melhorar qualidade, suporte e evolução do produto (de forma agregada sempre que possível).</li>
+          </ul>
+        </section>
+
+        <section id="bases">
+          <h2>4. Bases legais (LGPD)</h2>
+          <p>O tratamento de dados pessoais observa, conforme o caso:</p>
+          <ul>
+            <li><strong>Execução de contrato</strong> (art. 7º, V) — prestação do serviço LIA;</li>
+            <li><strong>Consentimento</strong> (art. 7º, I) — ex.: notificações, recursos opcionais;</li>
+            <li><strong>Legítimo interesse</strong> (art. 7º, IX) — segurança, melhoria do serviço, com salvaguardas;</li>
+            <li><strong>Obrigação legal / regulatória</strong> (art. 7º, II) — quando aplicável;</li>
+            <li>
+              Para dados sensíveis eventualmente compartilhados no contexto de cuidado, bases do
+              art. 11 da LGPD, inclusive tutela da saúde e consentimento específico, quando cabível.
+            </li>
+          </ul>
+        </section>
+
+        <section id="compartilhamento">
+          <h2>5. Compartilhamento de dados</h2>
+          <p>Podemos compartilhar dados com:</p>
+          <ul>
+            <li>
+              <strong>Plataforma Crescere (iClinica / telemedicina):</strong> para autenticação de
+              colaboradores, jornadas, plantão e prontuário, quando o serviço estiver integrado;
+            </li>
+            <li>
+              <strong>Prestadores de tecnologia:</strong> infraestrutura em nuvem, envio de e-mails,
+              notificações push e provedores de IA/TTS, sob contratos e obrigações de confidencialidade;
+            </li>
+            <li>
+              <strong>Profissionais de saúde</strong> no plantão, apenas o necessário ao atendimento;
+            </li>
+            <li>
+              <strong>Autoridades</strong>, quando houver obrigação legal ou ordem válida.
+            </li>
+          </ul>
+          <p>Não vendemos seus dados pessoais.</p>
+        </section>
+
+        <section id="armazenamento">
+          <h2>6. Armazenamento, retenção e segurança</h2>
+          <p>
+            Adotamos medidas técnicas e administrativas razoáveis para proteger os dados (controle de
+            acesso, criptografia em trânsito, segregação de ambientes e monitoramento).
+          </p>
+          <p>
+            Mantemos os dados pelo tempo necessário às finalidades descritas, à prestação do serviço
+            e a obrigações legais. Após o encerramento da conta ou pedido de exclusão, poderemos
+            reter registros mínimos quando exigido por lei ou para defesa em processos.
+          </p>
+        </section>
+
+        <section id="direitos">
+          <h2>7. Seus direitos como titular (LGPD)</h2>
+          <p>Você pode solicitar, nos termos da lei:</p>
+          <ul>
+            <li>Confirmação da existência de tratamento e acesso aos dados;</li>
+            <li>Correção de dados incompletos, inexatos ou desatualizados;</li>
+            <li>Anonimização, bloqueio ou eliminação de dados desnecessários ou excessivos;</li>
+            <li>Portabilidade, quando aplicável;</li>
+            <li>Informação sobre compartilhamentos;</li>
+            <li>Revogação do consentimento;</li>
+            <li>Oposição a tratamentos realizados com base em legítimo interesse, quando cabível.</li>
+          </ul>
+          <p>
+            Para exercer seus direitos, utilize o canal indicado na seção de contato. Também é
+            possível apresentar reclamação à Autoridade Nacional de Proteção de Dados (ANPD).
+          </p>
+        </section>
+
+        <section id="cookies">
+          <h2>8. Cookies e tecnologias semelhantes</h2>
+          <p>
+            Utilizamos cookies e armazenamento local essenciais para autenticação, preferências e
+            funcionamento da plataforma. Cookies opcionais de análise, quando existirem, dependerão
+            de consentimento ou configuração do navegador.
+          </p>
+        </section>
+
+        <section id="menores">
+          <h2>9. Crianças e adolescentes</h2>
+          <p>
+            A LIA é voltada a cuidadores e famílias. O tratamento de dados de crianças e adolescentes
+            observa o melhor interesse do menor e as regras do art. 14 da LGPD. Se identificar
+            cadastro indevido, entre em contato para remoção.
+          </p>
+        </section>
+
+        <section id="alteracoes">
+          <h2>10. Alterações desta política</h2>
+          <p>
+            Podemos atualizar este documento periodicamente. A versão vigente estará sempre
+            disponível em
+            <a href="https://lia.crescere.life/privacidade">lia.crescere.life/privacidade</a>, com a
+            data de atualização no topo da página.
+          </p>
+        </section>
+
+        <section id="contato">
+          <h2>11. Contato do controlador / encarregado (DPO)</h2>
+          <div class="contact">
+            <p>
+              Para dúvidas sobre privacidade, exercício de direitos ou incidentes de segurança
+              envolvendo dados pessoais:
+            </p>
+            <p>
+              <strong>Crescere — LIA</strong><br />
+              Site:
+              <a href="https://lia.crescere.life/">https://lia.crescere.life/</a><br />
+              E-mail sugerido:
+              <a href="mailto:privacidade@crescere.life">privacidade@crescere.life</a>
+            </p>
+            <p style="margin-bottom: 0; font-size: 13px">
+              Se o e-mail acima ainda não estiver ativo na sua empresa, utilize o canal de suporte
+              oficial da Crescere informado no app ou no contrato com a clínica.
+            </p>
+          </div>
+        </section>
+      </article>
+    </main>
+
+    <footer>
+      <p>© Crescere · LIA — Política de Privacidade (LGPD)</p>
+      <div class="links">
+        <a href="https://lia.crescere.life/">Voltar à LIA</a>
+        <a href="https://lia.crescere.life/termos/">Termos de Uso</a>
+      </div>
+    </footer>
+  </body>
+</html>
