@@ -67,7 +67,7 @@ iclinicaRouter.get("/professionals", async (req, res) => {
   if (!isIclinicaSyncConfigured()) {
     return res.status(503).json({
       error: "integration_not_configured",
-      message: "Catálogo de profissionais depende da integração com o Crescere.",
+      message: "Catálogo de profissionais depende da integração com a Amare.",
     });
   }
 
@@ -86,7 +86,7 @@ iclinicaRouter.get("/library", async (req, res) => {
   if (!isIclinicaSyncConfigured()) {
     return res.status(503).json({
       error: "integration_not_configured",
-      message: "Biblioteca depende da integração com o Crescere.",
+      message: "Biblioteca depende da integração com a Amare.",
     });
   }
 

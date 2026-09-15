@@ -49,11 +49,11 @@ export function LoginScreen() {
       <div className="login-hero">
         <div className="login-hero-glow" aria-hidden />
         <div className="login-orb">
-          <img src="/lia.jpeg" alt="Lia" loading="eager" />
+          <img src="/lia.jpeg" alt="Mari" loading="eager" />
         </div>
         <p className="login-hero-badge">Acesso do cuidador</p>
         <h1>Bem-vindo(a)</h1>
-        <p className="login-tagline">Crescere · Apoio ao Cuidador</p>
+        <p className="login-tagline">Amare · Apoio ao Cuidador</p>
       </div>
 
       <div className="login-body">
@@ -111,7 +111,7 @@ export function LoginScreen() {
             </button>
           </p>
 
-          <img className="crescere-brand-logo login-brand" src="/crescere-logo.png" alt="Crescere" />
+          <img className="crescere-brand-logo login-brand" src="/amare-logo.png" alt="Amare" />
         </div>
       </div>
     </div>

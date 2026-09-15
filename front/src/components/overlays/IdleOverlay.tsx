@@ -21,7 +21,7 @@ export function IdleOverlay() {
           Vamos continuar?
         </div>
         <div className="ps-sub">
-          Você ficou alguns instantes sem interagir. Gostaria de continuar conversando com a LIA ou
+          Você ficou alguns instantes sem interagir. Gostaria de continuar conversando com a Mari ou
           encerrar esta conversa por agora?
         </div>
         <button type="button" className="ps-cta" onClick={continueFromIdle}>

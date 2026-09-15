@@ -16,7 +16,7 @@ interface CompanyRow extends RowDataPacket {
 }
 
 const DEFAULT_SLUG = process.env.DEFAULT_TENANT_SLUG?.trim() || "crescere";
-const DEFAULT_NAME = process.env.DEFAULT_TENANT_NAME?.trim() || "Crescere";
+const DEFAULT_NAME = process.env.DEFAULT_TENANT_NAME?.trim() || "Amare";
 
 function mapCompany(row: CompanyRow): Tenant {
   return {
@@ -43,7 +43,7 @@ export async function ensureDefaultTenant(): Promise<Tenant> {
 
   const created = await getTenantById(String(result.insertId));
   if (!created) {
-    throw new Error("Não foi possível criar a empresa padrão da Lia");
+    throw new Error("Não foi possível criar a empresa padrão da Mari");
   }
 
   return created;

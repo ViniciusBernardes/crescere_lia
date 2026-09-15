@@ -129,7 +129,7 @@ function SuggestBubble({ msg }: { msg: Extract<ChatMessage, { kind: 'suggest' }>
           <button type="button" className="jcard" onClick={() => startJourney(j.n)}>
             <div className="jci">{j.icon}</div>
             <div className="jct">
-              <div className="jcl">Sugestão da Lia</div>
+              <div className="jcl">Sugestão da Mari</div>
               <div className="jcn">
                 J{j.n} — {j.title}
               </div>
@@ -306,7 +306,7 @@ export function MessageList() {
             <MessageRow key={msg.id}>
               <LiaAvatar />
               <div className="bwrap">
-                <div className="typing-bubble" aria-label="Lia está digitando">
+                <div className="typing-bubble" aria-label="Mari está digitando">
                   <span />
                   <span />
                   <span />

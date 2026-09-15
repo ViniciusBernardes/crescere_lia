@@ -760,7 +760,7 @@ export function createJourneyRunner(api: ChatApi) {
               api.addAiMsg(content[idx][1], content[idx][1].replace(/<[^>]+>/g,''),
               `<div class="hquote">Você não precisa sozinho(a) mudar a sociedade. Mas pode construir um círculo mais acolhedor ao redor da sua família.</div>`);
               setTimeout(()=>api.showTyping(()=>{
-                api.addAiMsg('🎉 <strong>Parabéns! Você concluiu todas as 12 jornadas!</strong>\n\nEssa é uma conquista real. Você dedicou tempo e cuidado a entender sua própria jornada como cuidador.\n\nContinue aqui quando precisar — a Lia está sempre disponível. 💜','Parabéns! Você concluiu todas as 12 jornadas! Essa é uma conquista real. Você dedicou tempo e cuidado a entender sua própria jornada como cuidador. Continue aqui quando precisar. A Lia está sempre disponível.',
+                api.addAiMsg('🎉 <strong>Parabéns! Você concluiu todas as 12 jornadas!</strong>\n\nEssa é uma conquista real. Você dedicou tempo e cuidado a entender sua própria jornada como cuidador.\n\nContinue aqui quando precisar — a Mari está sempre disponível. 💜','Parabéns! Você concluiu todas as 12 jornadas! Essa é uma conquista real. Você dedicou tempo e cuidado a entender sua própria jornada como cuidador. Continue aqui quando precisar. A Mari está sempre disponível.',
                 `<div class="info-card"><div class="ic-title">🌸 Lembre sempre</div><ul><li>Você não está sozinho(a)</li><li>Você está fazendo o melhor que pode</li><li>Cuidar de si é cuidar da criança</li><li>Esta plataforma existe para você</li></ul></div>`);
                 setTimeout(()=>endJourneyCtas([
                   {icon:'📊',label:'Ver meu mapa completo',style:'primary',action: () => api.showScreen('mapScreen')},

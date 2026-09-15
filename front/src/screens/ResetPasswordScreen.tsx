@@ -68,11 +68,11 @@ export function ResetPasswordScreen() {
       <div className="login-hero">
         <div className="login-hero-glow" aria-hidden />
         <div className="login-orb">
-          <img src="/lia.jpeg" alt="Lia" loading="eager" />
+          <img src="/lia.jpeg" alt="Mari" loading="eager" />
         </div>
         <p className="login-hero-badge">Nova senha</p>
         <h1>Redefinir senha</h1>
-        <p className="login-tagline">Crescere · Apoio ao Cuidador</p>
+        <p className="login-tagline">Amare · Apoio ao Cuidador</p>
       </div>
 
       <div className="login-body">
@@ -137,7 +137,7 @@ export function ResetPasswordScreen() {
             </button>
           </p>
 
-          <img className="crescere-brand-logo login-brand" src="/crescere-logo.png" alt="Crescere" />
+          <img className="crescere-brand-logo login-brand" src="/amare-logo.png" alt="Amare" />
         </div>
       </div>
     </div>

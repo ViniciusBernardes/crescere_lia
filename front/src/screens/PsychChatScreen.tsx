@@ -20,7 +20,7 @@ const INTEGRATION_MESSAGES: Record<IntegrationIssue, { title: string; detail: st
   unavailable: {
     title: 'Plantão indisponível no momento',
     detail:
-      'A conexão com a plataforma Crescere não está ativa. Tente novamente em instantes ou volte ao chat.',
+      'A conexão com a plataforma Amare não está ativa. Tente novamente em instantes ou volte ao chat.',
   },
   error: {
     title: 'Não foi possível consultar o plantão',

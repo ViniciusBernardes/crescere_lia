@@ -36,11 +36,11 @@ export function ForgotPasswordScreen() {
       <div className="login-hero">
         <div className="login-hero-glow" aria-hidden />
         <div className="login-orb">
-          <img src="/lia.jpeg" alt="Lia" loading="eager" />
+          <img src="/lia.jpeg" alt="Mari" loading="eager" />
         </div>
         <p className="login-hero-badge">Recuperar acesso</p>
         <h1>Esqueci a senha</h1>
-        <p className="login-tagline">Crescere · Apoio ao Cuidador</p>
+        <p className="login-tagline">Amare · Apoio ao Cuidador</p>
       </div>
 
       <div className="login-body">
@@ -90,7 +90,7 @@ export function ForgotPasswordScreen() {
             </button>
           </p>
 
-          <img className="crescere-brand-logo login-brand" src="/crescere-logo.png" alt="Crescere" />
+          <img className="crescere-brand-logo login-brand" src="/amare-logo.png" alt="Amare" />
         </div>
       </div>
     </div>

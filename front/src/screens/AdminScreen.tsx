@@ -216,7 +216,7 @@ export function AdminScreen({ onLogout }: { onLogout?: () => void }) {
       const data = await savePromptConfig(selectedSlug, '')
       setPromptConfig(data)
       setSystemPrompt(data.systemPrompt)
-      setSuccess(`Prompt restaurado para o padrão da Lia (${data.tenantName}).`)
+      setSuccess(`Prompt restaurado para o padrão da Mari (${data.tenantName}).`)
     } catch (err) {
       setError(handleAdminError(err, onLogout))
     } finally {
@@ -271,7 +271,7 @@ export function AdminScreen({ onLogout }: { onLogout?: () => void }) {
             <img src="/lia.jpeg" alt="" className="admin-topbar-avatar" />
             <div className="admin-topbar-title">
               <span className="admin-eyebrow">Painel Admin</span>
-              <strong>Crescere LIA</strong>
+              <strong>Amare · Mari</strong>
             </div>
           </div>
           {onLogout && (
@@ -285,7 +285,7 @@ export function AdminScreen({ onLogout }: { onLogout?: () => void }) {
       <div className="admin-hero">
         <div className="admin-hero-inner">
           <div className="admin-hero-copy">
-            <h1>Configurações da Lia</h1>
+            <h1>Configurações da Mari</h1>
             <p>
               Personalize o tom de atendimento e a integração OpenAI para cada empresa do whitelabel.
             </p>
@@ -352,7 +352,7 @@ export function AdminScreen({ onLogout }: { onLogout?: () => void }) {
             icon="⏱️"
             title="Inatividade no chat"
             subtitle={tenantLabel}
-            description="Depois deste tempo sem interação, a Lia envia um aviso e abre o pop-up para continuar ou encerrar."
+            description="Depois deste tempo sem interação, a Mari envia um aviso e abre o pop-up para continuar ou encerrar."
           />
           <form onSubmit={handleSaveAppConfig} className="admin-form">
             <label className="admin-field">
@@ -391,7 +391,7 @@ export function AdminScreen({ onLogout }: { onLogout?: () => void }) {
             icon="💬"
             title="Prompt de atendimento"
             subtitle={tenantLabel}
-            description="Fallback offline apenas. Com a integração iClinica ativa, o chat usa o prompt do painel Crescere (Master/clínica). Este texto só entra se o iClinica estiver indisponível."
+            description="Fallback offline apenas. Com a integração iClinica ativa, o chat usa o prompt do painel Amare (Master/clínica). Este texto só entra se o iClinica estiver indisponível."
           />
           <form onSubmit={handleSavePrompt} className="admin-form">
             <label className="admin-field">
@@ -404,7 +404,7 @@ export function AdminScreen({ onLogout }: { onLogout?: () => void }) {
                   rows={14}
                   spellCheck={false}
                   disabled={loading || savingPrompt}
-                  placeholder="Descreva o papel, tom de voz e regras da Lia para esta empresa…"
+                  placeholder="Descreva o papel, tom de voz e regras da Mari para esta empresa…"
                 />
               </div>
             </label>
@@ -604,7 +604,7 @@ export function AdminScreen({ onLogout }: { onLogout?: () => void }) {
         </section>
         </div>
 
-        <img className="admin-footer-brand-logo" src="/crescere-logo.png" alt="Crescere" />
+        <img className="admin-footer-brand-logo" src="/amare-logo.png" alt="Amare" />
       </div>
     </div>
   )

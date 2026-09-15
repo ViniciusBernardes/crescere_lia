@@ -3,7 +3,7 @@ const LIA_AVATAR = '/lia.jpeg'
 export function LiaAvatar({ size = 'sm' }: { size?: 'sm' | 'md' }) {
   return (
     <div className={`mavatar${size === 'md' ? ' hdr-avatar' : ''}`}>
-      <img src={LIA_AVATAR} alt="Lia" onError={(e) => (e.currentTarget.style.display = 'none')} />
+      <img src={LIA_AVATAR} alt="Mari" onError={(e) => (e.currentTarget.style.display = 'none')} />
     </div>
   )
 }

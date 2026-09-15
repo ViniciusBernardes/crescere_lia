@@ -21,7 +21,7 @@ function suggestFor(e: string): string {
     'Estou bem': 'Jornada 10 — Como o Cérebro Aprende',
     'Não sei dizer': 'Jornada 4 — Autoavaliação',
   }
-  return map[e] ?? 'Continue com a Lia'
+  return map[e] ?? 'Continue com a Mari'
 }
 
 function roleDesc(r: string): string {
@@ -117,7 +117,7 @@ export function MapScreen() {
               Voltar
             </button>
             <h2>Meu Mapa Emocional</h2>
-            <p>Baseado nas suas respostas com a Lia</p>
+            <p>Baseado nas suas respostas com a Mari</p>
           </div>
         </header>
         <div className="map-scroll">
@@ -126,10 +126,10 @@ export function MapScreen() {
           <div className="map-empty">
             <div className="me-icon">🗺️</div>
             <p>
-              Seu mapa emocional aparece aqui conforme você interage com a Lia.
+              Seu mapa emocional aparece aqui conforme você interage com a Mari.
               <br />
               <br />
-              Comece conversando com a Lia para gerar seus primeiros insights.
+              Comece conversando com a Mari para gerar seus primeiros insights.
             </p>
           </div>
         ) : (
@@ -151,7 +151,7 @@ export function MapScreen() {
                   icon="😌"
                   title="Como você chegou hoje"
                   body={moodDesc(p.emotionToday)}
-                  tag={showJourneys() ? suggestFor(p.emotionToday) : 'Continue conversando com a Lia'}
+                  tag={showJourneys() ? suggestFor(p.emotionToday) : 'Continue conversando com a Mari'}
                 />
               )}
               {p.emotionsFound.length > 0 && (
@@ -189,7 +189,7 @@ export function MapScreen() {
               <MapCard
                 icon="💡"
                 title="Próximo passo"
-                body={showJourneys() ? nextStep(p) : 'Continue conversando com a Lia ou fale com o plantão psicológico.'}
+                body={showJourneys() ? nextStep(p) : 'Continue conversando com a Mari ou fale com o plantão psicológico.'}
                 tag={showJourneys() ? 'Ver todas as jornadas' : 'Plantão psicológico 24h'}
               />
             </div>

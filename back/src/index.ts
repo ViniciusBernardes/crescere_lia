@@ -28,7 +28,7 @@ app.get("/api/health", async (_req, res) => {
     const settings = await resolveOpenAiSettings(tenant.slug);
     res.json({
       status: "ok",
-      message: "Crescere LIA API",
+      message: "Amare · Mari API",
       tenant: tenant.slug,
       openai: (await isOpenAiConfigured(tenant.slug)) ? "configured" : "missing_key",
       model: settings?.model ?? null,

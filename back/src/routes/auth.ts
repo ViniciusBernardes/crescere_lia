@@ -62,7 +62,7 @@ authRouter.post("/auth/register", async (req, res) => {
     if (!isIclinicaSyncConfigured()) {
       return res.status(503).json({
         error: "integration_not_configured",
-        message: "Cadastro depende da integração com o Crescere.",
+        message: "Cadastro depende da integração com a Amare.",
       });
     }
 

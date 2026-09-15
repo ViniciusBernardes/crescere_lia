@@ -10,7 +10,7 @@ import { resolveSuggestedJourneyNumber } from './journeyRecommendation'
 const INTRO_TITLE = 'Introdução — Primeiro contato'
 
 const WELCOME_INSTRUCTION =
-  'Dê as boas-vindas calorosas ao cuidador que acabou de entrar no Crescere. Diga que este espaço foi criado para ele(a), que estar aqui já é um gesto de cuidado consigo. Tom acolhedor, sem pressa, 2–3 parágrafos curtos. Pode usar 💜 no final.'
+  'Dê as boas-vindas calorosas ao cuidador que acabou de entrar na Amare. Diga que este espaço foi criado para ele(a), que estar aqui já é um gesto de cuidado consigo. Tom acolhedor, sem pressa, 2–3 parágrafos curtos. Pode usar 💜 no final.'
 
 const WELCOME_FALLBACK = {
   html: 'Olá! Que coisa boa contar com a sua presença aqui! 💜\n\nSe você está aqui, é porque uma parte sua também pediu atenção. Este espaço foi criado para você.',

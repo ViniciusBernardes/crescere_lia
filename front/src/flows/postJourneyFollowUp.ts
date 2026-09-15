@@ -12,15 +12,15 @@ const POST_JOURNEY_FOLLOWUPS = [
   },
   {
     html:
-      '🌱 Parabéns por concluir esta jornada!\n\nO cuidado com a saúde emocional acontece um passo de cada vez. Sempre que desejar, explore novas jornadas e continue contando com a Lia para apoiar você.\n\nSe sentir que precisa de um acolhimento mais imediato, nosso Plantão Psicológico 24 horas está à disposição.\n\nAntes de encerrar, queremos saber: como você está se sentindo agora? Se ainda precisar de ajuda, conte para nós. Estamos aqui para caminhar ao seu lado. 💙',
+      '🌱 Parabéns por concluir esta jornada!\n\nO cuidado com a saúde emocional acontece um passo de cada vez. Sempre que desejar, explore novas jornadas e continue contando com a Mari para apoiar você.\n\nSe sentir que precisa de um acolhimento mais imediato, nosso Plantão Psicológico 24 horas está à disposição.\n\nAntes de encerrar, queremos saber: como você está se sentindo agora? Se ainda precisar de ajuda, conte para nós. Estamos aqui para caminhar ao seu lado. 💙',
     audio:
-      'Parabéns por concluir esta jornada! O cuidado com a saúde emocional acontece um passo de cada vez. Sempre que desejar, explore novas jornadas e continue contando com a Lia para apoiar você. Se sentir que precisa de um acolhimento mais imediato, nosso Plantão Psicológico 24 horas está à disposição. Antes de encerrar, queremos saber: como você está se sentindo agora? Se ainda precisar de ajuda, conte para nós. Estamos aqui para caminhar ao seu lado.',
+      'Parabéns por concluir esta jornada! O cuidado com a saúde emocional acontece um passo de cada vez. Sempre que desejar, explore novas jornadas e continue contando com a Mari para apoiar você. Se sentir que precisa de um acolhimento mais imediato, nosso Plantão Psicológico 24 horas está à disposição. Antes de encerrar, queremos saber: como você está se sentindo agora? Se ainda precisar de ajuda, conte para nós. Estamos aqui para caminhar ao seu lado.',
   },
   {
     html:
-      '🌱 Parabéns por concluir esta jornada! O cuidado com a saúde emocional acontece um passo de cada vez. Sempre que desejar, explore novas jornadas, converse com a Lia ou, se precisar de um acolhimento imediato, acesse o Plantão Psicológico 24 horas. Estamos aqui para caminhar com você. 💙',
+      '🌱 Parabéns por concluir esta jornada! O cuidado com a saúde emocional acontece um passo de cada vez. Sempre que desejar, explore novas jornadas, converse com a Mari ou, se precisar de um acolhimento imediato, acesse o Plantão Psicológico 24 horas. Estamos aqui para caminhar com você. 💙',
     audio:
-      'Parabéns por concluir esta jornada! O cuidado com a saúde emocional acontece um passo de cada vez. Sempre que desejar, explore novas jornadas, converse com a Lia ou, se precisar de um acolhimento imediato, acesse o Plantão Psicológico 24 horas. Estamos aqui para caminhar com você.',
+      'Parabéns por concluir esta jornada! O cuidado com a saúde emocional acontece um passo de cada vez. Sempre que desejar, explore novas jornadas, converse com a Mari ou, se precisar de um acolhimento imediato, acesse o Plantão Psicológico 24 horas. Estamos aqui para caminhar com você.',
   },
 ] as const
 

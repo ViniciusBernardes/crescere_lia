@@ -16,11 +16,11 @@ export function ChatScreen() {
               ‹
             </button>
             <div className="hdr-avatar hdr-avatar--chat">
-              <img src="/lia.jpeg" alt="Lia" />
+              <img src="/lia.jpeg" alt="Mari" />
               <div className="online-dot" />
             </div>
             <div className="hdr-info">
-              <div className="hdr-name">Lia</div>
+              <div className="hdr-name">Mari</div>
               <div className="hdr-status">
                 <span className="status-pulse" />
                 <span className="hdr-status-short">Online agora</span>

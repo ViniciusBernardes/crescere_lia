@@ -1,6 +1,6 @@
-# Crescere LIA
+# Amare · Mari
 
-Plataforma de apoio a cuidadores de crianças com TEA — assistente virtual **Lia**.
+Plataforma de apoio a cuidadores de crianças com TEA — assistente virtual **Mari** (legado: LIA / Crescere).
 
 ## Estrutura
 
@@ -23,7 +23,7 @@ Produção (AWS): **porta 80/443** — sem alteração (`docker-compose.prod.yml
 
 ### Se não abrir / erro de conexão
 
-A LIA **depende do MySQL do telemedicina**. Se o back não subir:
+A Mari **depende do MySQL do telemedicina**. Se o back não subir:
 
 ```bash
 # 1. MySQL
