@@ -139,7 +139,7 @@ export function MapScreen() {
               <div className="map-bars">
                 <MapBar label="Nível de sobrecarga" pct={metrics.stress} color="#E87777" />
                 <MapBar label="Autocuidado percebido" pct={metrics.sc} color="#5CC878" />
-                <MapBar label="Consciência emocional" pct={metrics.awareness} color="#8B6BB1" />
+                <MapBar label="Consciência emocional" pct={metrics.awareness} color="#1ab6a9" />
                 {showJourneys() && (
                   <MapBar label="Engajamento nas jornadas" pct={metrics.engagement} color="#5BA8D4" />
                 )}

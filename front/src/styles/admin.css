@@ -1,16 +1,16 @@
 :root {
-  --lilac: #8b6bb1;
-  --lilac-light: #b89fd4;
-  --lilac-dark: #6347a0;
-  --lilac-xdark: #432d72;
-  --lilac-pale: #ede6f7;
-  --lilac-xpale: #f7f4fc;
-  --lavender: #c9bbe8;
-  --cream: #fdfbff;
-  --text-dark: #1e1530;
-  --text-mid: #4a3a6a;
-  --text-light: #9080b0;
-  --text-xlight: #c0b0d8;
+  --lilac: #1ab6a9;
+  --lilac-light: #6dd4cb;
+  --lilac-dark: #0f8a80;
+  --lilac-xdark: #0a5c56;
+  --lilac-pale: #d0f3ef;
+  --lilac-xpale: #eefaf8;
+  --lavender: #a3e6e0;
+  --cream: #f5fcfb;
+  --text-dark: #101828;
+  --text-mid: #344054;
+  --text-light: #667085;
+  --text-xlight: #98a2b3;
   --page-gutter: clamp(16px, 4vw, 32px);
   --space-xs: 6px;
   --space-sm: 10px;
@@ -18,9 +18,9 @@
   --space-lg: 22px;
   --space-xl: 28px;
   --btn-radius: 14px;
-  --btn-shadow: 0 8px 28px rgba(99, 71, 160, 0.3);
-  --card-shadow: 0 2px 12px rgba(99, 71, 160, 0.06);
-  --card-border: 1px solid rgba(139, 107, 177, 0.12);
+  --btn-shadow: 0 8px 28px rgba(26, 182, 169, 0.3);
+  --card-shadow: 0 2px 12px rgba(26, 182, 169, 0.06);
+  --card-border: 1px solid rgba(26, 182, 169, 0.12);
 }
 
 .admin-page {
@@ -34,9 +34,9 @@
   font-family: 'Nunito', sans-serif;
   color: var(--text-dark);
   background:
-    radial-gradient(circle at 12% 8%, rgba(184, 159, 212, 0.22) 0%, transparent 42%),
-    radial-gradient(circle at 88% 92%, rgba(139, 107, 177, 0.14) 0%, transparent 38%),
-    linear-gradient(180deg, #f4f0fb 0%, #f7f4fc 55%, #f2eef9 100%);
+    radial-gradient(circle at 12% 8%, rgba(109, 212, 203, 0.22) 0%, transparent 42%),
+    radial-gradient(circle at 88% 92%, rgba(26, 182, 169, 0.14) 0%, transparent 38%),
+    linear-gradient(180deg, #eefaf8 0%, #f5fcfb 55%, #e8f6f4 100%);
 }
 
 .admin-topbar {
@@ -52,8 +52,8 @@
     10px
     max(var(--page-gutter), env(safe-area-inset-left, 0px));
   background: var(--cream);
-  border-bottom: 1px solid rgba(139, 107, 177, 0.08);
-  box-shadow: 0 4px 24px rgba(99, 71, 160, 0.06);
+  border-bottom: 1px solid rgba(26, 182, 169, 0.08);
+  box-shadow: 0 4px 24px rgba(26, 182, 169, 0.06);
 }
 
 .admin-topbar-back {
@@ -61,7 +61,7 @@
   height: 38px;
   border-radius: 12px;
   background: var(--lilac-xpale);
-  border: 1px solid rgba(139, 107, 177, 0.12);
+  border: 1px solid rgba(26, 182, 169, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -109,8 +109,8 @@
   height: 40px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid rgba(139, 107, 177, 0.25);
-  box-shadow: 0 4px 14px rgba(99, 71, 160, 0.18);
+  border: 2px solid rgba(26, 182, 169, 0.25);
+  box-shadow: 0 4px 14px rgba(26, 182, 169, 0.18);
   flex-shrink: 0;
 }
 
@@ -212,8 +212,8 @@
 }
 
 .admin-card-featured {
-  border-color: rgba(139, 107, 177, 0.2);
-  box-shadow: 0 8px 28px rgba(99, 71, 160, 0.08);
+  border-color: rgba(26, 182, 169, 0.2);
+  box-shadow: 0 8px 28px rgba(26, 182, 169, 0.08);
 }
 
 .admin-card-muted {
@@ -226,7 +226,7 @@
   gap: var(--space-md);
   padding-bottom: var(--space-md);
   margin-bottom: var(--space-lg);
-  border-bottom: 1px solid rgba(139, 107, 177, 0.1);
+  border-bottom: 1px solid rgba(26, 182, 169, 0.1);
 }
 
 .admin-card-head-text {
@@ -248,7 +248,7 @@
   font-size: 20px;
   flex-shrink: 0;
   margin-top: 2px;
-  box-shadow: 0 4px 14px rgba(99, 71, 160, 0.22);
+  box-shadow: 0 4px 14px rgba(26, 182, 169, 0.22);
 }
 
 .admin-card-head-text h2 {
@@ -326,7 +326,7 @@
 .admin-textarea {
   width: 100%;
   max-width: 100%;
-  border: 1px solid rgba(139, 107, 177, 0.18);
+  border: 1px solid rgba(26, 182, 169, 0.18);
   border-radius: 12px;
   padding: 12px 14px;
   font-family: 'Nunito', sans-serif;
@@ -348,7 +348,7 @@
 .admin-textarea:focus {
   outline: none;
   border-color: var(--lilac);
-  box-shadow: 0 0 0 3px rgba(139, 107, 177, 0.14);
+  box-shadow: 0 0 0 3px rgba(26, 182, 169, 0.14);
 }
 
 .admin-select {
@@ -407,7 +407,7 @@
 }
 
 .admin-btn-primary {
-  background: linear-gradient(135deg, #7b5ba8 0%, #6347a0 100%);
+  background: linear-gradient(135deg, #3fc4b8 0%, #0f8a80 100%);
   color: white;
   box-shadow: var(--btn-shadow);
 }
@@ -415,13 +415,13 @@
 .admin-btn-secondary {
   background: var(--lilac-xpale);
   color: var(--lilac-dark);
-  border: 1px solid rgba(139, 107, 177, 0.18);
+  border: 1px solid rgba(26, 182, 169, 0.18);
 }
 
 .admin-btn-ghost {
   background: transparent;
   color: var(--lilac-dark);
-  border: 1px dashed rgba(139, 107, 177, 0.35);
+  border: 1px dashed rgba(26, 182, 169, 0.35);
 }
 
 .admin-btn:not(:disabled):hover {
@@ -497,7 +497,7 @@
 .admin-badge-neutral {
   background: var(--lilac-xpale);
   color: var(--lilac-dark);
-  border: 1px solid rgba(139, 107, 177, 0.16);
+  border: 1px solid rgba(26, 182, 169, 0.16);
 }
 
 .admin-masked-key {
@@ -526,8 +526,8 @@
   gap: var(--space-xs);
   padding: var(--space-md);
   border-radius: 14px;
-  background: rgba(139, 107, 177, 0.06);
-  border: 1px solid rgba(139, 107, 177, 0.12);
+  background: rgba(26, 182, 169, 0.06);
+  border: 1px solid rgba(26, 182, 169, 0.12);
 }
 
 .admin-key-source {
@@ -545,7 +545,7 @@
   padding: var(--space-md);
   border-radius: 14px;
   background: var(--lilac-xpale);
-  border: 1px dashed rgba(139, 107, 177, 0.22);
+  border: 1px dashed rgba(26, 182, 169, 0.22);
 }
 
 .admin-key-import .admin-btn {
@@ -558,7 +558,7 @@
   gap: var(--space-sm);
   padding-top: var(--space-md);
   margin-top: var(--space-xs);
-  border-top: 1px solid rgba(139, 107, 177, 0.1);
+  border-top: 1px solid rgba(26, 182, 169, 0.1);
 }
 
 .admin-form-actions .admin-btn {
@@ -690,7 +690,7 @@
       180deg,
       rgba(247, 244, 252, 0) 0%,
       rgba(247, 244, 252, 0.94) 30%,
-      #f7f4fc 100%
+      #eefaf8 100%
     );
   }
 }
@@ -741,14 +741,14 @@
 @media (min-width: 1024px) {
   .admin-page {
     background:
-      radial-gradient(circle at 8% 0%, rgba(184, 159, 212, 0.28) 0%, transparent 38%),
-      radial-gradient(circle at 92% 8%, rgba(139, 107, 177, 0.16) 0%, transparent 34%),
-      linear-gradient(180deg, #ebe4f7 0%, #f7f4fc 42%, #f2eef9 100%);
+      radial-gradient(circle at 8% 0%, rgba(109, 212, 203, 0.28) 0%, transparent 38%),
+      radial-gradient(circle at 92% 8%, rgba(26, 182, 169, 0.16) 0%, transparent 34%),
+      linear-gradient(180deg, #e8f6f4 0%, #eefaf8 42%, #e8f6f4 100%);
   }
 
   .admin-topbar {
     background: var(--cream);
-    border-bottom: 1px solid rgba(139, 107, 177, 0.06);
+    border-bottom: 1px solid rgba(26, 182, 169, 0.06);
     box-shadow: none;
     max-width: none;
     margin: 0;
@@ -781,8 +781,8 @@
     gap: 28px;
     padding: 26px 28px;
     border-radius: 22px;
-    background: linear-gradient(135deg, #6347a0 0%, #8b6bb1 52%, #b89fd4 100%);
-    box-shadow: 0 12px 36px rgba(99, 71, 160, 0.2);
+    background: linear-gradient(135deg, #0f8a80 0%, #1ab6a9 52%, #6dd4cb 100%);
+    box-shadow: 0 12px 36px rgba(26, 182, 169, 0.2);
     position: relative;
     overflow: hidden;
   }
@@ -828,7 +828,7 @@
     padding: 14px 16px;
     border-radius: 14px;
     background: rgba(255,255,255,0.92);
-    box-shadow: 0 8px 24px rgba(99, 71, 160, 0.16);
+    box-shadow: 0 8px 24px rgba(26, 182, 169, 0.16);
   }
 
   .admin-hero-wordmark img {
@@ -946,12 +946,12 @@
     border: 1px solid rgba(255, 255, 255, 0.65);
     background: rgba(255, 255, 255, 0.82);
     backdrop-filter: blur(10px);
-    box-shadow: 0 10px 40px rgba(99, 71, 160, 0.08);
+    box-shadow: 0 10px 40px rgba(26, 182, 169, 0.08);
   }
 
   .admin-card-featured {
-    border-color: rgba(139, 107, 177, 0.14);
-    box-shadow: 0 14px 44px rgba(99, 71, 160, 0.1);
+    border-color: rgba(26, 182, 169, 0.14);
+    box-shadow: 0 14px 44px rgba(26, 182, 169, 0.1);
   }
 
   .admin-card-muted {
@@ -1032,7 +1032,7 @@
   border: var(--card-border);
   border-radius: 18px;
   padding: var(--space-xl) var(--space-lg);
-  box-shadow: 0 14px 44px rgba(99, 71, 160, 0.1);
+  box-shadow: 0 14px 44px rgba(26, 182, 169, 0.1);
 }
 
 .admin-login-brand {
@@ -1063,8 +1063,8 @@
   object-fit: cover;
   display: block;
   margin: 0 auto;
-  border: 3px solid rgba(139, 107, 177, 0.25);
-  box-shadow: 0 8px 24px rgba(99, 71, 160, 0.18);
+  border: 3px solid rgba(26, 182, 169, 0.25);
+  box-shadow: 0 8px 24px rgba(26, 182, 169, 0.18);
 }
 
 .admin-login-brand-logo {
