@@ -17,6 +17,7 @@ interface VideoTokenData {
   token: string
   ws_url: string
   room_name: string
+  attendance_id?: number
 }
 
 export function VideoCallScreen() {
@@ -30,12 +31,31 @@ export function VideoCallScreen() {
   const roomRef = useRef<Room | null>(null)
   const connectingRef = useRef(false)
   const releasedRef = useRef(false)
+  const attendanceIdRef = useRef<number | null>(null)
   const [micEnabled, setMicEnabled] = useState(true)
   const [camEnabled, setCamEnabled] = useState(true)
 
   const leavePsychQueue = useCallback(async (keepalive = false) => {
     if (releasedRef.current) return
     releasedRef.current = true
+
+    const attendanceId = attendanceIdRef.current
+    try {
+      await fetch(`${API_BASE}/chat/psych/video-end`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getPsychApiHeaders(),
+        },
+        body: JSON.stringify(
+          attendanceId ? { attendance_id: attendanceId } : {},
+        ),
+        keepalive,
+      })
+    } catch {
+      // best-effort — o release abaixo ainda zera a fila
+    }
+
     await releasePsychRequest({ keepalive }).catch(() => undefined)
   }, [releasePsychRequest])
 
@@ -83,6 +103,10 @@ export function VideoCallScreen() {
           setError('Nenhuma videochamada ativa.')
           setStatus('ended')
           return
+        }
+
+        if (tokenData.attendance_id) {
+          attendanceIdRef.current = tokenData.attendance_id
         }
 
         const room = new Room({

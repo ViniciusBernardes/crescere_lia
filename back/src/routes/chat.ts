@@ -441,17 +441,18 @@ chatRouter.post("/chat/psych/video-end", async (req, res) => {
   }
   const tenantSlug = tenantSlugFromRequest(req);
   const sessionToken = sessionTokenFromRequest(req);
-  const attendanceId = Number(req.body?.attendance_id);
+  const attendanceId = Number(req.body?.attendance_id) || 0;
   if (!sessionToken) {
     return res.status(400).json({ error: "missing_session_token" });
-  }
-  if (!attendanceId) {
-    return res.status(400).json({ error: "missing_attendance_id" });
   }
   try {
     const tenant = await getTenantBySlug(tenantSlug);
     if (!tenant) return res.status(404).json({ error: "tenant_not_found" });
-    const data = await endVideoCallInIclinica(tenant.slug, sessionToken, attendanceId);
+    const data = await endVideoCallInIclinica(
+      tenant.slug,
+      sessionToken,
+      attendanceId || undefined,
+    );
     return res.json(data);
   } catch (error) {
     console.error("[psych-video] end error:", error);

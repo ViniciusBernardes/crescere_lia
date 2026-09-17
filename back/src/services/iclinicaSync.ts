@@ -441,8 +441,16 @@ export async function streamPlantaoStatus(
 export async function endVideoCallInIclinica(
   companySlug: string,
   sessionToken: string,
-  attendanceId: number,
+  attendanceId?: number,
 ): Promise<Record<string, unknown>> {
+  const body: Record<string, unknown> = {
+    company_slug: companySlug.trim().toLowerCase(),
+    session_token: sessionToken,
+  };
+  if (attendanceId && attendanceId > 0) {
+    body.attendance_id = attendanceId;
+  }
+
   return iclinicaRequest<Record<string, unknown>>(
     "/api/v1/integrations/lia/video/end",
     {
@@ -450,11 +458,7 @@ export async function endVideoCallInIclinica(
       headers: {
         "X-Lia-Session-Token": sessionToken,
       },
-      body: JSON.stringify({
-        company_slug: companySlug.trim().toLowerCase(),
-        session_token: sessionToken,
-        attendance_id: attendanceId,
-      }),
+      body: JSON.stringify(body),
     },
   );
 }
