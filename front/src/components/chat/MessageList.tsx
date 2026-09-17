@@ -141,7 +141,7 @@ function SuggestBubble({ msg }: { msg: Extract<ChatMessage, { kind: 'suggest' }>
               <span className="ci">💜</span>
               <div className="ct">
                 Falar com psicólogo
-                <span className="cs">Plantão disponível 24h</span>
+                <span className="cs">Plantão disponível</span>
               </div>
             </button>
           </div>

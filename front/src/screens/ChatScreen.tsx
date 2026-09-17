@@ -64,7 +64,7 @@ export function ChatScreen() {
           <button type="button" className="psych-bar" onClick={openPsych}>
             <div className="pb-icon">💜</div>
             <div className="pb-main">
-              <div className="pb-title">Plantão Psicológico 24h</div>
+              <div className="pb-title">Plantão Psicológico</div>
               <div className="pb-sub">Desejo conversar com um psicólogo</div>
             </div>
             <div className="pb-arrow">›</div>

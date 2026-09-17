@@ -34,7 +34,7 @@ export function PsychOverlay() {
           </div>
           <div className="ps-feat">
             <span className="pf-check">⚡</span>
-            <span className="pf-text">Disponível 24h, 7 dias por semana</span>
+            <span className="pf-text">Disponível quando você precisar</span>
           </div>
         </div>
         <button type="button" className="ps-cta" onClick={openPsychChat}>

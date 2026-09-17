@@ -68,7 +68,7 @@ export function createJourneyRunner(api: ChatApi) {
         () =>
           api.addCtas([
             { icon: '🌊', label: 'Jornada 9 — Momentos de Crise', style: 'primary', action: () => startJourney(9) },
-            { icon: '💜', label: 'Falar com psicólogo agora', sub: 'Plantão 24h', style: 'accent', action: () => api.openPsych() },
+            { icon: '💜', label: 'Falar com psicólogo agora', sub: 'Plantão psicológico', style: 'accent', action: () => api.openPsych() },
           ]),
         700,
       );
@@ -674,7 +674,7 @@ export function createJourneyRunner(api: ChatApi) {
                 api.addAiMsg('Depois da crise: <strong>acolhimento, não cobrança.</strong>\n\nNão é hora de avaliar o que deu errado.\nÉ hora de cuidar.','Depois da crise, acolhimento, não cobrança. Não é hora de avaliar o que deu errado. É hora de cuidar.',
                 `<div class="hquote">Ter uma crise não te define. Como você se levanta depois dela, sim.</div>`);
                 setTimeout(()=>endJourneyCtas([
-                  {icon:'💜',label:'Falar com psicólogo AGORA',sub:'Plantão disponível 24h',style:'accent',action: () => api.openPsych()},
+                  {icon:'💜',label:'Falar com psicólogo AGORA',sub:'Plantão disponível',style:'accent',action: () => api.openPsych()},
                   {icon:'🌱',label:'Jornada 5 — Cuidar de Si',style:'primary',action: () => j5()},
                   {icon:'📊',label:'Ver meu mapa',style:'secondary',action: () => api.showScreen('mapScreen')}
                 ], 9),400);

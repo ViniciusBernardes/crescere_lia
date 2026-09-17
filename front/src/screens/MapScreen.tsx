@@ -190,7 +190,7 @@ export function MapScreen() {
                 icon="💡"
                 title="Próximo passo"
                 body={showJourneys() ? nextStep(p) : 'Continue conversando com a Mari ou fale com o plantão psicológico.'}
-                tag={showJourneys() ? 'Ver todas as jornadas' : 'Plantão psicológico 24h'}
+                tag={showJourneys() ? 'Ver todas as jornadas' : 'Plantão psicológico'}
               />
             </div>
           </>

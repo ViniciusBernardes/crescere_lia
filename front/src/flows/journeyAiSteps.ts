@@ -461,7 +461,7 @@ export function buildJourneySteps(deps: JourneyDeps): Record<number, JourneyStep
       {
         type: 'ctas',
         buildCtas: () => [
-          { icon: '💜', label: 'Falar com psicólogo AGORA', sub: 'Plantão 24h', style: 'accent', action: () => openPsych() },
+          { icon: '💜', label: 'Falar com psicólogo AGORA', sub: 'Plantão psicológico', style: 'accent', action: () => openPsych() },
           { icon: '🌱', label: 'Jornada 5 — Cuidar de Si', style: 'primary', action: () => startJourney(5) },
           { icon: '📊', label: 'Ver meu mapa', style: 'secondary', action: () => showScreen('mapScreen') },
         ],

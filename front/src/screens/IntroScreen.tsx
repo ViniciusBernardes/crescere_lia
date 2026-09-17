@@ -5,7 +5,7 @@ const FEATURES = [
   { icon: '📚', title: 'Psicoeducação acolhedora', desc: 'Informação clara sobre TEA em linguagem humana' },
   { icon: '💙', title: 'Suporte emocional', desc: 'Espaço seguro para falar sobre seus sentimentos' },
   { icon: '🗺️', title: 'Mapa comportamental', desc: 'Insights personalizados com base nas suas respostas' },
-  { icon: '🕐', title: 'Plantão psicológico 24h', desc: 'Apoio humano sempre que você precisar' },
+  { icon: '🕐', title: 'Plantão psicológico', desc: 'Apoio humano sempre que você precisar' },
 ]
 
 export function IntroScreen() {

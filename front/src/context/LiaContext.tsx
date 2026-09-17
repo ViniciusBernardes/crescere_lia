@@ -351,7 +351,7 @@ export function LiaProvider({ children }: { children: ReactNode }) {
               label: 'Falar com psicólogo',
               icon: '💜',
               style: 'accent' as const,
-              sub: 'Plantão disponível 24h',
+              sub: 'Plantão disponível',
               action: () => setPsychOpen(true),
             },
           ]
