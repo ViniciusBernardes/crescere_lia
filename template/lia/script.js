@@ -107,7 +107,7 @@ function updateProgress() {
 }
 
 function handleSOS() {
-    addMessage("🆘 Acionando plantão psicológico 24h...", 'luna');
+    addMessage("🆘 Acionando plantão psicológico...", 'luna');
     setTimeout(() => alert("Conectando você a um profissional agora."), 500);
 }
 
