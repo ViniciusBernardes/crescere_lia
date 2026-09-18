@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  Room,
-  RoomEvent,
-  Track,
-  type LocalTrackPublication,
-  type RemoteTrack,
-  type RemoteTrackPublication,
-  type RemoteParticipant,
-} from 'livekit-client'
+  LiveKitRoom,
+  RoomAudioRenderer,
+  StartAudio,
+  TrackToggle,
+  VideoTrack,
+  useLocalParticipant,
+  useRemoteParticipants,
+  useRoomContext,
+  useTracks,
+} from '@livekit/components-react'
+import { Track } from 'livekit-client'
 import { useLia } from '../context/LiaContext'
 import { getPsychApiHeaders } from '../services/sessionSync'
 
@@ -21,21 +24,12 @@ interface VideoTokenData {
 }
 
 export function VideoCallScreen() {
-  const { showScreen, releasePsychRequest, primeAudio } = useLia()
+  const { showScreen, releasePsychRequest } = useLia()
   const [status, setStatus] = useState<'connecting' | 'active' | 'ended'>('connecting')
   const [error, setError] = useState<string | null>(null)
-  const [mediaWarning, setMediaWarning] = useState<string | null>(null)
-  // Chamada abre via polling (sem gesto) → áudio remoto costuma nascer bloqueado.
-  const [audioBlocked, setAudioBlocked] = useState(true)
-  const remoteVideoRef = useRef<HTMLVideoElement>(null)
-  const remoteAudioContainerRef = useRef<HTMLDivElement>(null)
-  const localVideoRef = useRef<HTMLVideoElement>(null)
-  const roomRef = useRef<Room | null>(null)
-  const connectingRef = useRef(false)
+  const [tokenData, setTokenData] = useState<VideoTokenData | null>(null)
   const releasedRef = useRef(false)
   const attendanceIdRef = useRef<number | null>(null)
-  const [micEnabled, setMicEnabled] = useState(true)
-  const [camEnabled, setCamEnabled] = useState(true)
 
   const leavePsychQueue = useCallback(async (keepalive = false) => {
     if (releasedRef.current) return
@@ -61,249 +55,64 @@ export function VideoCallScreen() {
     await releasePsychRequest({ keepalive }).catch(() => undefined)
   }, [releasePsychRequest])
 
-  const syncAudioPlaybackState = useCallback((room: Room) => {
-    setAudioBlocked(!room.canPlaybackAudio)
-  }, [])
-
-  const unlockCallAudio = useCallback(async () => {
-    primeAudio()
-    const room = roomRef.current
-    if (!room) return
-    try {
-      // API oficial do LiveKit — precisa rodar em handler de click/tap.
-      await room.startAudio()
-      setAudioBlocked(!room.canPlaybackAudio)
-    } catch (err) {
-      console.warn('[video] startAudio failed:', err)
-      setAudioBlocked(true)
-    }
-  }, [primeAudio])
-
-  const attachRemoteTrack = useCallback((track: RemoteTrack) => {
-    if (track.kind === Track.Kind.Video && remoteVideoRef.current) {
-      track.attach(remoteVideoRef.current)
-      void remoteVideoRef.current.play().catch(() => undefined)
-      return
-    }
-
-    if (track.kind === Track.Kind.Audio) {
-      // Deixa o SDK criar o <audio>; Room.startAudio() controla o playback.
-      const attached = track.attach()
-      const elements = Array.isArray(attached) ? attached : [attached]
-      const host = remoteAudioContainerRef.current
-      elements.forEach((el: HTMLMediaElement) => {
-        el.autoplay = true
-        el.setAttribute('playsinline', 'true')
-        el.setAttribute('webkit-playsinline', 'true')
-        if (host && !host.contains(el)) {
-          host.appendChild(el)
-        }
-      })
-      const room = roomRef.current
-      if (room) syncAudioPlaybackState(room)
-    }
-  }, [syncAudioPlaybackState])
-
-  const attachExistingRemoteTracks = useCallback(
-    (room: Room) => {
-      room.remoteParticipants.forEach((participant: RemoteParticipant) => {
-        participant.trackPublications.forEach((publication: RemoteTrackPublication) => {
-          if (publication.track) {
-            attachRemoteTrack(publication.track)
-          }
-        })
-      })
-    },
-    [attachRemoteTrack],
-  )
-
-  const attachLocalCamera = useCallback((room: Room) => {
-    const localVideoTrack = room.localParticipant.getTrackPublication(Track.Source.Camera)
-    if (localVideoTrack?.track && localVideoRef.current) {
-      localVideoTrack.track.attach(localVideoRef.current)
-    }
-  }, [])
-
   useEffect(() => {
     let cancelled = false
 
-    async function connectToRoom() {
-      if (connectingRef.current) return
-      connectingRef.current = true
-
-      try {
-        const tokenData = await fetchVideoToken()
-        if (cancelled) return
-
-        if (!tokenData) {
+    async function loadToken() {
+      for (let attempt = 0; attempt < 5; attempt++) {
+        try {
+          const res = await fetch(`${API_BASE}/chat/psych/video-token`, {
+            headers: getPsychApiHeaders(),
+          })
+          if (cancelled) return
+          if (res.ok) {
+            const data = (await res.json()) as VideoTokenData
+            if (data.attendance_id) {
+              attendanceIdRef.current = data.attendance_id
+            }
+            setTokenData(data)
+            setStatus('active')
+            return
+          }
+          if (res.status === 404 && attempt < 4) {
+            await new Promise((r) => setTimeout(r, 2000))
+            continue
+          }
           setError('Nenhuma videochamada ativa.')
           setStatus('ended')
           return
-        }
-
-        if (tokenData.attendance_id) {
-          attendanceIdRef.current = tokenData.attendance_id
-        }
-
-        const room = new Room({
-          adaptiveStream: true,
-          dynacast: true,
-        })
-        roomRef.current = room
-
-        room.on(RoomEvent.TrackSubscribed, (track: RemoteTrack) => {
-          attachRemoteTrack(track)
-        })
-
-        room.on(RoomEvent.TrackUnsubscribed, (track: RemoteTrack) => {
-          const detached = track.detach()
-          const elements = Array.isArray(detached) ? detached : [detached]
-          elements.forEach((el: HTMLMediaElement) => {
-            el.remove()
-          })
-        })
-
-        room.on(RoomEvent.LocalTrackPublished, (publication: LocalTrackPublication) => {
-          if (publication.source === Track.Source.Camera && publication.track && localVideoRef.current) {
-            publication.track.attach(localVideoRef.current)
+        } catch {
+          if (attempt < 4) {
+            await new Promise((r) => setTimeout(r, 2000))
+            continue
           }
-        })
-
-        room.on(RoomEvent.AudioPlaybackStatusChanged, () => {
-          syncAudioPlaybackState(room)
-        })
-
-        room.on(RoomEvent.Disconnected, () => {
-          if (!cancelled) setStatus('ended')
-        })
-
-        await room.connect(tokenData.ws_url, tokenData.token)
-        if (cancelled) {
-          room.disconnect()
+          if (!cancelled) {
+            setError('Falha ao conectar na videochamada.')
+            setStatus('ended')
+          }
           return
         }
-
-        attachExistingRemoteTracks(room)
-        syncAudioPlaybackState(room)
-        setStatus('active')
-
-        const mediaIssues: string[] = []
-
-        try {
-          await room.localParticipant.setCameraEnabled(true)
-          setCamEnabled(true)
-          attachLocalCamera(room)
-        } catch (cameraError) {
-          console.warn('[video] camera unavailable:', cameraError)
-          setCamEnabled(false)
-          mediaIssues.push('câmera')
-        }
-
-        try {
-          await room.localParticipant.setMicrophoneEnabled(true)
-          setMicEnabled(true)
-          // getUserMedia no gesto implícito do mic às vezes liberava áudio — aqui
-          // a chamada veio de polling, então ainda precisamos do startAudio no tap.
-          syncAudioPlaybackState(room)
-        } catch (micError) {
-          console.warn('[video] microphone unavailable:', micError)
-          setMicEnabled(false)
-          mediaIssues.push('microfone')
-        }
-
-        if (mediaIssues.length > 0) {
-          setMediaWarning(
-            `Não foi possível acessar ${mediaIssues.join(' e ')}. Você ainda pode ver e ouvir o psicólogo.`,
-          )
-        }
-      } catch (e) {
-        console.error('[video] connection error:', e)
-        if (!cancelled) {
-          setError('Falha ao conectar na videochamada.')
-          setStatus('ended')
-        }
-      } finally {
-        connectingRef.current = false
       }
     }
 
-    void connectToRoom()
-
+    void loadToken()
     return () => {
       cancelled = true
-      const room = roomRef.current
-      roomRef.current = null
-      room?.disconnect()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  async function fetchVideoToken(): Promise<VideoTokenData | null> {
-    for (let attempt = 0; attempt < 5; attempt++) {
-      try {
-        const res = await fetch(`${API_BASE}/chat/psych/video-token`, {
-          headers: getPsychApiHeaders(),
-        })
-        if (res.ok) return await res.json()
-        if (res.status === 404 && attempt < 4) {
-          await new Promise((r) => setTimeout(r, 2000))
-          continue
-        }
-        return null
-      } catch {
-        if (attempt < 4) {
-          await new Promise((r) => setTimeout(r, 2000))
-          continue
-        }
-        return null
-      }
-    }
-    return null
-  }
-
-  const toggleMic = useCallback(async () => {
-    void unlockCallAudio()
-    const room = roomRef.current
-    if (!room) return
-    const enabled = !micEnabled
-    try {
-      await room.localParticipant.setMicrophoneEnabled(enabled)
-      setMicEnabled(enabled)
-      setMediaWarning(null)
-    } catch {
-      setMediaWarning('Não foi possível alterar o microfone.')
-    }
-  }, [micEnabled, unlockCallAudio])
-
-  const toggleCam = useCallback(async () => {
-    void unlockCallAudio()
-    const room = roomRef.current
-    if (!room) return
-    const enabled = !camEnabled
-    try {
-      await room.localParticipant.setCameraEnabled(enabled)
-      setCamEnabled(enabled)
-      if (enabled) attachLocalCamera(room)
-      setMediaWarning(null)
-    } catch {
-      setMediaWarning('Não foi possível alterar a câmera.')
-    }
-  }, [attachLocalCamera, camEnabled, unlockCallAudio])
-
-  const handleEnd = useCallback(() => {
-    roomRef.current?.disconnect()
-    roomRef.current = null
-    setStatus('ended')
-    void leavePsychQueue()
-  }, [leavePsychQueue])
-
-  // Fecha aba/app no meio da chamada → tira da fila (needs_psych).
   useEffect(() => {
     const onLeave = () => {
       void leavePsychQueue(true)
     }
     window.addEventListener('pagehide', onLeave)
     return () => window.removeEventListener('pagehide', onLeave)
+  }, [leavePsychQueue])
+
+  const handleEnd = useCallback(() => {
+    setTokenData(null)
+    setStatus('ended')
+    void leavePsychQueue()
   }, [leavePsychQueue])
 
   if (status === 'ended') {
@@ -327,64 +136,129 @@ export function VideoCallScreen() {
     )
   }
 
-  return (
-    <div className="video-call-screen">
-      {status === 'connecting' && (
+  if (!tokenData) {
+    return (
+      <div className="video-call-screen">
         <div className="vc-connecting">
           <div className="vc-spinner" />
           <p>Conectando videochamada…</p>
         </div>
-      )}
+      </div>
+    )
+  }
 
+  return (
+    <div className="video-call-screen">
+      <LiveKitRoom
+        token={tokenData.token}
+        serverUrl={tokenData.ws_url}
+        connect
+        // Igual ao telemedicina: getUserMedia no SignalConnected libera autoplay
+        // ANTES dos tracks remotos chegarem.
+        audio
+        video
+        onDisconnected={() => {
+          setStatus('ended')
+        }}
+        onError={(err) => {
+          console.error('[video] livekit error:', err)
+        }}
+        className="vc-livekit-room"
+      >
+        <RoomAudioRenderer />
+        <StartAudio label="Toque para ativar o som" className="vc-unmute-btn" />
+        <VideoCallRoom onEnd={handleEnd} />
+      </LiveKitRoom>
+    </div>
+  )
+}
+
+function VideoCallRoom({ onEnd }: { onEnd: () => void }) {
+  const room = useRoomContext()
+  const { isMicrophoneEnabled, isCameraEnabled } = useLocalParticipant()
+  const remoteParticipants = useRemoteParticipants()
+  const hasRemoteParticipant = remoteParticipants.length > 0
+  const [mediaWarning, setMediaWarning] = useState<string | null>(null)
+
+  const tracks = useTracks(
+    [Track.Source.Camera, Track.Source.ScreenShare],
+    { onlySubscribed: true },
+  )
+  const remoteVideoTracks = tracks.filter((t) => !t.participant.isLocal)
+  const localTracks = tracks.filter(
+    (t) => t.participant.isLocal && t.source === Track.Source.Camera,
+  )
+
+  useEffect(() => {
+    // Garante resume do playback depois do unlock via getUserMedia.
+    void room.startAudio().catch(() => undefined)
+  }, [room])
+
+  useEffect(() => {
+    const issues: string[] = []
+    if (!isMicrophoneEnabled) issues.push('microfone')
+    if (!isCameraEnabled) issues.push('câmera')
+    if (issues.length > 0) {
+      setMediaWarning(
+        `Não foi possível acessar ${issues.join(' e ')}. Você ainda pode ver e ouvir o psicólogo.`,
+      )
+    } else {
+      setMediaWarning(null)
+    }
+  }, [isCameraEnabled, isMicrophoneEnabled])
+
+  return (
+    <>
       <div className="vc-remote">
-        <video ref={remoteVideoRef} autoPlay playsInline className="vc-remote-video" />
-        <div ref={remoteAudioContainerRef} className="vc-remote-audio" aria-hidden />
+        {remoteVideoTracks.length > 0 ? (
+          <VideoTrack
+            trackRef={remoteVideoTracks[0]}
+            className="vc-remote-video"
+          />
+        ) : (
+          <div className="vc-remote-placeholder">
+            {hasRemoteParticipant
+              ? 'Psicólogo conectado — câmera desativada'
+              : 'Aguardando o psicólogo…'}
+          </div>
+        )}
       </div>
 
-      <div className="vc-local">
-        <video ref={localVideoRef} autoPlay playsInline muted className="vc-local-video" />
-      </div>
-
-      {audioBlocked && status === 'active' && (
-        <button
-          type="button"
-          className="vc-unmute-btn"
-          onClick={() => {
-            void unlockCallAudio()
-          }}
-        >
-          Toque para ativar o som
-        </button>
+      {localTracks.length > 0 && (
+        <div className="vc-local">
+          <VideoTrack
+            trackRef={localTracks[0]}
+            className="vc-local-video"
+          />
+        </div>
       )}
 
       {mediaWarning && <div className="vc-media-warning">{mediaWarning}</div>}
 
       <div className="vc-controls">
-        <button
-          type="button"
-          className={`vc-ctrl-btn ${!micEnabled ? 'vc-off' : ''}`}
-          onClick={() => void toggleMic()}
-          aria-label={micEnabled ? 'Desativar microfone' : 'Ativar microfone'}
+        <TrackToggle
+          source={Track.Source.Microphone}
+          showIcon={false}
+          className={`vc-ctrl-btn ${!isMicrophoneEnabled ? 'vc-off' : ''}`}
         >
-          {micEnabled ? '🎙️' : '🔇'}
-        </button>
-        <button
-          type="button"
-          className={`vc-ctrl-btn ${!camEnabled ? 'vc-off' : ''}`}
-          onClick={() => void toggleCam()}
-          aria-label={camEnabled ? 'Desativar camera' : 'Ativar camera'}
+          {isMicrophoneEnabled ? '🎙️' : '🔇'}
+        </TrackToggle>
+        <TrackToggle
+          source={Track.Source.Camera}
+          showIcon={false}
+          className={`vc-ctrl-btn ${!isCameraEnabled ? 'vc-off' : ''}`}
         >
-          {camEnabled ? '📷' : '🚫'}
-        </button>
+          {isCameraEnabled ? '📷' : '🚫'}
+        </TrackToggle>
         <button
           type="button"
           className="vc-ctrl-btn vc-end"
-          onClick={handleEnd}
+          onClick={onEnd}
           aria-label="Encerrar chamada"
         >
           📞
         </button>
       </div>
-    </div>
+    </>
   )
 }
