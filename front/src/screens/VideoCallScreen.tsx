@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   LiveKitRoom,
   RoomAudioRenderer,
-  StartAudio,
   TrackToggle,
   VideoTrack,
   useLocalParticipant,
@@ -10,7 +9,7 @@ import {
   useRoomContext,
   useTracks,
 } from '@livekit/components-react'
-import { Track } from 'livekit-client'
+import { RoomEvent, Track, type RemoteTrack } from 'livekit-client'
 import { useLia } from '../context/LiaContext'
 import { getPsychApiHeaders } from '../services/sessionSync'
 
@@ -24,7 +23,7 @@ interface VideoTokenData {
 }
 
 export function VideoCallScreen() {
-  const { showScreen, releasePsychRequest } = useLia()
+  const { showScreen, releasePsychRequest, primeAudio } = useLia()
   const [status, setStatus] = useState<'connecting' | 'active' | 'ended'>('connecting')
   const [error, setError] = useState<string | null>(null)
   const [tokenData, setTokenData] = useState<VideoTokenData | null>(null)
@@ -49,7 +48,7 @@ export function VideoCallScreen() {
         keepalive,
       })
     } catch {
-      // best-effort — o release abaixo ainda zera a fila
+      // best-effort
     }
 
     await releasePsychRequest({ keepalive }).catch(() => undefined)
@@ -153,8 +152,6 @@ export function VideoCallScreen() {
         token={tokenData.token}
         serverUrl={tokenData.ws_url}
         connect
-        // Igual ao telemedicina: getUserMedia no SignalConnected libera autoplay
-        // ANTES dos tracks remotos chegarem.
         audio
         video
         onDisconnected={() => {
@@ -166,15 +163,124 @@ export function VideoCallScreen() {
         className="vc-livekit-room"
       >
         <RoomAudioRenderer />
-        <StartAudio label="Toque para ativar o som" className="vc-unmute-btn" />
+        <RemoteAudioRecovery primeAudio={primeAudio} />
         <VideoCallRoom onEnd={handleEnd} />
       </LiveKitRoom>
     </div>
   )
 }
 
-function VideoCallRoom({ onEnd }: { onEnd: () => void }) {
+/**
+ * Corrige a race: tracks remotos chegam e falham o play() ANTES do getUserMedia
+ * liberar o autoplay. Quando o áudio fica permitido (ou o usuário toca), força
+ * startAudio() de novo em todos os elementos já attached.
+ */
+function RemoteAudioRecovery({ primeAudio }: { primeAudio: () => void }) {
   const room = useRoomContext()
+  const [needsGesture, setNeedsGesture] = useState(true)
+  const unlockedRef = useRef(false)
+
+  const resumeAllRemoteAudio = useCallback(async () => {
+    primeAudio()
+    try {
+      // Anexa qualquer áudio remoto que ainda não tenha elemento (fallback).
+      room.remoteParticipants.forEach((participant) => {
+        participant.audioTrackPublications.forEach((publication) => {
+          const track = publication.track
+          if (!track) return
+          if (track.attachedElements.length === 0) {
+            const attached = track.attach()
+            const elements = Array.isArray(attached) ? attached : [attached]
+            elements.forEach((el) => {
+              el.autoplay = true
+              el.muted = false
+              el.volume = 1
+              el.setAttribute('playsinline', 'true')
+              if (!document.body.contains(el)) {
+                el.style.position = 'fixed'
+                el.style.width = '1px'
+                el.style.height = '1px'
+                el.style.opacity = '0'
+                el.style.pointerEvents = 'none'
+                el.style.zIndex = '-1'
+                document.body.appendChild(el)
+              }
+            })
+          } else {
+            track.attachedElements.forEach((el) => {
+              el.muted = false
+              el.volume = 1
+            })
+          }
+        })
+      })
+
+      await room.startAudio()
+      unlockedRef.current = room.canPlaybackAudio
+      setNeedsGesture(!room.canPlaybackAudio)
+    } catch (err) {
+      console.warn('[video] resumeAllRemoteAudio failed:', err)
+      unlockedRef.current = false
+      setNeedsGesture(true)
+    }
+  }, [primeAudio, room])
+
+  useEffect(() => {
+    const onPlaybackStatus = () => {
+      if (room.canPlaybackAudio) {
+        // getUserMedia liberou a flag — retomar elementos que falharam antes.
+        void room.startAudio()
+          .then(() => {
+            unlockedRef.current = true
+            setNeedsGesture(false)
+          })
+          .catch(() => {
+            setNeedsGesture(true)
+          })
+      } else {
+        setNeedsGesture(true)
+      }
+    }
+
+    const onTrackSubscribed = (track: RemoteTrack) => {
+      if (track.kind !== Track.Kind.Audio) return
+      // Sempre tenta startAudio após um novo áudio remoto (cobre a race).
+      void room.startAudio().catch(() => {
+        setNeedsGesture(true)
+      })
+    }
+
+    room.on(RoomEvent.AudioPlaybackStatusChanged, onPlaybackStatus)
+    room.on(RoomEvent.TrackSubscribed, onTrackSubscribed)
+
+    // Tentativa inicial após montar (mic já pode ter desbloqueado).
+    const t = window.setTimeout(() => {
+      void resumeAllRemoteAudio()
+    }, 300)
+
+    return () => {
+      window.clearTimeout(t)
+      room.off(RoomEvent.AudioPlaybackStatusChanged, onPlaybackStatus)
+      room.off(RoomEvent.TrackSubscribed, onTrackSubscribed)
+    }
+  }, [resumeAllRemoteAudio, room])
+
+  if (!needsGesture) return null
+
+  return (
+    <button
+      type="button"
+      className="vc-unmute-btn"
+      onClick={() => {
+        void resumeAllRemoteAudio()
+      }}
+    >
+      Toque para ativar o som
+    </button>
+  )
+}
+
+function VideoCallRoom({ onEnd }: { onEnd: () => void }) {
   const { isMicrophoneEnabled, isCameraEnabled } = useLocalParticipant()
   const remoteParticipants = useRemoteParticipants()
   const hasRemoteParticipant = remoteParticipants.length > 0
@@ -188,11 +294,6 @@ function VideoCallRoom({ onEnd }: { onEnd: () => void }) {
   const localTracks = tracks.filter(
     (t) => t.participant.isLocal && t.source === Track.Source.Camera,
   )
-
-  useEffect(() => {
-    // Garante resume do playback depois do unlock via getUserMedia.
-    void room.startAudio().catch(() => undefined)
-  }, [room])
 
   useEffect(() => {
     const issues: string[] = []
