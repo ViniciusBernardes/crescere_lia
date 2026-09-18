@@ -21,12 +21,14 @@ interface VideoTokenData {
 }
 
 export function VideoCallScreen() {
-  const { showScreen, releasePsychRequest } = useLia()
+  const { showScreen, releasePsychRequest, primeAudio } = useLia()
   const [status, setStatus] = useState<'connecting' | 'active' | 'ended'>('connecting')
   const [error, setError] = useState<string | null>(null)
   const [mediaWarning, setMediaWarning] = useState<string | null>(null)
+  // Chamada abre via polling (sem gesto) → áudio remoto costuma nascer bloqueado.
+  const [audioBlocked, setAudioBlocked] = useState(true)
   const remoteVideoRef = useRef<HTMLVideoElement>(null)
-  const remoteAudioRef = useRef<HTMLAudioElement>(null)
+  const remoteAudioContainerRef = useRef<HTMLDivElement>(null)
   const localVideoRef = useRef<HTMLVideoElement>(null)
   const roomRef = useRef<Room | null>(null)
   const connectingRef = useRef(false)
@@ -59,14 +61,48 @@ export function VideoCallScreen() {
     await releasePsychRequest({ keepalive }).catch(() => undefined)
   }, [releasePsychRequest])
 
+  const syncAudioPlaybackState = useCallback((room: Room) => {
+    setAudioBlocked(!room.canPlaybackAudio)
+  }, [])
+
+  const unlockCallAudio = useCallback(async () => {
+    primeAudio()
+    const room = roomRef.current
+    if (!room) return
+    try {
+      // API oficial do LiveKit — precisa rodar em handler de click/tap.
+      await room.startAudio()
+      setAudioBlocked(!room.canPlaybackAudio)
+    } catch (err) {
+      console.warn('[video] startAudio failed:', err)
+      setAudioBlocked(true)
+    }
+  }, [primeAudio])
+
   const attachRemoteTrack = useCallback((track: RemoteTrack) => {
     if (track.kind === Track.Kind.Video && remoteVideoRef.current) {
       track.attach(remoteVideoRef.current)
+      void remoteVideoRef.current.play().catch(() => undefined)
+      return
     }
-    if (track.kind === Track.Kind.Audio && remoteAudioRef.current) {
-      track.attach(remoteAudioRef.current)
+
+    if (track.kind === Track.Kind.Audio) {
+      // Deixa o SDK criar o <audio>; Room.startAudio() controla o playback.
+      const attached = track.attach()
+      const elements = Array.isArray(attached) ? attached : [attached]
+      const host = remoteAudioContainerRef.current
+      elements.forEach((el: HTMLMediaElement) => {
+        el.autoplay = true
+        el.setAttribute('playsinline', 'true')
+        el.setAttribute('webkit-playsinline', 'true')
+        if (host && !host.contains(el)) {
+          host.appendChild(el)
+        }
+      })
+      const room = roomRef.current
+      if (room) syncAudioPlaybackState(room)
     }
-  }, [])
+  }, [syncAudioPlaybackState])
 
   const attachExistingRemoteTracks = useCallback(
     (room: Room) => {
@@ -120,13 +156,21 @@ export function VideoCallScreen() {
         })
 
         room.on(RoomEvent.TrackUnsubscribed, (track: RemoteTrack) => {
-          track.detach()
+          const detached = track.detach()
+          const elements = Array.isArray(detached) ? detached : [detached]
+          elements.forEach((el: HTMLMediaElement) => {
+            el.remove()
+          })
         })
 
         room.on(RoomEvent.LocalTrackPublished, (publication: LocalTrackPublication) => {
           if (publication.source === Track.Source.Camera && publication.track && localVideoRef.current) {
             publication.track.attach(localVideoRef.current)
           }
+        })
+
+        room.on(RoomEvent.AudioPlaybackStatusChanged, () => {
+          syncAudioPlaybackState(room)
         })
 
         room.on(RoomEvent.Disconnected, () => {
@@ -140,21 +184,37 @@ export function VideoCallScreen() {
         }
 
         attachExistingRemoteTracks(room)
+        syncAudioPlaybackState(room)
         setStatus('active')
+
+        const mediaIssues: string[] = []
 
         try {
           await room.localParticipant.setCameraEnabled(true)
-          await room.localParticipant.setMicrophoneEnabled(true)
           setCamEnabled(true)
-          setMicEnabled(true)
           attachLocalCamera(room)
-        } catch (mediaError) {
-          console.warn('[video] camera/mic unavailable:', mediaError)
-          setMediaWarning(
-            'Não foi possível acessar câmera ou microfone. Você ainda pode ver e ouvir o psicólogo.',
-          )
+        } catch (cameraError) {
+          console.warn('[video] camera unavailable:', cameraError)
           setCamEnabled(false)
+          mediaIssues.push('câmera')
+        }
+
+        try {
+          await room.localParticipant.setMicrophoneEnabled(true)
+          setMicEnabled(true)
+          // getUserMedia no gesto implícito do mic às vezes liberava áudio — aqui
+          // a chamada veio de polling, então ainda precisamos do startAudio no tap.
+          syncAudioPlaybackState(room)
+        } catch (micError) {
+          console.warn('[video] microphone unavailable:', micError)
           setMicEnabled(false)
+          mediaIssues.push('microfone')
+        }
+
+        if (mediaIssues.length > 0) {
+          setMediaWarning(
+            `Não foi possível acessar ${mediaIssues.join(' e ')}. Você ainda pode ver e ouvir o psicólogo.`,
+          )
         }
       } catch (e) {
         console.error('[video] connection error:', e)
@@ -202,6 +262,7 @@ export function VideoCallScreen() {
   }
 
   const toggleMic = useCallback(async () => {
+    void unlockCallAudio()
     const room = roomRef.current
     if (!room) return
     const enabled = !micEnabled
@@ -212,9 +273,10 @@ export function VideoCallScreen() {
     } catch {
       setMediaWarning('Não foi possível alterar o microfone.')
     }
-  }, [micEnabled])
+  }, [micEnabled, unlockCallAudio])
 
   const toggleCam = useCallback(async () => {
+    void unlockCallAudio()
     const room = roomRef.current
     if (!room) return
     const enabled = !camEnabled
@@ -226,7 +288,7 @@ export function VideoCallScreen() {
     } catch {
       setMediaWarning('Não foi possível alterar a câmera.')
     }
-  }, [attachLocalCamera, camEnabled])
+  }, [attachLocalCamera, camEnabled, unlockCallAudio])
 
   const handleEnd = useCallback(() => {
     roomRef.current?.disconnect()
@@ -276,12 +338,24 @@ export function VideoCallScreen() {
 
       <div className="vc-remote">
         <video ref={remoteVideoRef} autoPlay playsInline className="vc-remote-video" />
-        <audio ref={remoteAudioRef} autoPlay />
+        <div ref={remoteAudioContainerRef} className="vc-remote-audio" aria-hidden />
       </div>
 
       <div className="vc-local">
         <video ref={localVideoRef} autoPlay playsInline muted className="vc-local-video" />
       </div>
+
+      {audioBlocked && status === 'active' && (
+        <button
+          type="button"
+          className="vc-unmute-btn"
+          onClick={() => {
+            void unlockCallAudio()
+          }}
+        >
+          Toque para ativar o som
+        </button>
+      )}
 
       {mediaWarning && <div className="vc-media-warning">{mediaWarning}</div>}
 
